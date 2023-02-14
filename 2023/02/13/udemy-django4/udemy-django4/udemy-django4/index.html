@@ -437,14 +437,14 @@ tips
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        338
+                        1.5k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        1 分
+                        7 分
                     </div>
                     
                 
@@ -513,6 +513,256 @@ urlpatterns <span class="token operator">=</span> <span class="token punctuation
 <h2 id="运行并测试"><a href="#运行并测试" class="headerlink" title="运行并测试"></a>运行并测试</h2><pre class=" language-shell"><code class="language-shell">python .\manage.py runserver
 </code></pre>
 <p><img src="img_20.png" alt="404,提示只要my_app和admin被注册了"><br><img src="img_21.png" alt="访问my_app"></p>
+<h1 id="introduction-to-URLs-views-and-routing"><a href="#introduction-to-URLs-views-and-routing" class="headerlink" title="introduction to URLs,views,and routing"></a>introduction to URLs,views,and routing</h1><h2 id="project-application-exercise"><a href="#project-application-exercise" class="headerlink" title="project application exercise"></a>project application exercise</h2><h3 id="创建新项目"><a href="#创建新项目" class="headerlink" title="创建新项目"></a>创建新项目</h3><pre class=" language-shell"><code class="language-shell">django-admin startproject my_site
+cd my_site
+python manage.py startapp first_app
+</code></pre>
+<h3 id="views-and-urls-overview"><a href="#views-and-urls-overview" class="headerlink" title="views and urls overview"></a>views and urls overview</h3><p><img src="img_22.png" alt="img_22.png"><br><img src="img_23.png" alt="img_23.png"><br><img src="img_24.png" alt="img_24.png"></p>
+<h3 id="function-based-views-basics"><a href="#function-based-views-basics" class="headerlink" title="function based views - basics"></a>function based views - basics</h3><h4 id="修改first-app下的views-py"><a href="#修改first-app下的views-py" class="headerlink" title="修改first_app下的views.py"></a>修改first_app下的views.py</h4><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>shortcuts <span class="token keyword">import</span> render
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>http<span class="token punctuation">.</span>response <span class="token keyword">import</span> HttpResponse
+
+<span class="token keyword">def</span> <span class="token function">simple_view</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> HttpResponse<span class="token punctuation">(</span><span class="token string">"SIMPLE VIEW"</span><span class="token punctuation">)</span> 
+</code></pre>
+<h4 id="在first-app下新建urls-py"><a href="#在first-app下新建urls-py" class="headerlink" title="在first_app下新建urls.py"></a>在first_app下新建urls.py</h4><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>urls <span class="token keyword">import</span> path
+<span class="token comment" spellcheck="true"># 从当前目录导入</span>
+<span class="token keyword">from</span> <span class="token punctuation">.</span> <span class="token keyword">import</span> views
+<span class="token comment" spellcheck="true"># 配置路由</span>
+urlpatterns <span class="token operator">=</span> <span class="token punctuation">[</span>
+    path<span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">,</span> views<span class="token punctuation">.</span>simple_view<span class="token punctuation">)</span>
+<span class="token punctuation">]</span>
+</code></pre>
+<h4 id="修改my-site下的urls-py"><a href="#修改my-site下的urls-py" class="headerlink" title="修改my_site下的urls.py"></a>修改my_site下的urls.py</h4><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>contrib <span class="token keyword">import</span> admin
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>urls <span class="token keyword">import</span> path<span class="token punctuation">,</span> include
+<span class="token comment" spellcheck="true"># 配置路由</span>
+urlpatterns <span class="token operator">=</span> <span class="token punctuation">[</span>
+    path<span class="token punctuation">(</span><span class="token string">'admin/'</span><span class="token punctuation">,</span> admin<span class="token punctuation">.</span>site<span class="token punctuation">.</span>urls<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    path<span class="token punctuation">(</span><span class="token string">'first_app/'</span><span class="token punctuation">,</span> include<span class="token punctuation">(</span><span class="token string">'first_app.urls'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">]</span> 
+</code></pre>
+<pre class=" language-shell"><code class="language-shell">python manage.py runserver
+</code></pre>
+<p><img src="img_27.png" alt="显示提示是因为DEBUG=true选项"><br><img src="img_26.png" alt="img_26.png"></p>
+<h4 id="修改my-site下的urls-py-1"><a href="#修改my-site下的urls-py-1" class="headerlink" title="修改my_site下的urls.py"></a>修改my_site下的urls.py</h4><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>contrib <span class="token keyword">import</span> admin
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>http<span class="token punctuation">.</span>response <span class="token keyword">import</span> HttpResponse
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>urls <span class="token keyword">import</span> path<span class="token punctuation">,</span> include 
+<span class="token comment" spellcheck="true"># 最简单的路由处理配置</span>
+<span class="token keyword">def</span> <span class="token function">home_view</span><span class="token punctuation">(</span>req<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> HttpResponse<span class="token punctuation">(</span><span class="token string">'HOME PAGE'</span><span class="token punctuation">)</span> 
+<span class="token comment" spellcheck="true"># 配置路由</span>
+urlpatterns <span class="token operator">=</span> <span class="token punctuation">[</span>
+    path<span class="token punctuation">(</span><span class="token string">'admin/'</span><span class="token punctuation">,</span> admin<span class="token punctuation">.</span>site<span class="token punctuation">.</span>urls<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    path<span class="token punctuation">(</span><span class="token string">'first_app/'</span><span class="token punctuation">,</span> include<span class="token punctuation">(</span><span class="token string">'first_app.urls'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    path<span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">,</span> home_view<span class="token punctuation">)</span>
+<span class="token punctuation">]</span> 
+</code></pre>
+<p><img src="img_28.png" alt="img_28.png"></p>
+<h4 id="将home-page移动到my-site-views-py-新建"><a href="#将home-page移动到my-site-views-py-新建" class="headerlink" title="将home_page移动到my_site/views.py(新建)"></a>将home_page移动到my_site/views.py(新建)</h4><p><img src="img_29.png" alt="img_29.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>http<span class="token punctuation">.</span>response <span class="token keyword">import</span> HttpResponse
+
+<span class="token comment" spellcheck="true"># 最简单的路由处理配置</span>
+<span class="token keyword">def</span> <span class="token function">home_view</span><span class="token punctuation">(</span>req<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> HttpResponse<span class="token punctuation">(</span><span class="token string">'HOME PAGE'</span><span class="token punctuation">)</span>
+</code></pre>
+<p><img src="img_30.png" alt="此时的urls.py"><br><img src="img_31.png" alt="django有热更新,可以看到homepage正常显示"></p>
+<h2 id="Dynamic-Views-routing-logic"><a href="#Dynamic-Views-routing-logic" class="headerlink" title="Dynamic Views - routing logic"></a>Dynamic Views - routing logic</h2><p><img src="img_32.png" alt="img_32.png"></p>
+<h3 id="修改first-app-views-py"><a href="#修改first-app-views-py" class="headerlink" title="修改first_app/views.py"></a>修改first_app/views.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>shortcuts <span class="token keyword">import</span> render
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>http<span class="token punctuation">.</span>response <span class="token keyword">import</span> HttpResponse
+
+<span class="token comment" spellcheck="true"># 字典里存放网页对应内容</span>
+articles <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">'sports'</span><span class="token punctuation">:</span> <span class="token string">'Sports Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'finance'</span><span class="token punctuation">:</span> <span class="token string">'Finance Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'politics'</span><span class="token punctuation">:</span> <span class="token string">'Politics Page'</span>
+<span class="token punctuation">}</span>
+
+
+<span class="token comment" spellcheck="true"># topic接收路由参数</span>
+<span class="token keyword">def</span> <span class="token function">news_view</span><span class="token punctuation">(</span>req<span class="token punctuation">,</span> topic<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 去字典里获取内容,但是如果没有,会报keyError,而我们需要重定向报错页面</span>
+    <span class="token keyword">return</span> HttpResponse<span class="token punctuation">(</span>articles<span class="token punctuation">[</span>topic<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">add_view</span><span class="token punctuation">(</span>req<span class="token punctuation">,</span> num1<span class="token punctuation">,</span> num2<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># first_app/num1/num2 -> num1+num2</span>
+    add_res <span class="token operator">=</span> num1 <span class="token operator">+</span> num2
+    res <span class="token operator">=</span> f<span class="token string">"{num1} + {num2} = {add_res}"</span>
+    <span class="token keyword">return</span> HttpResponse<span class="token punctuation">(</span>str<span class="token punctuation">(</span>res<span class="token punctuation">)</span><span class="token punctuation">)</span> 
+</code></pre>
+<h3 id="修改first-app-urls-py"><a href="#修改first-app-urls-py" class="headerlink" title="修改first_app/urls.py"></a>修改first_app/urls.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>urls <span class="token keyword">import</span> path
+<span class="token comment" spellcheck="true"># 从当前目录导入</span>
+<span class="token keyword">from</span> <span class="token punctuation">.</span> <span class="token keyword">import</span> views
+
+<span class="token comment" spellcheck="true"># 配置路由</span>
+urlpatterns <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token comment" spellcheck="true"># 动态路由</span>
+    <span class="token comment" spellcheck="true"># path('&lt;topic>/',views.news_view)</span>
+    <span class="token comment" spellcheck="true"># 路径转换器(path convertor),接收并转换路径中的参数</span>
+    <span class="token comment" spellcheck="true"># 这里将topic识别为字符串</span>
+    path<span class="token punctuation">(</span><span class="token string">'&lt;str:topic>/'</span><span class="token punctuation">,</span> views<span class="token punctuation">.</span>news_view<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    path<span class="token punctuation">(</span><span class="token string">'&lt;int:num1>/&lt;int:num2>'</span><span class="token punctuation">,</span> views<span class="token punctuation">.</span>add_view<span class="token punctuation">)</span>
+<span class="token punctuation">]</span>  
+</code></pre>
+<p><img src="img_33.png" alt="路径转换器"><br><img src="img_35.png" alt="img_35.png"></p>
+<h2 id="Using-ResponseNotFound-and-404-Pages"><a href="#Using-ResponseNotFound-and-404-Pages" class="headerlink" title="Using ResponseNotFound and 404 Pages"></a>Using ResponseNotFound and 404 Pages</h2><p><img src="img_36.png" alt="img_36.png"><br><img src="img_37.png" alt="img_37.png"></p>
+<h3 id="修改first-app-views-py-1"><a href="#修改first-app-views-py-1" class="headerlink" title="修改first_app/views.py"></a>修改first_app/views.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>shortcuts <span class="token keyword">import</span> render
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>http<span class="token punctuation">.</span>response <span class="token keyword">import</span> HttpResponse<span class="token punctuation">,</span> HttpResponseNotFound 
+
+<span class="token comment" spellcheck="true"># 字典里存放网页对应内容</span>
+articles <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">'sports'</span><span class="token punctuation">:</span> <span class="token string">'Sports Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'finance'</span><span class="token punctuation">:</span> <span class="token string">'Finance Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'politics'</span><span class="token punctuation">:</span> <span class="token string">'Politics Page'</span>
+<span class="token punctuation">}</span>
+ 
+<span class="token comment" spellcheck="true"># topic接收路由参数</span>
+<span class="token keyword">def</span> <span class="token function">news_view</span><span class="token punctuation">(</span>req<span class="token punctuation">,</span> topic<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 尝试获取网页</span>
+    <span class="token keyword">try</span><span class="token punctuation">:</span>
+        res <span class="token operator">=</span> articles<span class="token punctuation">[</span>topic<span class="token punctuation">]</span>
+        <span class="token keyword">return</span> HttpResponse<span class="token punctuation">(</span>articles<span class="token punctuation">[</span>topic<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token keyword">except</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 如果没有该网页,返回404的提示</span>
+        res <span class="token operator">=</span> <span class="token string">'No page for the topic!'</span>
+        <span class="token keyword">return</span> HttpResponseNotFound<span class="token punctuation">(</span>res<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 返回字符串 </span>
+</code></pre>
+<p><img src="img_38.png" alt="img_38.png"></p>
+<h3 id="修改first-app-views-py-2"><a href="#修改first-app-views-py-2" class="headerlink" title="修改first_app/views.py"></a>修改first_app/views.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>shortcuts <span class="token keyword">import</span> render
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>http<span class="token punctuation">.</span>response <span class="token keyword">import</span> HttpResponse<span class="token punctuation">,</span> HttpResponseNotFound<span class="token punctuation">,</span> Http404
+
+<span class="token comment" spellcheck="true"># 字典里存放网页对应内容</span>
+articles <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">'sports'</span><span class="token punctuation">:</span> <span class="token string">'Sports Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'finance'</span><span class="token punctuation">:</span> <span class="token string">'Finance Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'politics'</span><span class="token punctuation">:</span> <span class="token string">'Politics Page'</span>
+<span class="token punctuation">}</span> 
+
+<span class="token comment" spellcheck="true"># topic接收路由参数</span>
+<span class="token keyword">def</span> <span class="token function">news_view</span><span class="token punctuation">(</span>req<span class="token punctuation">,</span> topic<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 尝试获取网页</span>
+    <span class="token keyword">try</span><span class="token punctuation">:</span>
+        res <span class="token operator">=</span> articles<span class="token punctuation">[</span>topic<span class="token punctuation">]</span>
+        <span class="token keyword">return</span> HttpResponse<span class="token punctuation">(</span>articles<span class="token punctuation">[</span>topic<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token keyword">except</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 如果没有该网页,返回404的提示</span>
+        res <span class="token operator">=</span> <span class="token string">'No page for the topic!'</span>
+        <span class="token comment" spellcheck="true"># return HttpResponseNotFound(res) # 返回字符串</span>
+        <span class="token keyword">raise</span> Http404<span class="token punctuation">(</span><span class="token string">"404 GENERIC ERROR"</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 返回通用错误,返回模板(如404.html) </span>
+</code></pre>
+<p><img src="img_39.png" alt="没有配置自定义404页时的默认404"></p>
+<h3 id="修改my-site-setting-py"><a href="#修改my-site-setting-py" class="headerlink" title="修改my_site/setting.py"></a>修改my_site/setting.py</h3><p><img src="img_40.png" alt="img_40.png"><br><img src="img_41.png" alt="此时的404,不会提供太多信息"></p>
+<h2 id="Redirects-Basics"><a href="#Redirects-Basics" class="headerlink" title="Redirects Basics"></a>Redirects Basics</h2><p><img src="img_42.png" alt="img_42.png"><img src="img_43.png" alt="img_43.png"><img src="img_44.png" alt="img_44.png"></p>
+<h3 id="first-app-views-py"><a href="#first-app-views-py" class="headerlink" title="first_app/views.py"></a>first_app/views.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>shortcuts <span class="token keyword">import</span> render
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>http<span class="token punctuation">.</span>response <span class="token keyword">import</span> HttpResponse<span class="token punctuation">,</span> HttpResponseNotFound<span class="token punctuation">,</span> Http404<span class="token punctuation">,</span> HttpResponseRedirect
+
+<span class="token comment" spellcheck="true"># 字典里存放网页对应内容</span>
+articles <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">'sports'</span><span class="token punctuation">:</span> <span class="token string">'Sports Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'finance'</span><span class="token punctuation">:</span> <span class="token string">'Finance Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'politics'</span><span class="token punctuation">:</span> <span class="token string">'Politics Page'</span>
+<span class="token punctuation">}</span>
+ 
+<span class="token comment" spellcheck="true"># topic接收路由参数</span>
+<span class="token keyword">def</span> <span class="token function">news_view</span><span class="token punctuation">(</span>req<span class="token punctuation">,</span> topic<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 尝试获取网页</span>
+    <span class="token keyword">try</span><span class="token punctuation">:</span>
+        res <span class="token operator">=</span> articles<span class="token punctuation">[</span>topic<span class="token punctuation">]</span>
+        <span class="token keyword">return</span> HttpResponse<span class="token punctuation">(</span>articles<span class="token punctuation">[</span>topic<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token keyword">except</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 如果没有该网页,返回404的提示</span>
+        res <span class="token operator">=</span> <span class="token string">'No page for the topic!'</span>
+        <span class="token comment" spellcheck="true"># return HttpResponseNotFound(res) # 返回字符串</span>
+        <span class="token keyword">raise</span> Http404<span class="token punctuation">(</span><span class="token string">"404 GENERIC ERROR"</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 返回通用错误,返回模板(如404.html) </span>
+
+<span class="token keyword">def</span> <span class="token function">num_page_view</span><span class="token punctuation">(</span>req<span class="token punctuation">,</span> num_page<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>num_page<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 获取字典里所有的key</span>
+    topics_list <span class="token operator">=</span> list<span class="token punctuation">(</span>articles<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># ['sports','finance','politics']</span>
+    topic <span class="token operator">=</span> topics_list<span class="token punctuation">[</span>num_page<span class="token punctuation">]</span>
+    <span class="token comment" spellcheck="true"># 重定向到 first_app/除num_page外的当前路由/&lt;topic></span>
+    <span class="token keyword">return</span> HttpResponseRedirect<span class="token punctuation">(</span>topic<span class="token punctuation">)</span> 
+</code></pre>
+<h3 id="first-app-urls-py"><a href="#first-app-urls-py" class="headerlink" title="first_app/urls.py"></a>first_app/urls.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>urls <span class="token keyword">import</span> path
+<span class="token comment" spellcheck="true"># 从当前目录导入</span>
+<span class="token keyword">from</span> <span class="token punctuation">.</span> <span class="token keyword">import</span> views
+
+<span class="token comment" spellcheck="true"># 配置路由</span>
+urlpatterns <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token comment" spellcheck="true"># 将被重定向的url</span>
+    path<span class="token punctuation">(</span><span class="token string">'redirect/&lt;int:num_page>'</span><span class="token punctuation">,</span> views<span class="token punctuation">.</span>num_page_view<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true"># 如果没有redirect,则不知道为啥把除了0以外的都识别称字符串,然后报404</span>
+    path<span class="token punctuation">(</span><span class="token string">'redirect/&lt;str:topic>/'</span><span class="token punctuation">,</span> views<span class="token punctuation">.</span>news_view<span class="token punctuation">)</span><span class="token punctuation">,</span> 
+<span class="token punctuation">]</span>
+</code></pre>
+<p><img src="img_45.png" alt="索引超出"></p>
+<h2 id="reverse-urls-and-url-names"><a href="#reverse-urls-and-url-names" class="headerlink" title="reverse urls and url names"></a>reverse urls and url names</h2><p><img src="img_46.png" alt="img_46.png"><img src="img_47.png" alt="img_47.png"><img src="img_48.png" alt="reverse方法查找对应name的url,可用于重定向"> </p>
+<h3 id="first-app-views-py-1"><a href="#first-app-views-py-1" class="headerlink" title="first_app/views.py"></a>first_app/views.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>shortcuts <span class="token keyword">import</span> render
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>urls <span class="token keyword">import</span> reverse
+<span class="token keyword">from</span> django<span class="token punctuation">.</span>http<span class="token punctuation">.</span>response <span class="token keyword">import</span> HttpResponse<span class="token punctuation">,</span> HttpResponseNotFound<span class="token punctuation">,</span> Http404<span class="token punctuation">,</span> HttpResponseRedirect
+
+<span class="token comment" spellcheck="true"># 字典里存放网页对应内容</span>
+articles <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">'sports'</span><span class="token punctuation">:</span> <span class="token string">'Sports Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'finance'</span><span class="token punctuation">:</span> <span class="token string">'Finance Page'</span><span class="token punctuation">,</span>
+    <span class="token string">'politics'</span><span class="token punctuation">:</span> <span class="token string">'Politics Page'</span>
+<span class="token punctuation">}</span> 
+
+<span class="token comment" spellcheck="true"># topic接收路由参数</span>
+<span class="token keyword">def</span> <span class="token function">news_view</span><span class="token punctuation">(</span>req<span class="token punctuation">,</span> topic<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+    
+<span class="token keyword">def</span> <span class="token function">num_page_view</span><span class="token punctuation">(</span>req<span class="token punctuation">,</span> num_page<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>num_page<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 获取字典里所有的key</span>
+    topics_list <span class="token operator">=</span> list<span class="token punctuation">(</span>articles<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># ['sports','finance','politics']</span>
+    topic <span class="token operator">=</span> topics_list<span class="token punctuation">[</span>num_page<span class="token punctuation">]</span>
+    <span class="token comment" spellcheck="true"># 反向定位到name为topic-page的url,并传递参数topic</span>
+    webpage <span class="token operator">=</span> reverse<span class="token punctuation">(</span><span class="token string">'topic-page'</span><span class="token punctuation">,</span> args<span class="token operator">=</span><span class="token punctuation">[</span>topic<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 重定向到 first_app/除num_page外的当前路由/&lt;topic></span>
+    <span class="token comment" spellcheck="true"># return HttpResponseRedirect(topic)</span>
+    <span class="token keyword">return</span> HttpResponseRedirect<span class="token punctuation">(</span>webpage<span class="token punctuation">)</span> 
+</code></pre>
+<h3 id="first-app-urls-py-1"><a href="#first-app-urls-py-1" class="headerlink" title="first_app/urls.py"></a>first_app/urls.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>urls <span class="token keyword">import</span> path
+<span class="token comment" spellcheck="true"># 从当前目录导入</span>
+<span class="token keyword">from</span> <span class="token punctuation">.</span> <span class="token keyword">import</span> views
+
+<span class="token comment" spellcheck="true"># 配置路由</span>
+urlpatterns <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token comment" spellcheck="true"># 将被重定向的url</span>
+    path<span class="token punctuation">(</span><span class="token string">'redirect/&lt;int:num_page>'</span><span class="token punctuation">,</span> views<span class="token punctuation">.</span>num_page_view<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true"># 如果没有redirect,则不知道为啥把除了0以外的都识别称字符串,然后报404</span>
+    path<span class="token punctuation">(</span><span class="token string">'redirect/&lt;str:topic>/'</span><span class="token punctuation">,</span> views<span class="token punctuation">.</span>news_view<span class="token punctuation">,</span>name<span class="token operator">=</span><span class="token string">'topic-page'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> 
+<span class="token punctuation">]</span> 
+</code></pre>
+<h2 id="connecting-a-view-to-a-template"><a href="#connecting-a-view-to-a-template" class="headerlink" title="connecting a view to a template"></a>connecting a view to a template</h2><p><img src="img_49.png" alt="img_49.png"><img src="img_50.png" alt="img_50.png"><img src="img_51.png" alt="img_51.png"></p>
+<h3 id="在顶层目录下创建templates-first-app-example-html"><a href="#在顶层目录下创建templates-first-app-example-html" class="headerlink" title="在顶层目录下创建templates/first_app/example.html"></a>在顶层目录下创建templates/first_app/example.html</h3><p><img src="img_52.png" alt="img_52.png"></p>
+<pre class=" language-html"><code class="language-html"><span class="token doctype">&lt;!DOCTYPE html></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>en<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">charset</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>UTF-8<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>title</span><span class="token punctuation">></span></span>Title<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>title</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>body</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>h1</span><span class="token punctuation">></span></span>example html connected<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>h1</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>body</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">></span></span>
+</code></pre>
+<h3 id="first-app-views-py-2"><a href="#first-app-views-py-2" class="headerlink" title="first_app/views.py"></a>first_app/views.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>shortcuts <span class="token keyword">import</span> render 
+<span class="token keyword">def</span> <span class="token function">simple_view</span><span class="token punctuation">(</span>req<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> render<span class="token punctuation">(</span>req<span class="token punctuation">,</span><span class="token string">'first_app/example.html'</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># xxx.html</span>
+</code></pre>
+<h3 id="first-app-urls-py-2"><a href="#first-app-urls-py-2" class="headerlink" title="first_app/urls.py"></a>first_app/urls.py</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> django<span class="token punctuation">.</span>urls <span class="token keyword">import</span> path
+<span class="token comment" spellcheck="true"># 从当前目录导入</span>
+<span class="token keyword">from</span> <span class="token punctuation">.</span> <span class="token keyword">import</span> views
+
+<span class="token comment" spellcheck="true"># 配置路由</span>
+urlpatterns <span class="token operator">=</span> <span class="token punctuation">[</span>
+    path<span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">,</span>views<span class="token punctuation">.</span>simple_view<span class="token punctuation">)</span>
+<span class="token punctuation">]</span>
+</code></pre>
+<p><img src="img_53.png" alt="没有找到"><img src="img_54.png" alt="django尝试从内置的admin\templates和auth\templates里寻找html"></p>
+<h3 id="admin和auth在my-site-settings里应用程序列表里有配置"><a href="#admin和auth在my-site-settings里应用程序列表里有配置" class="headerlink" title="admin和auth在my_site/settings里应用程序列表里有配置"></a>admin和auth在my_site/settings里应用程序列表里有配置</h3><p><img src="img_55.png" alt="img_55.png"></p>
+<h3 id="settings里配置templates所在目录"><a href="#settings里配置templates所在目录" class="headerlink" title="settings里配置templates所在目录"></a>settings里配置templates所在目录</h3><p><img src="img_56.png" alt="img_56.png"><br><img src="img_57.png" alt="可以多个"><br><img src="img_58.png" alt="成功"></p>
 
             </div>
             <hr/>
@@ -893,7 +1143,7 @@ index.html&lt;!doctype html>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">38.2k</span>
+                <span class="white-color">39.6k</span>
             
 
             
