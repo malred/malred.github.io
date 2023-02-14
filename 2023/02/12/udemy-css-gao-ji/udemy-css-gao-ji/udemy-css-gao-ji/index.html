@@ -435,14 +435,14 @@ index.html&amp;lt;!doctype html&gt;
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        2.9k
+                        4.5k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        13 分
+                        20 分
                     </div>
                     
                 
@@ -900,6 +900,330 @@ Dark green: #28b485
 <h2 id="how-css-is-parsed-p2-value-processing-单位如何计算-px-rem-…"><a href="#how-css-is-parsed-p2-value-processing-单位如何计算-px-rem-…" class="headerlink" title="how css is parsed,p2 value processing (单位如何计算(px,rem,…))"></a>how css is parsed,p2 value processing (单位如何计算(px,rem,…))</h2><p><img src="img_39.png" alt="百分比%不是单位,它取决于父元素的值!,通过计算并四舍五入后得出"><br><img src="img_40.png" alt="没有声明的属性有初始值,浏览器默认的"><br><img src="img_41.png" alt="rem是基于初始值计算的"><br><img src="img_42.png" alt="关于文字的属性会被子类继承"><br><img src="img_44.png" alt="字体的em是取决于父元素的font-size,padding等length的是取决于当前元素的font-size,rem基于根元素"></p>
 <h3 id="小结-1"><a href="#小结-1" class="headerlink" title="小结"></a>小结</h3><p><img src="img_45.png" alt="img_45.png"></p>
 <h2 id="how-css-is-parsed-p3-inheritance-继承"><a href="#how-css-is-parsed-p3-inheritance-继承" class="headerlink" title="how css is parsed,p3 inheritance (继承)"></a>how css is parsed,p3 inheritance (继承)</h2><p><img src="img_46.png" alt="1,判断有无级联值,如果没有2,有无继承值,如果没有,就使用初始/默认值"><br><img src="img_47.png" alt="img_47.png"></p>
+<h1 id="back-to-Natours-回到项目"><a href="#back-to-Natours-回到项目" class="headerlink" title="back to Natours 回到项目"></a>back to Natours 回到项目</h1><h2 id="converting-px-to-rem-转换px为rem"><a href="#converting-px-to-rem-转换px为rem" class="headerlink" title="converting px to rem 转换px为rem"></a>converting px to rem 转换px为rem</h2><p><img src="img_48.png" alt="img_48.png"></p>
+<blockquote>
+<p>rem的便利在于,改变根元素,则所有rem都会改变,无需逐个修改,并且不需要写一堆媒体查询</p>
+</blockquote>
+<pre class=" language-css"><code class="language-css"><span class="token comment" spellcheck="true">/*
+品牌色
+COLORS:
+Light green: #7ed56f
+Medium green: #55c57a
+Dark green: #28b485
+*/</span>
+<span class="token comment" spellcheck="true">/* basic reset */</span>
+<span class="token comment" spellcheck="true">/*
+    重置样式是为了让样式在不同浏览器都保持一致
+    但是如今的浏览器兼容性越来越好,所以重置已经不是必须的了
+    添加after和before是因为只匹配*的话,after和before不会被覆盖到
+*/</span>
+<span class="token selector">*,
+*<span class="token pseudo-element">::after</span>,
+*<span class="token pseudo-element">::before</span> </span><span class="token punctuation">{</span>
+    <span class="token property">margin</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*继承*/</span>
+    <span class="token property">box-sizing</span><span class="token punctuation">:</span> inherit<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector">html </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*设置根元素font-size*/</span>
+    <span class="token comment" spellcheck="true">/*设置为10是因为方便换算 1rem=10px -> 16px=1.6rem*/</span>
+    <span class="token comment" spellcheck="true">/*font-size: 10px;*/</span>
+    <span class="token comment" spellcheck="true">/*写死为10px是不好的(比如用户修改浏览器默认字体大小?放大缩小),我们应该基于浏览器的默认font-size(16px)的百分比*/</span>
+    <span class="token comment" spellcheck="true">/*0.625*16=10*/</span>
+    <span class="token comment" spellcheck="true">/*老ie不兼容rem*/</span>
+    <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">62.5%</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*改变盒子模型,以便不再添加边框和填充到总宽度和总高度*/</span>
+    <span class="token property">box-sizing</span><span class="token punctuation">:</span> border-box<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/*
+    字体相关的写在body,why
+    因为字体的属性通常是遗传/继承的,所以加在body来使之遗传,
+    比通用选择器里给每个元素(父子都有)添加来得高效
+*/</span>
+<span class="token selector">body </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*
+        sans-serif是无衬线字体
+        lato是谷歌的字体
+    */</span>
+    <span class="token property">font-family</span><span class="token punctuation">:</span> <span class="token string">"Lato"</span>, sans-serif<span class="token punctuation">;</span>
+    <span class="token property">font-weight</span><span class="token punctuation">:</span> <span class="token number">400</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*font-size: 16px;*/</span>
+    <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">1.6</span>rem<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/* 比预定义行高高1.7倍 */</span>
+    <span class="token property">line-height</span><span class="token punctuation">:</span> <span class="token number">1.7</span><span class="token punctuation">;</span>
+    <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode">#777</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/* 四边的留白 */</span>
+    <span class="token comment" spellcheck="true">/*padding: 30px;*/</span>
+    <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">3</span>rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/* basic reset end */</span>
+<span class="token selector"><span class="token class">.header</span> </span><span class="token punctuation">{</span>
+    <span class="token property">height</span><span class="token punctuation">:</span> <span class="token number">95</span>vh<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*
+        linear-gradient: 线性渐变
+        to right bottom: 向右下角渐变
+        rgba: 最后一个数值是透明度
+     */</span>
+    <span class="token property">background-image</span><span class="token punctuation">:</span> <span class="token function">linear-gradient</span><span class="token punctuation">(</span>
+            to right bottom,
+            <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">126</span>, <span class="token number">213</span>, <span class="token number">111</span>, <span class="token number">0.8</span><span class="token punctuation">)</span>,
+            <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">40</span>, <span class="token number">180</span>, <span class="token number">131</span>, <span class="token number">0.8</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span>,
+    <span class="token url">url("../img/hero.jpg")</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/* cover: 不论宽度如何改变,都会适应 */</span>
+    <span class="token property">background-size</span><span class="token punctuation">:</span> cover<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/* 背景缩放时顶部不会被裁剪,而是下半部分被裁剪 */</span>
+    <span class="token property">background-position</span><span class="token punctuation">:</span> top<span class="token punctuation">;</span>
+    <span class="token property">position</span><span class="token punctuation">:</span> relative<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*
+        剪辑图片的右下角
+        polygon: 四个参数对应顺时针的四角,参数指定该点相对于左上角的顶点的距离
+    */</span>
+    <span class="token comment" spellcheck="true">/*clip-path: polygon(0 0,50% 15%,100% 200px,0 100%);*/</span>
+    <span class="token property">clip-path</span><span class="token punctuation">:</span> <span class="token function">polygon</span><span class="token punctuation">(</span><span class="token number">0</span> <span class="token number">0</span>, <span class="token number">100%</span> <span class="token number">0</span>, <span class="token number">100%</span> <span class="token number">75</span>vh, <span class="token number">0</span> <span class="token number">100%</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.logo-box</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*子绝父相*/</span>
+    <span class="token property">position</span><span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*top: 40px;*/</span>
+    <span class="token property">top</span><span class="token punctuation">:</span> <span class="token number">4</span>rem<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*left: 40px;*/</span>
+    <span class="token property">left</span><span class="token punctuation">:</span> <span class="token number">4</span>rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.logo</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*会自动计算宽度*/</span>
+    <span class="token comment" spellcheck="true">/*height: 35px;*/</span>
+    <span class="token property">height</span><span class="token punctuation">:</span> <span class="token number">3.5</span>rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.logo-box</span><span class="token pseudo-class">:hover</span> <span class="token class">.logo</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*
+        要父元素的hover+子元素选择器才行
+        如果是子元素选择器:hover,则每次hover,子元素移开(动画),此时又失去hover,则会一直在原点频闪
+    */</span>
+    <span class="token property">animation</span><span class="token punctuation">:</span> moveInRight <span class="token number">1</span>s ease-out<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.text-box</span> </span><span class="token punctuation">{</span>
+    <span class="token property">position</span><span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*移动父元素的50%*/</span>
+    <span class="token comment" spellcheck="true">/*top: 50%;*/</span>
+    <span class="token property">top</span><span class="token punctuation">:</span> <span class="token number">40%</span><span class="token punctuation">;</span>
+    <span class="token property">left</span><span class="token punctuation">:</span> <span class="token number">50%</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*移动自身的-50%,回到正中位置*/</span>
+    <span class="token comment" spellcheck="true">/*这里的50%不是基于父元素,而是基于元素本身*/</span>
+    <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translate</span><span class="token punctuation">(</span>-<span class="token number">50%</span>, -<span class="token number">50%</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*文本/行内块对齐*/</span>
+    <span class="token property">text-align</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.heading-primary</span> </span><span class="token punctuation">{</span>
+    <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode">#fff</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/* 字母转大写 */</span>
+    <span class="token property">text-transform</span><span class="token punctuation">:</span> uppercase<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*
+        背部可见性
+        解决动画的震动(原理不明)
+    */</span>
+    <span class="token property">backface-visibility</span><span class="token punctuation">:</span> hidden<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*margin-bottom: 60px;*/</span>
+    <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">6</span>rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.heading-primary-main</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*块元素会占一整行,可以把另一个span挤下去*/</span>
+    <span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*font-size: 60px;*/</span>
+    <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">6</span>rem<span class="token punctuation">;</span>
+    <span class="token property">font-weight</span><span class="token punctuation">:</span> <span class="token number">400</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*字间距*/</span>
+    <span class="token comment" spellcheck="true">/*letter-spacing: 35px;*/</span>
+    <span class="token property">letter-spacing</span><span class="token punctuation">:</span> <span class="token number">3.5</span>rem<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*指定要执行的动画的名称*/</span>
+    <span class="token property">animation-name</span><span class="token punctuation">:</span> moveInLeft<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*动画执行时间*/</span>
+    <span class="token property">animation-duration</span><span class="token punctuation">:</span> <span class="token number">1</span>s<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/**
+        动画计时函数
+        ease-in: 越来越快
+        ease-out(缓出): 越来越慢
+        ease-in-out/linear/step-start/step-end
+        支持自定义
+     */</span>
+    <span class="token property">animation-timing-function</span><span class="token punctuation">:</span> ease-out<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*动画重复次数*/</span>
+    <span class="token comment" spellcheck="true">/*animation-iteration-count: 3;*/</span>
+    <span class="token comment" spellcheck="true">/*动画延迟时间(会等待x秒再开始动画)*/</span>
+    <span class="token comment" spellcheck="true">/*animation-delay: 3s; */</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.heading-primary-sub</span> </span><span class="token punctuation">{</span>
+    <span class="token property">display</span><span class="token punctuation">:</span> block<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*font-size: 20px;*/</span>
+    <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">2</span>rem<span class="token punctuation">;</span>
+    <span class="token property">font-weight</span><span class="token punctuation">:</span> <span class="token number">700</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*letter-spacing: 17.4px;*/</span>
+    <span class="token property">letter-spacing</span><span class="token punctuation">:</span> <span class="token number">1.75</span>rem<span class="token punctuation">;</span>
+    <span class="token property">animation</span><span class="token punctuation">:</span> moveInRight <span class="token number">1</span>s ease-out<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/* 从左侧移动 */</span>
+<span class="token comment" spellcheck="true">/* 为了浏览器优化,最好只对两个属性进行动画 */</span>
+<span class="token atrule"><span class="token rule">@keyframes</span> moveInLeft</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*初始状态*/</span>
+    <span class="token selector">0% </span><span class="token punctuation">{</span>
+        <span class="token property">opacity</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">/*初始位置是执行动画的元素的-100px*/</span>
+        <span class="token comment" spellcheck="true">/*transform: translateX(-100px);*/</span>
+        <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translateX</span><span class="token punctuation">(</span>-<span class="token number">10</span>rem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token selector">80% </span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">/*执行到80%,此时到原元素位置的右侧20px*/</span>
+        <span class="token comment" spellcheck="true">/*transform: translateX(10px);*/</span>
+        <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translateX</span><span class="token punctuation">(</span><span class="token number">1</span>rem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">/*结束状态*/</span>
+    <span class="token selector">100% </span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">/*最后回到元素的初始位置*/</span>
+        <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translate</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/* 从右侧移动 */</span>
+<span class="token atrule"><span class="token rule">@keyframes</span> moveInRight</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*初始状态*/</span>
+    <span class="token selector">0% </span><span class="token punctuation">{</span>
+        <span class="token property">opacity</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">/*初始位置是执行动画的元素的100px*/</span>
+        <span class="token comment" spellcheck="true">/*transform: translateX(100px);*/</span>
+        <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translateX</span><span class="token punctuation">(</span><span class="token number">10</span>rem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token selector">80% </span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">/*执行到80%,此时到原元素位置的左侧20px*/</span>
+        <span class="token comment" spellcheck="true">/*transform: translateX(-10px);*/</span>
+        <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translateX</span><span class="token punctuation">(</span>-<span class="token number">1</span>rem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">/*结束状态*/</span>
+    <span class="token selector">100% </span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">/*最后回到元素的初始位置*/</span>
+        <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translate</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/*可以通过分别设置两个伪类来实现点击前后的不同效果*/</span>
+<span class="token comment" spellcheck="true">/*:link是链接伪类,此时尚未被点击*/</span>
+<span class="token comment" spellcheck="true">/*:visited是已被点击的状态(已被访问的链接)(访问状态)*/</span>
+<span class="token selector"><span class="token class">.btn</span><span class="token pseudo-class">:link</span>,
+<span class="token class">.btn</span><span class="token pseudo-class">:visited</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*转大写字母*/</span>
+    <span class="token property">text-transform</span><span class="token punctuation">:</span> uppercase<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*取消a默认下划线*/</span>
+    <span class="token property">text-decoration</span><span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*padding可以撑开a元素*/</span>
+    <span class="token comment" spellcheck="true">/*padding: 15px 40px;*/</span>
+    <span class="token property">padding</span><span class="token punctuation">:</span> <span class="token number">1.5</span>rem <span class="token number">4</span>rem<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*防止挡住其他元素,并且行内元素被视为文字,可以使用文字居中*/</span>
+    <span class="token property">display</span><span class="token punctuation">:</span> inline-block<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*border-radius: 100px;*/</span>
+    <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">10</span>rem<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*过渡属性动画,比帧动画简单*/</span>
+    <span class="token comment" spellcheck="true">/*该属性作用于该选择器的所有属性*/</span>
+    <span class="token property">transition</span><span class="token punctuation">:</span> all <span class="token number">.2</span>s<span class="token punctuation">;</span>
+    <span class="token property">position</span><span class="token punctuation">:</span> relative<span class="token punctuation">;</span>
+    <span class="token property">font-size</span><span class="token punctuation">:</span> <span class="token number">1.6</span>rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/*hover y=3 active(点击) y=-1 则点击时实际是从3到1,实现了按钮按下的效果*/</span>
+<span class="token selector"><span class="token class">.btn</span><span class="token pseudo-class">:hover</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*向上移动*/</span>
+    <span class="token comment" spellcheck="true">/*transform: translateY(-3px);*/</span>
+    <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translateY</span><span class="token punctuation">(</span>-<span class="token number">0.3</span>rem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*阴影*/</span>
+    <span class="token comment" spellcheck="true">/*参数1: x轴阴影位置; 参数2: y轴阴影位置; 参数3: 模糊度; 参数4: 颜色*/</span>
+    <span class="token comment" spellcheck="true">/*y轴向下10px的阴影*/</span>
+    <span class="token comment" spellcheck="true">/*box-shadow: 0 10px 20px rgba(0, 0, 0, .2);*/</span>
+    <span class="token property">box-shadow</span><span class="token punctuation">:</span> <span class="token number">0</span> <span class="token number">1</span>rem <span class="token number">2</span>rem <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span>, <span class="token number">0</span>, <span class="token number">0</span>, <span class="token number">.2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/*被激活(单击或触发事件)时*/</span>
+<span class="token selector"><span class="token class">.btn</span><span class="token pseudo-class">:active</span> </span><span class="token punctuation">{</span>
+    <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translateY</span><span class="token punctuation">(</span>-<span class="token number">0.1</span>rem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*减少y轴的阴影面积,以及模糊度,给人一种向上按下的视觉效果*/</span>
+    <span class="token property">box-shadow</span><span class="token punctuation">:</span> <span class="token number">0</span> <span class="token number">5</span>px <span class="token number">10</span>px <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span>, <span class="token number">0</span>, <span class="token number">0</span>, <span class="token number">.2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token property">box-shadow</span><span class="token punctuation">:</span> <span class="token number">0</span> <span class="token number">0.5</span>rem <span class="token number">1</span>rem <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span>, <span class="token number">0</span>, <span class="token number">0</span>, <span class="token number">.2</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.btn-white</span> </span><span class="token punctuation">{</span>
+    <span class="token property">background-color</span><span class="token punctuation">:</span> <span class="token hexcode">#fff</span><span class="token punctuation">;</span>
+    <span class="token property">color</span><span class="token punctuation">:</span> <span class="token hexcode">#777</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/*基本被视为(此处为btn的)子元素*/</span>
+<span class="token comment" spellcheck="true">/*悬停到按钮外时,after会回到按钮后面*/</span>
+<span class="token selector"><span class="token class">.btn</span><span class="token pseudo-element">::after</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*可以是空,但必须设置,否则不会出现*/</span>
+    <span class="token property">content</span><span class="token punctuation">:</span> <span class="token string">""</span><span class="token punctuation">;</span>
+    <span class="token property">display</span><span class="token punctuation">:</span> inline-block<span class="token punctuation">;</span>
+    <span class="token property">height</span><span class="token punctuation">:</span> <span class="token number">100%</span><span class="token punctuation">;</span>
+    <span class="token property">width</span><span class="token punctuation">:</span> <span class="token number">100%</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*border-radius: 100px;*/</span>
+    <span class="token property">border-radius</span><span class="token punctuation">:</span> <span class="token number">10</span>rem<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*此处定位是基于.btn*/</span>
+    <span class="token comment" spellcheck="true">/*子绝父相*/</span>
+    <span class="token property">position</span><span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+    <span class="token property">top</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token property">left</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*藏在.btn下方*/</span>
+    <span class="token property">z-index</span><span class="token punctuation">:</span> -<span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*初始状态*/</span>
+    <span class="token property">transition</span><span class="token punctuation">:</span> all <span class="token number">.4</span>s<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token selector"><span class="token class">.btn-white</span><span class="token pseudo-element">::after</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*给.btn-white的after添加背景颜色*/</span>
+    <span class="token property">background-color</span><span class="token punctuation">:</span> <span class="token hexcode">#fff</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/*after被hover时触发*/</span>
+<span class="token selector"><span class="token class">.btn</span><span class="token pseudo-class">:hover</span><span class="token pseudo-element">::after</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*scale就是简单地增大元素,磁力增大为原来的2倍*/</span>
+    <span class="token comment" spellcheck="true">/*transform: scale(1.5);*/</span>
+    <span class="token comment" spellcheck="true">/*scale可以设置不同方向的缩放倍数*/</span>
+    <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">scaleX</span><span class="token punctuation">(</span><span class="token number">1.4</span><span class="token punctuation">)</span> <span class="token function">scaleY</span><span class="token punctuation">(</span><span class="token number">1.6</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*透明度过渡到0*/</span>
+    <span class="token property">opacity</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/* 从底部移动 */</span>
+<span class="token atrule"><span class="token rule">@keyframes</span> moveInBottom</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*初始状态*/</span>
+    <span class="token selector">0% </span><span class="token punctuation">{</span>
+        <span class="token property">opacity</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">/*初始位置是执行动画的元素的100px*/</span>
+        <span class="token comment" spellcheck="true">/*transform: translateY(30px);*/</span>
+        <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translateY</span><span class="token punctuation">(</span><span class="token number">3</span>rem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">/*结束状态*/</span>
+    <span class="token selector">100% </span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">/*最后回到元素的初始位置*/</span>
+        <span class="token property">transform</span><span class="token punctuation">:</span> <span class="token function">translate</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/*有(从底部)进入动画的按钮*/</span>
+<span class="token selector"><span class="token class">.btn-animated</span> </span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/*动画,延迟0.75秒启动*/</span>
+    <span class="token property">animation</span><span class="token punctuation">:</span> moveInBottom <span class="token number">.5</span>s ease-out <span class="token number">.75</span>s<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/*动画填充模式,解决动画0%时opacity无效的问题*/</span>
+    <span class="token property">animation-fill-mode</span><span class="token punctuation">:</span> backwards<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
 
             </div>
             <hr/>
@@ -1283,7 +1607,7 @@ input() 接收输入print("hello " + input("What is your name? "))
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">39.6k</span>
+                <span class="white-color">41.3k</span>
             
 
             
