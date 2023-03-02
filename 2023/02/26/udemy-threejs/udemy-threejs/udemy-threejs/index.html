@@ -393,16 +393,16 @@ ts部分foo.ts 编译
                                 <span class="chip bg-color">前端</span>
                             </a>
                         
+                            <a href="/tags/%E9%AB%98%E9%98%B6/" target="_blank">
+                                <span class="chip bg-color">高阶</span>
+                            </a>
+                        
                             <a href="/tags/%E5%8F%AF%E8%A7%86%E5%8C%96/" target="_blank">
                                 <span class="chip bg-color">可视化</span>
                             </a>
                         
                             <a href="/tags/threejs/" target="_blank">
                                 <span class="chip bg-color">threejs</span>
-                            </a>
-                        
-                            <a href="/tags/%E9%AB%98%E9%98%B6/" target="_blank">
-                                <span class="chip bg-color">高阶</span>
                             </a>
                         
                     </div>
@@ -444,14 +444,14 @@ ts部分foo.ts 编译
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        4.9k
+                        5.7k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        26 分
+                        31 分
                     </div>
                     
                 
@@ -1667,7 +1667,275 @@ function render() {
 animate()
 </code></pre>
 <p><img src="img_42.png" alt="img_42.png"></p>
-<h1 id="lession24"><a href="#lession24" class="headerlink" title="lession24"></a>lession24</h1>
+<h1 id="meshNormalMaterial"><a href="#meshNormalMaterial" class="headerlink" title="meshNormalMaterial"></a>meshNormalMaterial</h1><p>适用于项目一开始,还没有确定材质的时候<br><img src="img_43.png" alt="img_43.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// src\client\client.ts   </span>
+<span class="token comment" spellcheck="true">// @ts-ignore</span>
+<span class="token keyword">import</span> <span class="token operator">*</span> as THREE <span class="token keyword">from</span> <span class="token string">'/build/three.module.js'</span>
+<span class="token comment" spellcheck="true">// 用于控制的js</span>
+<span class="token comment" spellcheck="true">// @ts-ignore </span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> OrbitControls <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'/jsm/controls/OrbitControls'</span>
+<span class="token comment" spellcheck="true">// @ts-ignore </span>
+<span class="token keyword">import</span> Stats <span class="token keyword">from</span> <span class="token string">'/jsm/libs/stats.module'</span>
+<span class="token comment" spellcheck="true">// @ts-ignore </span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> GUI <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'/jsm/libs/dat.gui.module'</span>
+  
+<span class="token keyword">const</span> scene <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Scene</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>AxesHelper</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> camera <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>PerspectiveCamera</span><span class="token punctuation">(</span>
+    <span class="token number">75</span><span class="token punctuation">,</span>
+    window<span class="token punctuation">.</span>innerWidth <span class="token operator">/</span> window<span class="token punctuation">.</span>innerHeight<span class="token punctuation">,</span>
+    <span class="token number">0.1</span><span class="token punctuation">,</span>
+    <span class="token number">1000</span>
+<span class="token punctuation">)</span>
+camera<span class="token punctuation">.</span>position<span class="token punctuation">.</span>z <span class="token operator">=</span> <span class="token number">3</span>
+
+<span class="token keyword">const</span> renderer <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>WebGLRenderer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+renderer<span class="token punctuation">.</span><span class="token function">setSize</span><span class="token punctuation">(</span>window<span class="token punctuation">.</span>innerWidth<span class="token punctuation">,</span> window<span class="token punctuation">.</span>innerHeight<span class="token punctuation">)</span>
+document<span class="token punctuation">.</span>body<span class="token punctuation">.</span><span class="token function">appendChild</span><span class="token punctuation">(</span>renderer<span class="token punctuation">.</span>domElement<span class="token punctuation">)</span>
+
+<span class="token keyword">new</span> <span class="token class-name">OrbitControls</span><span class="token punctuation">(</span>camera<span class="token punctuation">,</span> renderer<span class="token punctuation">.</span>domElement<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> boxGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>BoxGeometry</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> sphereGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>SphereGeometry</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> icosahedronGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>IcosahedronGeometry</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> planeGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>PlaneGeometry</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> torusKnotGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>TorusKnotGeometry</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> material <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>MeshNormalMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> cube <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>boxGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+cube<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token number">5</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>cube<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> sphere <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>sphereGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+sphere<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token number">3</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>sphere<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> icosahedron <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>icosahedronGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+icosahedron<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token number">0</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>icosahedron<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> plane <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>planeGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+plane<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">2</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>plane<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> torusKnot <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>torusKnotGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+torusKnot<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">5</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>torusKnot<span class="token punctuation">)</span>
+
+window<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'resize'</span><span class="token punctuation">,</span> onWindowResize<span class="token punctuation">,</span> <span class="token keyword">false</span><span class="token punctuation">)</span>
+<span class="token keyword">function</span> <span class="token function">onWindowResize</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    camera<span class="token punctuation">.</span>aspect <span class="token operator">=</span> window<span class="token punctuation">.</span>innerWidth <span class="token operator">/</span> window<span class="token punctuation">.</span>innerHeight
+    camera<span class="token punctuation">.</span><span class="token function">updateProjectionMatrix</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    renderer<span class="token punctuation">.</span><span class="token function">setSize</span><span class="token punctuation">(</span>window<span class="token punctuation">.</span>innerWidth<span class="token punctuation">,</span> window<span class="token punctuation">.</span>innerHeight<span class="token punctuation">)</span>
+    <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> stats <span class="token operator">=</span> <span class="token function">Stats</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+document<span class="token punctuation">.</span>body<span class="token punctuation">.</span><span class="token function">appendChild</span><span class="token punctuation">(</span>stats<span class="token punctuation">.</span>dom<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> options <span class="token operator">=</span> <span class="token punctuation">{</span>
+    side<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        FrontSide<span class="token punctuation">:</span> THREE<span class="token punctuation">.</span>FrontSide<span class="token punctuation">,</span>
+        BackSide<span class="token punctuation">:</span> THREE<span class="token punctuation">.</span>BackSide<span class="token punctuation">,</span>
+        DoubleSide<span class="token punctuation">:</span> THREE<span class="token punctuation">.</span>DoubleSide<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> gui <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">GUI</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> materialFolder <span class="token operator">=</span> gui<span class="token punctuation">.</span><span class="token function">addFolder</span><span class="token punctuation">(</span><span class="token string">'THREE.Material'</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'transparent'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> material<span class="token punctuation">.</span>needsUpdate <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'opacity'</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0.01</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'depthTest'</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'depthWrite'</span><span class="token punctuation">)</span>
+materialFolder
+    <span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'alphaTest'</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0.01</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">updateMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'visible'</span><span class="token punctuation">)</span>
+materialFolder
+    <span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'side'</span><span class="token punctuation">,</span> options<span class="token punctuation">.</span>side<span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">updateMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">open</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> meshNormalMaterialFolder <span class="token operator">=</span> gui<span class="token punctuation">.</span><span class="token function">addFolder</span><span class="token punctuation">(</span><span class="token string">'THREE.MeshNormalMaterial'</span><span class="token punctuation">)</span>
+
+meshNormalMaterialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'wireframe'</span><span class="token punctuation">)</span>
+meshNormalMaterialFolder
+    <span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'flatShading'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">updateMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+meshNormalMaterialFolder<span class="token punctuation">.</span><span class="token function">open</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">function</span> <span class="token function">updateMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    material<span class="token punctuation">.</span>side <span class="token operator">=</span> <span class="token function">Number</span><span class="token punctuation">(</span>material<span class="token punctuation">.</span>side<span class="token punctuation">)</span>
+    material<span class="token punctuation">.</span>needsUpdate <span class="token operator">=</span> <span class="token keyword">true</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">animate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">requestAnimationFrame</span><span class="token punctuation">(</span>animate<span class="token punctuation">)</span>
+
+    <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    stats<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    renderer<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span>scene<span class="token punctuation">,</span> camera<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">animate</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h1 id="meshLambertMaterial"><a href="#meshLambertMaterial" class="headerlink" title="meshLambertMaterial"></a>meshLambertMaterial</h1><p><img src="img_44.png" alt="需要照明才能显现"><br><img src="img_45.png" alt="img_45.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// src\client\client.ts   </span>
+<span class="token comment" spellcheck="true">// @ts-ignore</span>
+<span class="token keyword">import</span> <span class="token operator">*</span> as THREE <span class="token keyword">from</span> <span class="token string">'/build/three.module.js'</span>
+<span class="token comment" spellcheck="true">// 用于控制的js</span>
+<span class="token comment" spellcheck="true">// @ts-ignore </span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> OrbitControls <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'/jsm/controls/OrbitControls'</span>
+<span class="token comment" spellcheck="true">// @ts-ignore </span>
+<span class="token keyword">import</span> Stats <span class="token keyword">from</span> <span class="token string">'/jsm/libs/stats.module'</span>
+<span class="token comment" spellcheck="true">// @ts-ignore </span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> GUI <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'/jsm/libs/dat.gui.module'</span>
+<span class="token keyword">const</span> scene <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Scene</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">//scene.background = new THREE.Color(0xff0000)</span>
+
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>AxesHelper</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">// 灯光</span>
+<span class="token keyword">const</span> light <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>PointLight</span><span class="token punctuation">(</span><span class="token number">0xffffff</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+light<span class="token punctuation">.</span>position<span class="token punctuation">.</span><span class="token keyword">set</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>light<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> camera <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>PerspectiveCamera</span><span class="token punctuation">(</span>
+    <span class="token number">75</span><span class="token punctuation">,</span>
+    window<span class="token punctuation">.</span>innerWidth <span class="token operator">/</span> window<span class="token punctuation">.</span>innerHeight<span class="token punctuation">,</span>
+    <span class="token number">0.1</span><span class="token punctuation">,</span>
+    <span class="token number">1000</span>
+<span class="token punctuation">)</span>
+camera<span class="token punctuation">.</span>position<span class="token punctuation">.</span>z <span class="token operator">=</span> <span class="token number">3</span>
+
+<span class="token keyword">const</span> renderer <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>WebGLRenderer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+renderer<span class="token punctuation">.</span><span class="token function">setSize</span><span class="token punctuation">(</span>window<span class="token punctuation">.</span>innerWidth<span class="token punctuation">,</span> window<span class="token punctuation">.</span>innerHeight<span class="token punctuation">)</span>
+document<span class="token punctuation">.</span>body<span class="token punctuation">.</span><span class="token function">appendChild</span><span class="token punctuation">(</span>renderer<span class="token punctuation">.</span>domElement<span class="token punctuation">)</span>
+
+<span class="token keyword">new</span> <span class="token class-name">OrbitControls</span><span class="token punctuation">(</span>camera<span class="token punctuation">,</span> renderer<span class="token punctuation">.</span>domElement<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> boxGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>BoxGeometry</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> sphereGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>SphereGeometry</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> icosahedronGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>IcosahedronGeometry</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> planeGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>PlaneGeometry</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> torusKnotGeometry <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>TorusKnotGeometry</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> material <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>MeshLambertMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// const texture = new THREE.TextureLoader().load("img/grid.png")</span>
+<span class="token comment" spellcheck="true">// material.map = texture</span>
+<span class="token comment" spellcheck="true">// const envTexture = new THREE.CubeTextureLoader().load(["img/px_50.png", "img/nx_50.png", "img/py_50.png", "img/ny_50.png", "img/pz_50.png", "img/nz_50.png"])</span>
+<span class="token comment" spellcheck="true">// //envTexture.mapping = THREE.CubeReflectionMapping</span>
+<span class="token comment" spellcheck="true">// envTexture.mapping = THREE.CubeRefractionMapping</span>
+<span class="token comment" spellcheck="true">// material.envMap = envTexture</span>
+
+<span class="token keyword">const</span> cube <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>boxGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+cube<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token number">5</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>cube<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> sphere <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>sphereGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+sphere<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token number">3</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>sphere<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> icosahedron <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>icosahedronGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+icosahedron<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token number">0</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>icosahedron<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> plane <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>planeGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+plane<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">2</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>plane<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> torusKnot <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">THREE<span class="token punctuation">.</span>Mesh</span><span class="token punctuation">(</span>torusKnotGeometry<span class="token punctuation">,</span> material<span class="token punctuation">)</span>
+torusKnot<span class="token punctuation">.</span>position<span class="token punctuation">.</span>x <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">5</span>
+scene<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>torusKnot<span class="token punctuation">)</span>
+
+window<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'resize'</span><span class="token punctuation">,</span> onWindowResize<span class="token punctuation">,</span> <span class="token keyword">false</span><span class="token punctuation">)</span>
+<span class="token keyword">function</span> <span class="token function">onWindowResize</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    camera<span class="token punctuation">.</span>aspect <span class="token operator">=</span> window<span class="token punctuation">.</span>innerWidth <span class="token operator">/</span> window<span class="token punctuation">.</span>innerHeight
+    camera<span class="token punctuation">.</span><span class="token function">updateProjectionMatrix</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    renderer<span class="token punctuation">.</span><span class="token function">setSize</span><span class="token punctuation">(</span>window<span class="token punctuation">.</span>innerWidth<span class="token punctuation">,</span> window<span class="token punctuation">.</span>innerHeight<span class="token punctuation">)</span>
+    <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> stats <span class="token operator">=</span> <span class="token function">Stats</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+document<span class="token punctuation">.</span>body<span class="token punctuation">.</span><span class="token function">appendChild</span><span class="token punctuation">(</span>stats<span class="token punctuation">.</span>dom<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> options <span class="token operator">=</span> <span class="token punctuation">{</span>
+    side<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        FrontSide<span class="token punctuation">:</span> THREE<span class="token punctuation">.</span>FrontSide<span class="token punctuation">,</span>
+        BackSide<span class="token punctuation">:</span> THREE<span class="token punctuation">.</span>BackSide<span class="token punctuation">,</span>
+        DoubleSide<span class="token punctuation">:</span> THREE<span class="token punctuation">.</span>DoubleSide<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    combine<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        MultiplyOperation<span class="token punctuation">:</span> THREE<span class="token punctuation">.</span>MultiplyOperation<span class="token punctuation">,</span>
+        MixOperation<span class="token punctuation">:</span> THREE<span class="token punctuation">.</span>MixOperation<span class="token punctuation">,</span>
+        AddOperation<span class="token punctuation">:</span> THREE<span class="token punctuation">.</span>AddOperation<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> gui <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">GUI</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> materialFolder <span class="token operator">=</span> gui<span class="token punctuation">.</span><span class="token function">addFolder</span><span class="token punctuation">(</span><span class="token string">'THREE.Material'</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'transparent'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> material<span class="token punctuation">.</span>needsUpdate <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'opacity'</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0.01</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'depthTest'</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'depthWrite'</span><span class="token punctuation">)</span>
+materialFolder
+    <span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'alphaTest'</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0.01</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">updateMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'visible'</span><span class="token punctuation">)</span>
+materialFolder
+    <span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'side'</span><span class="token punctuation">,</span> options<span class="token punctuation">.</span>side<span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">updateMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+materialFolder<span class="token punctuation">.</span><span class="token function">open</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> data <span class="token operator">=</span> <span class="token punctuation">{</span>
+    color<span class="token punctuation">:</span> material<span class="token punctuation">.</span>color<span class="token punctuation">.</span><span class="token function">getHex</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">//emissive: material.emissive.getHex(),</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> meshLambertMaterialFolder <span class="token operator">=</span> gui<span class="token punctuation">.</span><span class="token function">addFolder</span><span class="token punctuation">(</span><span class="token string">'THREE.MeshLambertMaterial'</span><span class="token punctuation">)</span>
+
+meshLambertMaterialFolder<span class="token punctuation">.</span><span class="token function">addColor</span><span class="token punctuation">(</span>data<span class="token punctuation">,</span> <span class="token string">'color'</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    material<span class="token punctuation">.</span>color<span class="token punctuation">.</span><span class="token function">setHex</span><span class="token punctuation">(</span><span class="token function">Number</span><span class="token punctuation">(</span>data<span class="token punctuation">.</span>color<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">replace</span><span class="token punctuation">(</span><span class="token string">'#'</span><span class="token punctuation">,</span> <span class="token string">'0x'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">//meshLambertMaterialFolder.addColor(data, 'emissive').onChange(() => { material.emissive.setHex(Number(data.emissive.toString().replace('#', '0x'))) })</span>
+meshLambertMaterialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'wireframe'</span><span class="token punctuation">)</span>
+meshLambertMaterialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'wireframeLinewidth'</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">//meshLambertMaterialFolder.add(material, 'flatShading').onChange(() => updateMaterial())</span>
+meshLambertMaterialFolder
+    <span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'combine'</span><span class="token punctuation">,</span> options<span class="token punctuation">.</span>combine<span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">onChange</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">updateMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+meshLambertMaterialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'reflectivity'</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+meshLambertMaterialFolder<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>material<span class="token punctuation">,</span> <span class="token string">'refractionRatio'</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+meshLambertMaterialFolder<span class="token punctuation">.</span><span class="token function">open</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">function</span> <span class="token function">updateMaterial</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    material<span class="token punctuation">.</span>side <span class="token operator">=</span> <span class="token function">Number</span><span class="token punctuation">(</span>material<span class="token punctuation">.</span>side<span class="token punctuation">)</span>
+    material<span class="token punctuation">.</span>combine <span class="token operator">=</span> <span class="token function">Number</span><span class="token punctuation">(</span>material<span class="token punctuation">.</span>combine<span class="token punctuation">)</span>
+    material<span class="token punctuation">.</span>needsUpdate <span class="token operator">=</span> <span class="token keyword">true</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">animate</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">requestAnimationFrame</span><span class="token punctuation">(</span>animate<span class="token punctuation">)</span>
+
+    <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    stats<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">render</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    renderer<span class="token punctuation">.</span><span class="token function">render</span><span class="token punctuation">(</span>scene<span class="token punctuation">,</span> camera<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">animate</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<p><img src="img_46.png" alt="img_46.png"></p>
+
             </div>
             <hr/>
 
@@ -1828,58 +2096,51 @@ animate()
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fa fa-dot-circle-o"></i>&nbsp;本篇
-            </div>
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2023/02/26/udemy-threejs/udemy-threejs/udemy-threejs/">
+                <a href="/2023/03/02/udemy-electron-react-ffmpeg/udemy-electron-react-ffmpeg/udemy-electron-react-ffmegs/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="udemy-threejs">
+                        <img src="/medias/featureimages/19.jpg" class="responsive-img" alt="udemy-electron-react-ffmpeg">
                         
-                        <span class="card-title">udemy-threejs</span>
+                        <span class="card-title">udemy-electron-react-ffmpeg</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">环境
-安装vs,git,ts# 建议使用最新版ts,其他包的types定义才能兼容
-npm i -g typescript 
-
-
-ts部分foo.ts 编译
-编译生成jsfunction foo(bar) {
-  return "hello</div>
+                    <div class="summary">basics of electronwhy electron
+history
+handling electron projects</div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2023-02-26
-                            </span>
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2023-03-02
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/%E5%8F%AF%E8%A7%86%E5%8C%96/" class="post-category" target="_blank">
-                                    可视化
+                            <a href="/categories/electron/" class="post-category" target="_blank">
+                                    electron
                                 </a>
                             
-                            <a href="/categories/%E5%8F%AF%E8%A7%86%E5%8C%96/threejs/" class="post-category" target="_blank">
-                                    threejs
-                                </a>
-                            
-                            <a href="/categories/%E5%8F%AF%E8%A7%86%E5%8C%96/threejs/%E9%AB%98%E9%98%B6/" class="post-category" target="_blank">
-                                    高阶
-                                </a>
-                            
-                            <a href="/categories/%E5%8F%AF%E8%A7%86%E5%8C%96/threejs/%E9%AB%98%E9%98%B6/%E5%89%8D%E7%AB%AF/" class="post-category" target="_blank">
+                            <a href="/categories/electron/%E5%89%8D%E7%AB%AF/" class="post-category" target="_blank">
                                     前端
+                                </a>
+                            
+                            <a href="/categories/electron/%E5%89%8D%E7%AB%AF/react/" class="post-category" target="_blank">
+                                    react
+                                </a>
+                            
+                            <a href="/categories/electron/%E5%89%8D%E7%AB%AF/react/ffmpeg/" class="post-category" target="_blank">
+                                    ffmpeg
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
@@ -1887,16 +2148,16 @@ ts部分foo.ts 编译
                         <span class="chip bg-color">前端</span>
                     </a>
                     
-                    <a href="/tags/%E5%8F%AF%E8%A7%86%E5%8C%96/" target="_blank">
-                        <span class="chip bg-color">可视化</span>
+                    <a href="/tags/react/" target="_blank">
+                        <span class="chip bg-color">react</span>
                     </a>
                     
-                    <a href="/tags/threejs/" target="_blank">
-                        <span class="chip bg-color">threejs</span>
+                    <a href="/tags/electron/" target="_blank">
+                        <span class="chip bg-color">electron</span>
                     </a>
                     
-                    <a href="/tags/%E9%AB%98%E9%98%B6/" target="_blank">
-                        <span class="chip bg-color">高阶</span>
+                    <a href="/tags/ffmpeg/" target="_blank">
+                        <span class="chip bg-color">ffmpeg</span>
                     </a>
                     
                 </div>
@@ -1920,7 +2181,7 @@ ts部分foo.ts 编译
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary"></div>
+                    <div class="summary">what is REST</div>
                     <div class="publish-info">
                             <span class="publish-date">
                                 <i class="fa fa-clock-o fa-fw icon-date"></i>2023-02-19
@@ -2076,7 +2337,7 @@ ts部分foo.ts 编译
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">66.1k</span>
+                <span class="white-color">67.3k</span>
             
 
             
