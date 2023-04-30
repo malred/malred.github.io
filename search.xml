@@ -4,6 +4,76 @@
   
     
     <entry>
+      <title>metaverse - 14 - input</title>
+      <link href="/2023/04/30/building-the-metaverse-ultimate-react-three-fiber-course/14-input/"/>
+      <url>/2023/04/30/building-the-metaverse-ultimate-react-three-fiber-course/14-input/</url>
+      
+        <content type="html"><![CDATA[<blockquote><p>用按键的方式 播放/暂停 动画</p><p>视频作者改变了目录结构</p></blockquote><p><img src="1682680734849.png" alt="1682680734849"></p><h2 id="gril-tsx"><a href="#gril-tsx" class="headerlink" title="gril.tsx"></a>gril.tsx</h2><pre class=" language-tsx"><code class="language-tsx">import * as THREE from "three";import React, { useEffect, useRef, useState } from "react";import { useGLTF, useAnimations } from "@react-three/drei";import { GLTF } from "three-stdlib";import { useInput } from "../hooks/useInput";const GrilModel = () => {    const { forward, backward, left, right, shift, jump } = useInput()    const model = useGLTF(        // GLTFLoader,        './models/gril.glb'    )    const { actions } = useAnimations(model.animations, model.scene)    // 缩放    model.scene.scale.set(0.8, 0.8, 0.8)    model.scene.traverse((obj) => {        if (obj.isMesh) {            obj.castShadow = true        }    })    const currentAction = useRef('')    useEffect(() => {        // actions?.jumping?.play();          let action = ''        if (forward || backward || left || right) {            action = 'walking'            if (shift) {                action = 'running'            }        } else if (jump) {            action = 'jumping'        } else {            action = 'idle'        }        // 如果动作改变了        if (currentAction.current != action) {            // 改变当前动作            const nextActionToPlay = actions[action]            const current = actions[currentAction.current]            current?.fadeOut(0.2)            nextActionToPlay?.reset().fadeIn(0.2).play()            currentAction.current = action        }    }, [forward, backward, left, right, shift, jump])    return <primitive object={model.scene} />}export default GrilModel</code></pre><h2 id="input-ts"><a href="#input-ts" class="headerlink" title="input.ts"></a>input.ts</h2><pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> useEffect<span class="token punctuation">,</span> useState <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"react"</span><span class="token keyword">export</span> <span class="token keyword">const</span> useInput <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>    <span class="token keyword">const</span> <span class="token punctuation">[</span>input<span class="token punctuation">,</span> setInput<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>        forward<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        backward<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        left<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        right<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        shift<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        jump<span class="token punctuation">:</span> <span class="token keyword">false</span>    <span class="token punctuation">}</span><span class="token punctuation">)</span>    <span class="token keyword">const</span> keys <span class="token operator">=</span> <span class="token punctuation">{</span>        KeyW<span class="token punctuation">:</span> <span class="token string">'forward'</span><span class="token punctuation">,</span>        KeyS<span class="token punctuation">:</span> <span class="token string">'backward'</span><span class="token punctuation">,</span>        KeyA<span class="token punctuation">:</span> <span class="token string">'left'</span><span class="token punctuation">,</span>        KeyD<span class="token punctuation">:</span> <span class="token string">'right'</span><span class="token punctuation">,</span>        ShiftLeft<span class="token punctuation">:</span> <span class="token string">'shift'</span><span class="token punctuation">,</span>        Space<span class="token punctuation">:</span> <span class="token string">'jump'</span>    <span class="token punctuation">}</span>    <span class="token keyword">const</span> findKey <span class="token operator">=</span> <span class="token punctuation">(</span>key<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> keys<span class="token punctuation">[</span>key<span class="token punctuation">]</span>    <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>        <span class="token keyword">const</span> handleKeyDown <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>            <span class="token comment" spellcheck="true">// 根据e.code找到input里对应的值->true</span>            <span class="token function">setInput</span><span class="token punctuation">(</span><span class="token punctuation">(</span>m<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token operator">...</span>m<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token function">findKey</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>code<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">:</span> <span class="token keyword">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>        <span class="token punctuation">}</span>        <span class="token keyword">const</span> handleKeyUp <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>            <span class="token function">setInput</span><span class="token punctuation">(</span><span class="token punctuation">(</span>m<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token operator">...</span>m<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token function">findKey</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>code<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">:</span> <span class="token keyword">false</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>        <span class="token punctuation">}</span>        <span class="token comment" spellcheck="true">// 按下按键会触发</span>        document<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'keydown'</span><span class="token punctuation">,</span> handleKeyDown<span class="token punctuation">)</span>        document<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'keyup'</span><span class="token punctuation">,</span> handleKeyUp<span class="token punctuation">)</span>        <span class="token comment" spellcheck="true">// 回调</span>        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>            document<span class="token punctuation">.</span><span class="token function">removeEventListener</span><span class="token punctuation">(</span><span class="token string">'keydown'</span><span class="token punctuation">,</span> handleKeyDown<span class="token punctuation">)</span>            document<span class="token punctuation">.</span><span class="token function">removeEventListener</span><span class="token punctuation">(</span><span class="token string">'keyup'</span><span class="token punctuation">,</span> handleKeyUp<span class="token punctuation">)</span>        <span class="token punctuation">}</span>    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>    <span class="token keyword">return</span> input<span class="token punctuation">}</span></code></pre>]]></content>
+      
+      
+      <categories>
+          
+          <category> metaverse </category>
+          
+          <category> r3f </category>
+          
+          <category> threejs </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> metaverse </tag>
+            
+            <tag> r3f </tag>
+            
+            <tag> threejs </tag>
+            
+            <tag> 前端 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>metaverse - 15 - player controller</title>
+      <link href="/2023/04/30/building-the-metaverse-ultimate-react-three-fiber-course/15-player-controller/"/>
+      <url>/2023/04/30/building-the-metaverse-ultimate-react-three-fiber-course/15-player-controller/</url>
+      
+        <content type="html"><![CDATA[<blockquote><p>真正地移动角色</p></blockquote><pre class=" language-tsx"><code class="language-tsx">import * as THREE from "three";import React, { useEffect, useRef, useState } from "react";import { useGLTF, useAnimations, OrbitControls } from "@react-three/drei";import { useInput } from "../hooks/useInput";import { useFrame, useThree } from "@react-three/fiber";let walkDirection = new THREE.Vector3()let rotateAngle = new THREE.Vector3(0, 1, 0)let rotateQuarternion = new THREE.Quaternion()let cameraTarget = new THREE.Vector3()// 对角移动const directionOffset = ({ forward, backward, left, right }) => {    var directionOffset = 0    if (forward) {        // 向前+向左 -> 对角线移动        if (left) {            directionOffset = Math.PI / 4 // w+a        } else if (right) {            directionOffset = -Math.PI / 4        }    } else if (backward) {        if (left) {            directionOffset = Math.PI / 4 + Math.PI / 2        } else if (right) {            directionOffset = -Math.PI / 4 - Math.PI / 2        } else {            directionOffset = Math.PI        }    } else if (left) {        directionOffset = Math.PI / 2    } else if (right) {        directionOffset = -Math.PI / 2    }    return directionOffset}type props = {    modelName: string}const Model: React.FC<props> = ({ modelName }) => {    const { forward, backward, left, right, shift, jump } = useInput()    const name = modelName ? modelName : 'gril'    const model = useGLTF(        // GLTFLoader,        './models/' + name + '.glb'    )     const { actions } = useAnimations(model.animations, model.scene)    // 缩放    model.scene.scale.set(0.8, 0.8, 0.8)    model.scene.traverse((obj) => {        if (obj.isMesh) {            obj.castShadow = true        }    })    // 当前动画    const currentAction = useRef('')    // 控制器    const controlsRef = useRef<typeof OrbitControls>()    // 相机    const camera = useThree((state) => state.camera)    // 更新相机的方法    const updateCameraTarget = (moveX: number, moveZ: number) => {        // move camera         camera.position.x += moveX        camera.position.z += moveZ        // update camera target        cameraTarget.x = model.scene.position.x        cameraTarget.y = model.scene.position.y + 2        cameraTarget.z = model.scene.position.z        if (controlsRef.current) controlsRef.current.target = cameraTarget    }    useEffect(() => {        // actions?.jumping?.play();          let action = ''        if (forward || backward || left || right) {            action = 'walking'            if (shift) {                action = 'running'            }        } else if (jump) {            action = 'jumping'        } else {            action = 'idel'        }        // 如果动作改变了        if (currentAction.current != action) {            // 改变当前动作            const nextActionToPlay = actions[action]            const current = actions[currentAction.current]            current?.fadeOut(0.2)            nextActionToPlay?.reset().fadeIn(0.2).play()            currentAction.current = action        }    }, [forward, backward, left, right, shift, jump])    useFrame((state, delta) => {        // delta是单位时间        if (currentAction.current == 'running' || currentAction.current == 'walking') {            // 相机朝向            let angleYCameraDirection = Math.atan2(                camera.position.x - model.scene.position.x,                camera.position.z - model.scene.position.z,            )            // 对角移动            let newDirectionOffset = directionOffset({                forward,                backward,                left,                right            })            // 旋转模型            rotateQuarternion.setFromAxisAngle(                rotateAngle,                angleYCameraDirection + newDirectionOffset            )            model.scene.quaternion.rotateTowards(rotateQuarternion, 0.2)            // 计算方向            camera.getWorldDirection(walkDirection)            walkDirection.y = 0            walkDirection.normalize()            walkDirection.applyAxisAngle(rotateAngle, newDirectionOffset)            // 移动速度            const velocity = currentAction.current == 'running' ? 10 : 5            // 移动model和相机            const moveX = walkDirection.x * velocity * delta            const moveZ = walkDirection.z * velocity * delta            model.scene.position.x += moveX            model.scene.position.z += moveZ            updateCameraTarget(moveX, moveZ)        }    })    return (<>        <OrbitControls ref={controlsRef} />        <primitive object={model.scene} />    </>)}export default Model</code></pre><h2 id="如果模型是往方向跑-就去blender里调一下z-180"><a href="#如果模型是往方向跑-就去blender里调一下z-180" class="headerlink" title="如果模型是往方向跑, 就去blender里调一下z=180"></a>如果模型是往方向跑, 就去blender里调一下z=180</h2><p><img src="1682685756598.png" alt="1682685756598"></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> metaverse </category>
+          
+          <category> r3f </category>
+          
+          <category> threejs </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> metaverse </tag>
+            
+            <tag> r3f </tag>
+            
+            <tag> threejs </tag>
+            
+            <tag> 前端 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title></title>
       <link href="/2023/04/29/jwt-authentication-in-go-gingorm/jwt-go/"/>
       <url>/2023/04/29/jwt-authentication-in-go-gingorm/jwt-go/</url>
@@ -61,32 +131,6 @@
       <url>/2023/04/28/learn-go-programming-by-building-11-projects-full-course/simple-slackbot-to-calculate-age/</url>
       
         <content type="html"><![CDATA[<h1 id="4-Simple-SlackBot-To-Calculate-Age"><a href="#4-Simple-SlackBot-To-Calculate-Age" class="headerlink" title="4-Simple SlackBot To Calculate Age"></a>4-Simple SlackBot To Calculate Age</h1><h1 id="init"><a href="#init" class="headerlink" title="init"></a>init</h1><p><img src="assets/1682687895664.png" alt="1682687895664"></p><p><img src="assets/1682687922085.png" alt="1682687922085"></p><p><img src="assets/1682689572362.png" alt="1682689572362"><img src="assets/1682689589992.png" alt="1682689589992"></p><p><img src="assets/1682689639307.png" alt="1682689639307"><img src="assets/1682689701355.png" alt="1682689701355"></p><p><img src="assets/1682689842080.png" alt="1682689842080"></p><p><img src="assets/1682689837306.png" alt="1682689837306"></p><p><img src="assets/1682689913148.png" alt="1682689913148"> </p><p><img src="assets/1682689934678.png" alt="1682689934678"></p><pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main<span class="token keyword">import</span> <span class="token punctuation">(</span>    <span class="token string">"context"</span>    <span class="token string">"fmt"</span>    <span class="token string">"github.com/shomali11/slacker"</span>    <span class="token string">"log"</span>    <span class="token string">"os"</span>    <span class="token string">"strconv"</span><span class="token punctuation">)</span><span class="token keyword">func</span> <span class="token function">printCommandEvents</span><span class="token punctuation">(</span>analyticsChannle <span class="token operator">&lt;-</span><span class="token keyword">chan</span> <span class="token operator">*</span>slacker<span class="token punctuation">.</span>CommandEvent<span class="token punctuation">)</span> <span class="token punctuation">{</span>    <span class="token keyword">for</span> event <span class="token operator">:=</span> <span class="token keyword">range</span> analyticsChannle <span class="token punctuation">{</span>        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"Command Evenets"</span><span class="token punctuation">)</span>        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>Timestamp<span class="token punctuation">)</span>        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>Command<span class="token punctuation">)</span>        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>Parameters<span class="token punctuation">)</span>        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>event<span class="token punctuation">.</span>Event<span class="token punctuation">)</span>        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token punctuation">)</span>    <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>    os<span class="token punctuation">.</span><span class="token function">Setenv</span><span class="token punctuation">(</span><span class="token string">"SLACK_BOT_TOKEN"</span><span class="token punctuation">,</span> <span class="token string">"xoxb-5197737830801-5185338014034-TFTAQS8qJWW1zueZRBukI81O"</span><span class="token punctuation">)</span>    os<span class="token punctuation">.</span><span class="token function">Setenv</span><span class="token punctuation">(</span><span class="token string">"SLACK_APP_TOKEN"</span><span class="token punctuation">,</span> <span class="token string">"xapp-1-A055F3LAFQS-5187782968548-f901916532b72eb33481e9069b6d92d119c99e986368619c084528246e4d94c4"</span><span class="token punctuation">)</span>    bot <span class="token operator">:=</span> slacker<span class="token punctuation">.</span><span class="token function">NewClient</span><span class="token punctuation">(</span>os<span class="token punctuation">.</span><span class="token function">Getenv</span><span class="token punctuation">(</span><span class="token string">"SLACK_BOT_TOKEN"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> os<span class="token punctuation">.</span><span class="token function">Getenv</span><span class="token punctuation">(</span><span class="token string">"SLACK_APP_TOKEN"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>    <span class="token keyword">go</span> <span class="token function">printCommandEvents</span><span class="token punctuation">(</span>bot<span class="token punctuation">.</span><span class="token function">CommandEvents</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>    bot<span class="token punctuation">.</span><span class="token function">Command</span><span class="token punctuation">(</span><span class="token string">"my bot is &lt;year>"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>slacker<span class="token punctuation">.</span>CommandDefinition<span class="token punctuation">{</span>        Description<span class="token punctuation">:</span> <span class="token string">"yob calculator"</span><span class="token punctuation">,</span>        Examples<span class="token punctuation">:</span>    <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">{</span><span class="token string">"my yot is 2020"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>        Handler<span class="token punctuation">:</span> <span class="token keyword">func</span><span class="token punctuation">(</span>botCtx slacker<span class="token punctuation">.</span>BotContext<span class="token punctuation">,</span> request slacker<span class="token punctuation">.</span>Request<span class="token punctuation">,</span> response slacker<span class="token punctuation">.</span>ResponseWriter<span class="token punctuation">)</span> <span class="token punctuation">{</span>            year <span class="token operator">:=</span> request<span class="token punctuation">.</span><span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">"year"</span><span class="token punctuation">)</span>            yob<span class="token punctuation">,</span> err <span class="token operator">:=</span> strconv<span class="token punctuation">.</span><span class="token function">Atoi</span><span class="token punctuation">(</span>year<span class="token punctuation">)</span>            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>                <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>            <span class="token punctuation">}</span>            age <span class="token operator">:=</span> <span class="token number">2021</span> <span class="token operator">-</span> yob            r <span class="token operator">:=</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"age is %d"</span><span class="token punctuation">,</span> age<span class="token punctuation">)</span>            response<span class="token punctuation">.</span><span class="token function">Reply</span><span class="token punctuation">(</span>r<span class="token punctuation">)</span>        <span class="token punctuation">}</span><span class="token punctuation">,</span>    <span class="token punctuation">}</span><span class="token punctuation">)</span>    ctx<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithCancel</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>    <span class="token keyword">defer</span> <span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>    err <span class="token operator">:=</span> bot<span class="token punctuation">.</span><span class="token function">Listen</span><span class="token punctuation">(</span>ctx<span class="token punctuation">)</span>    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>        log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>    <span class="token punctuation">}</span><span class="token punctuation">}</span></code></pre><blockquote><p>没啥用</p></blockquote>]]></content>
-      
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title></title>
-      <link href="/2023/04/28/building-the-metaverse-ultimate-react-three-fiber-course/15-player-controller/"/>
-      <url>/2023/04/28/building-the-metaverse-ultimate-react-three-fiber-course/15-player-controller/</url>
-      
-        <content type="html"><![CDATA[<h1 id="Player-Controller"><a href="#Player-Controller" class="headerlink" title="Player Controller"></a>Player Controller</h1><blockquote><p>真正地移动角色</p></blockquote><pre class=" language-tsx"><code class="language-tsx">import * as THREE from "three";import React, { useEffect, useRef, useState } from "react";import { useGLTF, useAnimations, OrbitControls } from "@react-three/drei";import { useInput } from "../hooks/useInput";import { useFrame, useThree } from "@react-three/fiber";let walkDirection = new THREE.Vector3()let rotateAngle = new THREE.Vector3(0, 1, 0)let rotateQuarternion = new THREE.Quaternion()let cameraTarget = new THREE.Vector3()// 对角移动const directionOffset = ({ forward, backward, left, right }) => {    var directionOffset = 0    if (forward) {        // 向前+向左 -> 对角线移动        if (left) {            directionOffset = Math.PI / 4 // w+a        } else if (right) {            directionOffset = -Math.PI / 4        }    } else if (backward) {        if (left) {            directionOffset = Math.PI / 4 + Math.PI / 2        } else if (right) {            directionOffset = -Math.PI / 4 - Math.PI / 2        } else {            directionOffset = Math.PI        }    } else if (left) {        directionOffset = Math.PI / 2    } else if (right) {        directionOffset = -Math.PI / 2    }    return directionOffset}type props = {    modelName: string}const Model: React.FC<props> = ({ modelName }) => {    const { forward, backward, left, right, shift, jump } = useInput()    const name = modelName ? modelName : 'gril'    const model = useGLTF(        // GLTFLoader,        './models/' + name + '.glb'    )     const { actions } = useAnimations(model.animations, model.scene)    // 缩放    model.scene.scale.set(0.8, 0.8, 0.8)    model.scene.traverse((obj) => {        if (obj.isMesh) {            obj.castShadow = true        }    })    // 当前动画    const currentAction = useRef('')    // 控制器    const controlsRef = useRef<typeof OrbitControls>()    // 相机    const camera = useThree((state) => state.camera)    // 更新相机的方法    const updateCameraTarget = (moveX: number, moveZ: number) => {        // move camera         camera.position.x += moveX        camera.position.z += moveZ        // update camera target        cameraTarget.x = model.scene.position.x        cameraTarget.y = model.scene.position.y + 2        cameraTarget.z = model.scene.position.z        if (controlsRef.current) controlsRef.current.target = cameraTarget    }    useEffect(() => {        // actions?.jumping?.play();          let action = ''        if (forward || backward || left || right) {            action = 'walking'            if (shift) {                action = 'running'            }        } else if (jump) {            action = 'jumping'        } else {            action = 'idel'        }        // 如果动作改变了        if (currentAction.current != action) {            // 改变当前动作            const nextActionToPlay = actions[action]            const current = actions[currentAction.current]            current?.fadeOut(0.2)            nextActionToPlay?.reset().fadeIn(0.2).play()            currentAction.current = action        }    }, [forward, backward, left, right, shift, jump])    useFrame((state, delta) => {        // delta是单位时间        if (currentAction.current == 'running' || currentAction.current == 'walking') {            // 相机朝向            let angleYCameraDirection = Math.atan2(                camera.position.x - model.scene.position.x,                camera.position.z - model.scene.position.z,            )            // 对角移动            let newDirectionOffset = directionOffset({                forward,                backward,                left,                right            })            // 旋转模型            rotateQuarternion.setFromAxisAngle(                rotateAngle,                angleYCameraDirection + newDirectionOffset            )            model.scene.quaternion.rotateTowards(rotateQuarternion, 0.2)            // 计算方向            camera.getWorldDirection(walkDirection)            walkDirection.y = 0            walkDirection.normalize()            walkDirection.applyAxisAngle(rotateAngle, newDirectionOffset)            // 移动速度            const velocity = currentAction.current == 'running' ? 10 : 5            // 移动model和相机            const moveX = walkDirection.x * velocity * delta            const moveZ = walkDirection.z * velocity * delta            model.scene.position.x += moveX            model.scene.position.z += moveZ            updateCameraTarget(moveX, moveZ)        }    })    return (<>        <OrbitControls ref={controlsRef} />        <primitive object={model.scene} />    </>)}export default Model</code></pre><h2 id="如果模型是往方向跑-就去blender里调一下z-180"><a href="#如果模型是往方向跑-就去blender里调一下z-180" class="headerlink" title="如果模型是往方向跑, 就去blender里调一下z=180"></a>如果模型是往方向跑, 就去blender里调一下z=180</h2><p><img src="1682685756598.png" alt="1682685756598"></p>]]></content>
-      
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
-      <title></title>
-      <link href="/2023/04/28/building-the-metaverse-ultimate-react-three-fiber-course/14-input/"/>
-      <url>/2023/04/28/building-the-metaverse-ultimate-react-three-fiber-course/14-input/</url>
-      
-        <content type="html"><![CDATA[<h1 id="input"><a href="#input" class="headerlink" title="input"></a>input</h1><blockquote><p>用按键的方式 播放/暂停 动画</p><p>视频作者改变了目录结构</p></blockquote><p><img src="1682680734849.png" alt="1682680734849"></p><h2 id="gril-tsx"><a href="#gril-tsx" class="headerlink" title="gril.tsx"></a>gril.tsx</h2><pre class=" language-tsx"><code class="language-tsx">import * as THREE from "three";import React, { useEffect, useRef, useState } from "react";import { useGLTF, useAnimations } from "@react-three/drei";import { GLTF } from "three-stdlib";import { useInput } from "../hooks/useInput";const GrilModel = () => {    const { forward, backward, left, right, shift, jump } = useInput()    const model = useGLTF(        // GLTFLoader,        './models/gril.glb'    )    const { actions } = useAnimations(model.animations, model.scene)    // 缩放    model.scene.scale.set(0.8, 0.8, 0.8)    model.scene.traverse((obj) => {        if (obj.isMesh) {            obj.castShadow = true        }    })    const currentAction = useRef('')    useEffect(() => {        // actions?.jumping?.play();          let action = ''        if (forward || backward || left || right) {            action = 'walking'            if (shift) {                action = 'running'            }        } else if (jump) {            action = 'jumping'        } else {            action = 'idle'        }        // 如果动作改变了        if (currentAction.current != action) {            // 改变当前动作            const nextActionToPlay = actions[action]            const current = actions[currentAction.current]            current?.fadeOut(0.2)            nextActionToPlay?.reset().fadeIn(0.2).play()            currentAction.current = action        }    }, [forward, backward, left, right, shift, jump])    return <primitive object={model.scene} />}export default GrilModel</code></pre><h2 id="input-ts"><a href="#input-ts" class="headerlink" title="input.ts"></a>input.ts</h2><pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> useEffect<span class="token punctuation">,</span> useState <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"react"</span><span class="token keyword">export</span> <span class="token keyword">const</span> useInput <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>    <span class="token keyword">const</span> <span class="token punctuation">[</span>input<span class="token punctuation">,</span> setInput<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token punctuation">{</span>        forward<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        backward<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        left<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        right<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        shift<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>        jump<span class="token punctuation">:</span> <span class="token keyword">false</span>    <span class="token punctuation">}</span><span class="token punctuation">)</span>    <span class="token keyword">const</span> keys <span class="token operator">=</span> <span class="token punctuation">{</span>        KeyW<span class="token punctuation">:</span> <span class="token string">'forward'</span><span class="token punctuation">,</span>        KeyS<span class="token punctuation">:</span> <span class="token string">'backward'</span><span class="token punctuation">,</span>        KeyA<span class="token punctuation">:</span> <span class="token string">'left'</span><span class="token punctuation">,</span>        KeyD<span class="token punctuation">:</span> <span class="token string">'right'</span><span class="token punctuation">,</span>        ShiftLeft<span class="token punctuation">:</span> <span class="token string">'shift'</span><span class="token punctuation">,</span>        Space<span class="token punctuation">:</span> <span class="token string">'jump'</span>    <span class="token punctuation">}</span>    <span class="token keyword">const</span> findKey <span class="token operator">=</span> <span class="token punctuation">(</span>key<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> keys<span class="token punctuation">[</span>key<span class="token punctuation">]</span>    <span class="token function">useEffect</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>        <span class="token keyword">const</span> handleKeyDown <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>            <span class="token comment" spellcheck="true">// 根据e.code找到input里对应的值->true</span>            <span class="token function">setInput</span><span class="token punctuation">(</span><span class="token punctuation">(</span>m<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token operator">...</span>m<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token function">findKey</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>code<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">:</span> <span class="token keyword">true</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>        <span class="token punctuation">}</span>        <span class="token keyword">const</span> handleKeyUp <span class="token operator">=</span> <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>            <span class="token function">setInput</span><span class="token punctuation">(</span><span class="token punctuation">(</span>m<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token operator">...</span>m<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token function">findKey</span><span class="token punctuation">(</span>e<span class="token punctuation">.</span>code<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">:</span> <span class="token keyword">false</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>        <span class="token punctuation">}</span>        <span class="token comment" spellcheck="true">// 按下按键会触发</span>        document<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'keydown'</span><span class="token punctuation">,</span> handleKeyDown<span class="token punctuation">)</span>        document<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'keyup'</span><span class="token punctuation">,</span> handleKeyUp<span class="token punctuation">)</span>        <span class="token comment" spellcheck="true">// 回调</span>        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>            document<span class="token punctuation">.</span><span class="token function">removeEventListener</span><span class="token punctuation">(</span><span class="token string">'keydown'</span><span class="token punctuation">,</span> handleKeyDown<span class="token punctuation">)</span>            document<span class="token punctuation">.</span><span class="token function">removeEventListener</span><span class="token punctuation">(</span><span class="token string">'keyup'</span><span class="token punctuation">,</span> handleKeyUp<span class="token punctuation">)</span>        <span class="token punctuation">}</span>    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>    <span class="token keyword">return</span> input<span class="token punctuation">}</span></code></pre>]]></content>
       
       
       
@@ -184,9 +228,9 @@
             
             <tag> 微服务 </tag>
             
-            <tag> node </tag>
-            
             <tag> micro </tag>
+            
+            <tag> node </tag>
             
         </tags>
       
@@ -254,13 +298,13 @@
       
         <tags>
             
-            <tag> 前端 </tag>
+            <tag> threejs </tag>
             
-            <tag> 高阶 </tag>
+            <tag> 前端 </tag>
             
             <tag> 可视化 </tag>
             
-            <tag> threejs </tag>
+            <tag> 高阶 </tag>
             
         </tags>
       
@@ -419,9 +463,9 @@
             
             <tag> 前端 </tag>
             
-            <tag> css </tag>
-            
             <tag> 高阶 </tag>
+            
+            <tag> css </tag>
             
         </tags>
       
@@ -502,17 +546,17 @@
       
         <tags>
             
+            <tag> 前端 </tag>
+            
             <tag> 框架 </tag>
+            
+            <tag> 造轮子 </tag>
             
             <tag> vue </tag>
             
             <tag> js </tag>
             
             <tag> javaScript </tag>
-            
-            <tag> 造轮子 </tag>
-            
-            <tag> 前端 </tag>
             
             <tag> 低代码 </tag>
             
@@ -553,7 +597,11 @@
       
         <tags>
             
+            <tag> 前端 </tag>
+            
             <tag> 框架 </tag>
+            
+            <tag> 造轮子 </tag>
             
             <tag> pinia </tag>
             
@@ -564,10 +612,6 @@
             <tag> js </tag>
             
             <tag> javaScript </tag>
-            
-            <tag> 造轮子 </tag>
-            
-            <tag> 前端 </tag>
             
         </tags>
       
@@ -608,17 +652,17 @@
       
         <tags>
             
+            <tag> 前端 </tag>
+            
             <tag> 框架 </tag>
+            
+            <tag> 造轮子 </tag>
             
             <tag> 状态管理 </tag>
             
             <tag> js </tag>
             
             <tag> javaScript </tag>
-            
-            <tag> 造轮子 </tag>
-            
-            <tag> 前端 </tag>
             
             <tag> redux </tag>
             
@@ -659,17 +703,17 @@
       
         <tags>
             
+            <tag> 前端 </tag>
+            
             <tag> 框架 </tag>
+            
+            <tag> 造轮子 </tag>
             
             <tag> vue </tag>
             
             <tag> js </tag>
             
             <tag> javaScript </tag>
-            
-            <tag> 造轮子 </tag>
-            
-            <tag> 前端 </tag>
             
         </tags>
       
@@ -740,11 +784,11 @@
             
             <tag> java </tag>
             
-            <tag> ide </tag>
-            
             <tag> 开发环境 </tag>
             
             <tag> bug记录 </tag>
+            
+            <tag> ide </tag>
             
         </tags>
       
