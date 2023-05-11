@@ -437,14 +437,14 @@ The Number 1 Rule ">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        4.4k
+                        4.8k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        25 分
+                        27 分
                     </div>
                     
                 
@@ -1355,8 +1355,69 @@ loaded_model_1<span class="token punctuation">.</span>eval<span class="token pun
     loaded_model_1_preds <span class="token operator">=</span> loaded_model_1<span class="token punctuation">(</span>x_test<span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span>y_preds<span class="token operator">==</span>loaded_model_1_preds<span class="token punctuation">)</span>
 </code></pre>
-<h1 id="4-PyTorch-Neural-Network-Classification"><a href="#4-PyTorch-Neural-Network-Classification" class="headerlink" title="4_PyTorch Neural Network Classification"></a>4_PyTorch Neural Network Classification</h1><h2 id="1-Introduction-to-Machine-Learning-Classification-With-PyTorch–-koudaizy-com"><a href="#1-Introduction-to-Machine-Learning-Classification-With-PyTorch–-koudaizy-com" class="headerlink" title="1. Introduction to Machine Learning Classification With PyTorch–[koudaizy.com]"></a>1. Introduction to Machine Learning Classification With PyTorch–[koudaizy.com]</h2><p><img src="20230509141722.png"><br><img src="20230509141808.png" alt="二元分类(eg.是否垃圾邮件)"><br><img src="20230509141825.png" alt="多分类(eg.什么品种的牛排)"><br>![多标签分类(eg.文章)-&gt;多标签是一个物体多个分类,多分类是一个物体一个分类]<br><img src="20230509142541.png"><br><img src="20230509142628.png"></p>
+<h1 id="4-PyTorch-Neural-Network-Classification"><a href="#4-PyTorch-Neural-Network-Classification" class="headerlink" title="4_PyTorch Neural Network Classification"></a>4_PyTorch Neural Network Classification</h1><h2 id="1-Introduction-to-Machine-Learning-Classification-With-PyTorch–-koudaizy-com"><a href="#1-Introduction-to-Machine-Learning-Classification-With-PyTorch–-koudaizy-com" class="headerlink" title="1. Introduction to Machine Learning Classification With PyTorch–[koudaizy.com]"></a>1. Introduction to Machine Learning Classification With PyTorch–[koudaizy.com]</h2><p><img src="20230509141722.png"><br><img src="20230509141808.png" alt="二元分类(eg.是否垃圾邮件)"><br><img src="20230509141825.png" alt="多分类(eg.什么品种的牛排)"><br><img src="20230509142307.png" alt="多标签分类(eg.文章)->多标签是一个物体多个分类,多分类是一个物体一个分类"><br><img src="20230509142541.png"><br><img src="20230509142628.png"></p>
+<h2 id="2-Classification-Problem-Example-Input-and-Output-Shapes–-koudaizy-com"><a href="#2-Classification-Problem-Example-Input-and-Output-Shapes–-koudaizy-com" class="headerlink" title="2. Classification Problem Example Input and Output Shapes–[koudaizy.com]"></a>2. Classification Problem Example Input and Output Shapes–[koudaizy.com]</h2><p><img src="20230509144427.png"></p>
+<blockquote>
+<p>batch_size不超过32会比较好<br><img src="20230509144624.png"></p>
+</blockquote>
+<h2 id="3-Typical-Architecture-of-a-Classification-Neural-Network-Overview-–-koudaizy-com"><a href="#3-Typical-Architecture-of-a-Classification-Neural-Network-Overview-–-koudaizy-com" class="headerlink" title="3. Typical Architecture of a Classification Neural Network (Overview)–[koudaizy.com]"></a>3. Typical Architecture of a Classification Neural Network (Overview)–[koudaizy.com]</h2><p><img src="20230509145211.png"><br><img src="20230509145258.png"></p>
+<h2 id="4-Making-a-Toy-Classification-Dataset–-koudaizy-com"><a href="#4-Making-a-Toy-Classification-Dataset–-koudaizy-com" class="headerlink" title="4. Making a Toy Classification Dataset–[koudaizy.com]"></a>4. Making a Toy Classification Dataset–[koudaizy.com]</h2><p><img src="20230509145531.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># 1 make classification data and get it ready</span>
+<span class="token keyword">import</span> sklearn 
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>datasets <span class="token keyword">import</span> make_circles
+<span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+<span class="token comment" spellcheck="true"># make 1000 samples</span>
+n_samples <span class="token operator">=</span> <span class="token number">1000</span>
+<span class="token comment" spellcheck="true"># create circles</span>
+<span class="token comment" spellcheck="true"># random_state 随机种子</span>
+x<span class="token punctuation">,</span>y <span class="token operator">=</span> make_circles<span class="token punctuation">(</span>n_samples<span class="token punctuation">,</span>noise<span class="token operator">=</span><span class="token number">0.03</span><span class="token punctuation">,</span>random_state<span class="token operator">=</span><span class="token number">42</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'first 5 samples of x:\n {x[:5]}'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'first 5 samples of y:\n {y[:5]}'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># make dataframe of circle data</span>
+circles <span class="token operator">=</span> pd<span class="token punctuation">.</span>DataFrame<span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token string">'x1'</span><span class="token punctuation">:</span>x<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                        <span class="token string">'x2'</span><span class="token punctuation">:</span>x<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                        <span class="token string">'label'</span><span class="token punctuation">:</span>y<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>circles<span class="token punctuation">.</span>head<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>x<span class="token operator">=</span>x<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>y<span class="token operator">=</span>x<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span>c<span class="token operator">=</span>y<span class="token punctuation">,</span>cmap<span class="token operator">=</span>plt<span class="token punctuation">.</span>cm<span class="token punctuation">.</span>RdYlBu<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="5-Turning-Our-Data-into-Tensors-and-Making-a-Training-and-Test-Split–-koudaizy-com"><a href="#5-Turning-Our-Data-into-Tensors-and-Making-a-Training-and-Test-Split–-koudaizy-com" class="headerlink" title="5. Turning Our Data into Tensors and Making a Training and Test Split–[koudaizy.com]"></a>5. Turning Our Data into Tensors and Making a Training and Test Split–[koudaizy.com]</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true">## 1.1 check input and output shapes</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>x<span class="token punctuation">.</span>shape<span class="token punctuation">,</span>y<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+x_sample <span class="token operator">=</span> x<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+y_sample <span class="token operator">=</span> y<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'values for one sample of x: {x_sample} and the same for y: {y_sample}'</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'shapes for one sample of x: {x_sample.shape} and the same for y: {y_sample.shape}'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">## 1.2 turn data into tensors and create train and test splits</span>
+x <span class="token operator">=</span> torch<span class="token punctuation">.</span>from_numpy<span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">.</span>type<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>float<span class="token punctuation">)</span>
+y <span class="token operator">=</span> torch<span class="token punctuation">.</span>from_numpy<span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">.</span>type<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>float<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>x<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span>y<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># split data </span>
+x_train<span class="token punctuation">,</span>x_test<span class="token punctuation">,</span>y_train<span class="token punctuation">,</span>y_test <span class="token operator">=</span> train_test_split<span class="token punctuation">(</span>x<span class="token punctuation">,</span>y<span class="token punctuation">,</span>test_size<span class="token operator">=</span><span class="token number">0.2</span><span class="token punctuation">,</span>random_state<span class="token operator">=</span><span class="token number">42</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="6-Laying-Out-Steps-for-Modelling-and-Setting-Up-Device-Agnostic-Code–-koudaizy-com"><a href="#6-Laying-Out-Steps-for-Modelling-and-Setting-Up-Device-Agnostic-Code–-koudaizy-com" class="headerlink" title="6. Laying Out Steps for Modelling and Setting Up Device-Agnostic Code–[koudaizy.com]"></a>6. Laying Out Steps for Modelling and Setting Up Device-Agnostic Code–[koudaizy.com]</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> torch
+<span class="token keyword">from</span> torch <span class="token keyword">import</span> nn
+<span class="token comment" spellcheck="true"># 2 building a model</span>
+<span class="token comment" spellcheck="true"># make device agnostic code</span>
+device <span class="token operator">=</span> <span class="token string">"cuda"</span> <span class="token keyword">if</span> torch<span class="token punctuation">.</span>cuda<span class="token punctuation">.</span>is_available<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">else</span> <span class="token string">"cpu"</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="7-Coding-a-Small-Neural-Network-to-Handle-Our-Classification-Data–-koudaizy-com"><a href="#7-Coding-a-Small-Neural-Network-to-Handle-Our-Classification-Data–-koudaizy-com" class="headerlink" title="7. Coding a Small Neural Network to Handle Our Classification Data–[koudaizy.com]"></a>7. Coding a Small Neural Network to Handle Our Classification Data–[koudaizy.com]</h2><p><img src="20230511183951.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">CircleModelV0</span><span class="token punctuation">(</span>nn<span class="token punctuation">.</span>Module<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">></span> None<span class="token punctuation">:</span>
+        super<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>__init__<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># create 2 nn.Linear layers capable of handling the shapes of our data</span>
+        self<span class="token punctuation">.</span>layer_1 <span class="token operator">=</span> \
+        nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span>in_features<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span>out_features<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 输入2个特征,升级为5个特征(5这个数可以随机取的)</span>
+        <span class="token comment" spellcheck="true"># 下一层的输入要和上一层的输出规格一致</span>
+        self<span class="token punctuation">.</span>layer_2 <span class="token operator">=</span> nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span>in_features<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">,</span>out_features<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span>x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>layer_2<span class="token punctuation">(</span>self<span class="token punctuation">.</span>layer_1<span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># x -> layer1 -> layer2</span>
 
+model_0 <span class="token operator">=</span> CircleModelV0<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>model_0<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="8-Making-Our-Neural-Network-Visual–-koudaizy-com"><a href="#8-Making-Our-Neural-Network-Visual–-koudaizy-com" class="headerlink" title="8. Making Our Neural Network Visual–[koudaizy.com]"></a>8. Making Our Neural Network Visual–[koudaizy.com]</h2>
             </div>
             <hr/>
 
@@ -1722,7 +1783,7 @@ The Number 1 Rule </div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">84.8k</span>
+                <span class="white-color">85.2k</span>
             
 
             
