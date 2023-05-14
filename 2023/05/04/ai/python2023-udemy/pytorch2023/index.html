@@ -437,14 +437,14 @@ The Number 1 Rule ">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        4.9k
+                        5.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        28 分
+                        30 分
                     </div>
                     
                 
@@ -1433,7 +1433,79 @@ model_0 <span class="token operator">=</span> nn<span class="token punctuation">
 <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'\nfirst 10 predictions:\n{torch.round(untrained_preds[:10])}'</span><span class="token punctuation">)</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'\nfirst 10 labels:\n{y_test[:10]}'</span><span class="token punctuation">)</span>
 </code></pre>
-<h2 id="10-Loss-Function-Optimizer-and-Evaluation-Function-for-Our-Classification-Network–-koudaizy-com"><a href="#10-Loss-Function-Optimizer-and-Evaluation-Function-for-Our-Classification-Network–-koudaizy-com" class="headerlink" title="10. Loss Function Optimizer and Evaluation Function for Our Classification Network–[koudaizy.com]"></a>10. Loss Function Optimizer and Evaluation Function for Our Classification Network–[koudaizy.com]</h2>
+<h2 id="10-Loss-Function-Optimizer-and-Evaluation-Function-for-Our-Classification-Network–-koudaizy-com"><a href="#10-Loss-Function-Optimizer-and-Evaluation-Function-for-Our-Classification-Network–-koudaizy-com" class="headerlink" title="10. Loss Function Optimizer and Evaluation Function for Our Classification Network–[koudaizy.com]"></a>10. Loss Function Optimizer and Evaluation Function for Our Classification Network–[koudaizy.com]</h2><p><img src="20230514203619.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># 2.1 setup loss function and optimizer</span>
+loss_fn <span class="token operator">=</span> nn<span class="token punctuation">.</span>BCEWithLogitsLoss<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># sigmoid activation function</span>
+optimizer <span class="token operator">=</span> torch<span class="token punctuation">.</span>optim<span class="token punctuation">.</span>SGD<span class="token punctuation">(</span>params<span class="token operator">=</span>model_0<span class="token punctuation">.</span>parameters<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                            lr<span class="token operator">=</span><span class="token number">0.1</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># calculate accuracy - out of 100 examples, what percentage does our model get right?</span>
+<span class="token keyword">def</span> <span class="token function">accuracy_fn</span><span class="token punctuation">(</span>y_true<span class="token punctuation">,</span>y_pred<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    correct <span class="token operator">=</span> torch<span class="token punctuation">.</span>eq<span class="token punctuation">(</span>y_true<span class="token punctuation">,</span>y_pred<span class="token punctuation">)</span><span class="token punctuation">.</span>sum<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>item<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    acc <span class="token operator">=</span> <span class="token punctuation">(</span>correct<span class="token operator">/</span>len<span class="token punctuation">(</span>y_pred<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">100</span>
+    <span class="token keyword">return</span> acc
+</code></pre>
+<h2 id="11-Going-from-Model-Logits-to-Prediction-Probabilities-to-Prediction-Labels–-koudaizy-com"><a href="#11-Going-from-Model-Logits-to-Prediction-Probabilities-to-Prediction-Labels–-koudaizy-com" class="headerlink" title="11. Going from Model Logits to Prediction Probabilities to Prediction Labels–[koudaizy.com]"></a>11. Going from Model Logits to Prediction Probabilities to Prediction Labels–[koudaizy.com]</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># 3. train model</span>
+model_0<span class="token punctuation">.</span>eval<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">with</span> torch<span class="token punctuation">.</span>inference_mode<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span> 
+    y_logits <span class="token operator">=</span> model_0<span class="token punctuation">(</span>x_test<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>y_logits<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>model_0<span class="token punctuation">.</span>state_dict<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+y_pred_probs <span class="token operator">=</span> torch<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>y_logits<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>y_pred_probs<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>torch<span class="token punctuation">.</span>round<span class="token punctuation">(</span>y_pred_probs<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 四舍五入</span>
+
+<span class="token comment" spellcheck="true"># find the predicted labels</span>
+y_preds <span class="token operator">=</span> torch<span class="token punctuation">.</span>round<span class="token punctuation">(</span>y_pred_probs<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># in full(logits->pred probs->pred labels)</span>
+y_pred_probs <span class="token operator">=</span> torch<span class="token punctuation">.</span>round<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>model_0<span class="token punctuation">(</span>x_test<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># check for equality</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>torch<span class="token punctuation">.</span>eq<span class="token punctuation">(</span>y_preds<span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>y_pred_probs<span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># get rid of extra dimension</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>y_preds<span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="12-Coding-a-Training-and-Testing-Optimization-Loop-for-Our-Classification-Model–-koudaizy-com"><a href="#12-Coding-a-Training-and-Testing-Optimization-Loop-for-Our-Classification-Model–-koudaizy-com" class="headerlink" title="12. Coding a Training and Testing Optimization Loop for Our Classification Model–[koudaizy.com]"></a>12. Coding a Training and Testing Optimization Loop for Our Classification Model–[koudaizy.com]</h2><p><img src="20230514215758.png"><br><img src="20230514220450.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># 3.2 building a training and testing loop</span>
+torch<span class="token punctuation">.</span>manual_seed<span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span>
+torch<span class="token punctuation">.</span>cuda<span class="token punctuation">.</span>manual_seed<span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># set the number of epochs</span>
+epochs <span class="token operator">=</span> <span class="token number">100</span>
+<span class="token comment" spellcheck="true"># put data to target device</span>
+x_train<span class="token punctuation">,</span>y_train <span class="token operator">=</span> x_train<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">,</span>y_train<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+x_test<span class="token punctuation">,</span>y_test <span class="token operator">=</span> x_test<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">,</span>y_test<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># build training and evaluation loop</span>
+<span class="token keyword">for</span> epoch <span class="token keyword">in</span> range<span class="token punctuation">(</span>epochs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true">### training  </span>
+    model_0<span class="token punctuation">.</span>train<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 1. forward pass</span>
+    y_logits <span class="token operator">=</span> model_0<span class="token punctuation">(</span>x_train<span class="token punctuation">)</span><span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># turn logits -> pred probs -> pred labels</span>
+    y_pred <span class="token operator">=</span> torch<span class="token punctuation">.</span>round<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>y_logits<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 2. calculate loss/accuracy</span>
+    loss <span class="token operator">=</span> loss_fn<span class="token punctuation">(</span>y_logits<span class="token punctuation">,</span>
+                   y_train<span class="token punctuation">)</span>
+    acc <span class="token operator">=</span> accuracy_fn<span class="token punctuation">(</span>y_true<span class="token operator">=</span>y_train<span class="token punctuation">,</span>
+                      y_pred<span class="token operator">=</span>y_pred<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 3. optimizer zero grad</span>
+    optimizer<span class="token punctuation">.</span>zero_grad<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 4. loss backward (backpropagation)</span>
+    loss<span class="token punctuation">.</span>backward<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 5. optimizer step (gradient descent)</span>
+    optimizer<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">### testing</span>
+    model_0<span class="token punctuation">.</span>eval<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">with</span> torch<span class="token punctuation">.</span>inference_mode<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 1. forward pass</span>
+        test_logits <span class="token operator">=</span> model_0<span class="token punctuation">(</span>x_test<span class="token punctuation">)</span><span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        test_pred <span class="token operator">=</span> torch<span class="token punctuation">.</span>round<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>test_logits<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 2.calculate test loss/acc</span>
+        test_loss <span class="token operator">=</span> loss_fn<span class="token punctuation">(</span>test_logits<span class="token punctuation">,</span>y_test<span class="token punctuation">)</span>
+        test_acc <span class="token operator">=</span> accuracy_fn<span class="token punctuation">(</span>y_true<span class="token operator">=</span>y_test<span class="token punctuation">,</span>y_pred<span class="token operator">=</span>test_pred<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># print out what's happenin'</span>
+    <span class="token keyword">if</span> epoch<span class="token operator">%</span><span class="token number">10</span><span class="token operator">==</span><span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'epoch: {epoch} | loss: {loss:.5f}, acc: {acc:.2f}% | test loss: {test_loss:.5f}, test acc: {test_acc:.2f}%'</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="13-Writing-Code-to-Download-a-Helper-Function-to-Visualize-Our-Models-Predictions–-koudaizy-com"><a href="#13-Writing-Code-to-Download-a-Helper-Function-to-Visualize-Our-Models-Predictions–-koudaizy-com" class="headerlink" title="13. Writing Code to Download a Helper Function to Visualize Our Models Predictions–[koudaizy.com]"></a>13. Writing Code to Download a Helper Function to Visualize Our Models Predictions–[koudaizy.com]</h2>
             </div>
             <hr/>
 
@@ -1761,7 +1833,7 @@ model_0 <span class="token operator">=</span> nn<span class="token punctuation">
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">87.6k</span>
+                <span class="white-color">87.9k</span>
             
 
             
