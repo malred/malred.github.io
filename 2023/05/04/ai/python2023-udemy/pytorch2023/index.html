@@ -437,14 +437,14 @@ The Number 1 Rule ">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        5.3k
+                        5.9k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        30 分
+                        34 分
                     </div>
                     
                 
@@ -1526,7 +1526,132 @@ plt<span class="token punctuation">.</span>show<span class="token punctuation">(
 </code></pre>
 <p><img src="20230515201350.png"></p>
 <h2 id="14-Discussing-Options-to-Improve-a-Model–-koudaizy-com"><a href="#14-Discussing-Options-to-Improve-a-Model–-koudaizy-com" class="headerlink" title="14. Discussing Options to Improve a Model–[koudaizy.com]"></a>14. Discussing Options to Improve a Model–[koudaizy.com]</h2><p><img src="20230515201619.png"><br><img src="20230515201625.png"><br><img src="20230515201715.png"></p>
-<h2 id="15-Creating-a-New-Model-with-More-Layers-and-Hidden-Units–-koudaizy-com"><a href="#15-Creating-a-New-Model-with-More-Layers-and-Hidden-Units–-koudaizy-com" class="headerlink" title="15. Creating a New Model with More Layers and Hidden Units–[koudaizy.com]"></a>15. Creating a New Model with More Layers and Hidden Units–[koudaizy.com]</h2>
+<h2 id="15-Creating-a-New-Model-with-More-Layers-and-Hidden-Units–-koudaizy-com"><a href="#15-Creating-a-New-Model-with-More-Layers-and-Hidden-Units–-koudaizy-com" class="headerlink" title="15. Creating a New Model with More Layers and Hidden Units–[koudaizy.com]"></a>15. Creating a New Model with More Layers and Hidden Units–[koudaizy.com]</h2><p><img src="20230516212630.png" alt="参数是指模型内部自己调整的变量,而超参数是我们指定的变量"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># improve model</span>
+<span class="token keyword">class</span> <span class="token class-name">CircleModelV1</span><span class="token punctuation">(</span>nn<span class="token punctuation">.</span>Module<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        super<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>__init__<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>layer_1 <span class="token operator">=</span> nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span>in_features<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span>out_features<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>layer_2 <span class="token operator">=</span> nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span>in_features<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span>out_features<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>layer_3 <span class="token operator">=</span> nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span>in_features<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span>out_features<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span>x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        z <span class="token operator">=</span> self<span class="token punctuation">.</span>layer_1<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+        z <span class="token operator">=</span> self<span class="token punctuation">.</span>layer_2<span class="token punctuation">(</span>z<span class="token punctuation">)</span>
+        z <span class="token operator">=</span> self<span class="token punctuation">.</span>layer_3<span class="token punctuation">(</span>z<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> z
+model_1 <span class="token operator">=</span> CircleModelV1<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>model_1<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="16-Writing-Training-and-Testing-Code-to-See-if-Our-Upgraded-Model-Performs-Better–-koudaizy-com"><a href="#16-Writing-Training-and-Testing-Code-to-See-if-Our-Upgraded-Model-Performs-Better–-koudaizy-com" class="headerlink" title="16. Writing Training and Testing Code to See if Our Upgraded Model Performs Better–[koudaizy.com]"></a>16. Writing Training and Testing Code to See if Our Upgraded Model Performs Better–[koudaizy.com]</h2><p><img src="20230516213301.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># create a loss function</span>
+loss_fn <span class="token operator">=</span> nn<span class="token punctuation">.</span>BCEWithLogitsLoss<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># create an optimizer</span>
+optimizer <span class="token operator">=</span> torch<span class="token punctuation">.</span>optim<span class="token punctuation">.</span>SGD<span class="token punctuation">(</span>params<span class="token operator">=</span>model_1<span class="token punctuation">.</span>parameters<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">,</span>
+                            lr<span class="token operator">=</span><span class="token number">0.001</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># write a training and evaluation loop for model_1 </span>
+torch<span class="token punctuation">.</span>manual_seed<span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># torch.cuda.manual_seed(42)</span>
+epochs<span class="token operator">=</span> <span class="token number">1000</span>
+<span class="token comment" spellcheck="true"># put data on the target device</span>
+x_train<span class="token punctuation">,</span>y_train <span class="token operator">=</span> x_train<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">,</span>y_train<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+x_test<span class="token punctuation">,</span>y_test <span class="token operator">=</span> x_test<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">,</span>y_test<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> epoch <span class="token keyword">in</span> range<span class="token punctuation">(</span>epochs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true">### Training</span>
+    model_1<span class="token punctuation">.</span>train<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 1.forward pass</span>
+    y_logits <span class="token operator">=</span> model_1<span class="token punctuation">(</span>x_train<span class="token punctuation">)</span><span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    y_pred <span class="token operator">=</span> torch<span class="token punctuation">.</span>round<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>y_logits<span class="token punctuation">)</span><span class="token punctuation">)</span> 
+    <span class="token comment" spellcheck="true"># 2. calculate the loss/acc</span>
+    loss <span class="token operator">=</span> loss_fn<span class="token punctuation">(</span>y_logits<span class="token punctuation">,</span>y_train<span class="token punctuation">)</span>
+    acc <span class="token operator">=</span> accuracy_fn<span class="token punctuation">(</span>y_true<span class="token operator">=</span>y_train<span class="token punctuation">,</span>
+                      y_pred<span class="token operator">=</span>y_pred<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 3. optimize zero grad</span>
+    optimizer<span class="token punctuation">.</span>zero_grad<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 4. loss backword (backpropagation)</span>
+    loss<span class="token punctuation">.</span>backward<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 5. optimizer step (gradient descent)</span>
+    optimizer<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">### testing</span>
+    model_1<span class="token punctuation">.</span>eval<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">with</span> torch<span class="token punctuation">.</span>inference_mode<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 1. forward pass</span>
+        test_logits <span class="token operator">=</span> model_1<span class="token punctuation">(</span>x_test<span class="token punctuation">)</span><span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        test_pred <span class="token operator">=</span> torch<span class="token punctuation">.</span>round<span class="token punctuation">(</span>torch<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>test_logits<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 2. calculate loss</span>
+        test_loss <span class="token operator">=</span> loss_fn<span class="token punctuation">(</span>test_logits<span class="token punctuation">,</span>
+                            y_test<span class="token punctuation">)</span>
+        test_acc <span class="token operator">=</span> accuracy_fn<span class="token punctuation">(</span>y_true<span class="token operator">=</span>y_test<span class="token punctuation">,</span>
+                               y_pred<span class="token operator">=</span>test_pred<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># pring what's happen</span>
+    <span class="token keyword">if</span> epoch <span class="token operator">%</span> <span class="token number">100</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'epoch: {epoch} | loss: {loss:.5f}, acc: {acc:.2f}% | test loss: {test_loss:.5f}, test acc: {test_acc:.2f}%'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># plot decision boundary of the model</span>
+plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">,</span><span class="token number">6</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>subplot<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">1</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token string">"Train"</span><span class="token punctuation">)</span>
+plot_decision_boundary<span class="token punctuation">(</span>model_1<span class="token punctuation">,</span>x_train<span class="token punctuation">,</span>y_train<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>subplot<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token string">"Test"</span><span class="token punctuation">)</span>
+plot_decision_boundary<span class="token punctuation">(</span>model_1<span class="token punctuation">,</span>x_test<span class="token punctuation">,</span>y_test<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="17-Creating-a-Straight-Line-Dataset-to-See-if-Our-Model-is-Learning-Anything–-koudaizy-com"><a href="#17-Creating-a-Straight-Line-Dataset-to-See-if-Our-Model-is-Learning-Anything–-koudaizy-com" class="headerlink" title="17. Creating a Straight Line Dataset to See if Our Model is Learning Anything–[koudaizy.com]"></a>17. Creating a Straight Line Dataset to See if Our Model is Learning Anything–[koudaizy.com]</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># 5.1 preparing data to see if our model can fit a straight line</span>
+<span class="token comment" spellcheck="true"># create some data </span>
+weight <span class="token operator">=</span> <span class="token number">0.7</span>
+bias <span class="token operator">=</span> <span class="token number">0.3</span>
+start <span class="token operator">=</span> <span class="token number">0</span>
+end <span class="token operator">=</span> <span class="token number">1</span>
+step <span class="token operator">=</span> <span class="token number">0.01</span>
+
+x_regression <span class="token operator">=</span> torch<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>start<span class="token punctuation">,</span>end<span class="token punctuation">,</span>step<span class="token punctuation">)</span><span class="token punctuation">.</span>unsqueeze<span class="token punctuation">(</span>dim<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+y_regression <span class="token operator">=</span> weight <span class="token operator">*</span> x_regression <span class="token operator">+</span> bias 
+<span class="token comment" spellcheck="true"># create train and test splits</span>
+train_split <span class="token operator">=</span> int<span class="token punctuation">(</span><span class="token number">0.8</span><span class="token operator">*</span>len<span class="token punctuation">(</span>x_regression<span class="token punctuation">)</span><span class="token punctuation">)</span>
+x_train_regression<span class="token punctuation">,</span>y_train_regression <span class="token operator">=</span> x_regression<span class="token punctuation">[</span><span class="token punctuation">:</span>train_split<span class="token punctuation">]</span><span class="token punctuation">,</span>y_regression<span class="token punctuation">[</span><span class="token punctuation">:</span>train_split<span class="token punctuation">]</span>
+x_test_regression<span class="token punctuation">,</span>y_test_regression <span class="token operator">=</span> x_regression<span class="token punctuation">[</span>train_split<span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">,</span>y_regression<span class="token punctuation">[</span>train_split<span class="token punctuation">:</span><span class="token punctuation">]</span>
+
+plot_predictions<span class="token punctuation">(</span>train_data<span class="token operator">=</span>x_train_regression<span class="token punctuation">,</span>
+                 train_labels<span class="token operator">=</span>y_train_regression<span class="token punctuation">,</span>
+                 test_data<span class="token operator">=</span>x_test_regression<span class="token punctuation">,</span>
+                 test_labels<span class="token operator">=</span>y_test_regression<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="18-Building-and-Training-a-Model-to-Fit-on-Straight-Line-Data–-koudaizy-com"><a href="#18-Building-and-Training-a-Model-to-Fit-on-Straight-Line-Data–-koudaizy-com" class="headerlink" title="18. Building and Training a Model to Fit on Straight Line Data–[koudaizy.com]"></a>18. Building and Training a Model to Fit on Straight Line Data–[koudaizy.com]</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># 5.2 adjusting model_1 to fit a straight line</span>
+model_2 <span class="token operator">=</span> nn<span class="token punctuation">.</span>Sequential<span class="token punctuation">(</span>
+    nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span>in_features<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span>out_features<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span>in_features<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span>out_features<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span>in_features<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span>out_features<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># loss and optimizer </span>
+loss_fn <span class="token operator">=</span> nn<span class="token punctuation">.</span>L1Loss<span class="token punctuation">(</span><span class="token punctuation">)</span>
+optimizer <span class="token operator">=</span> torch<span class="token punctuation">.</span>optim<span class="token punctuation">.</span>SGD<span class="token punctuation">(</span>params<span class="token operator">=</span>model_2<span class="token punctuation">.</span>parameters<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                            lr<span class="token operator">=</span><span class="token number">0.1</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># train</span>
+torch<span class="token punctuation">.</span>manual_seed<span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span> 
+<span class="token comment" spellcheck="true"># torch.cuda.manual_seed(42) </span>
+<span class="token comment" spellcheck="true"># set the number of epochs</span>
+epochs <span class="token operator">=</span> <span class="token number">1000</span>
+<span class="token comment" spellcheck="true"># put the data on the target device</span>
+x_train_regression<span class="token punctuation">,</span>y_train_regression<span class="token operator">=</span>x_train_regression<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">,</span>y_train_regression<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+x_test_regression<span class="token punctuation">,</span>y_test_regression<span class="token operator">=</span>x_test_regression<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span><span class="token punctuation">,</span>y_test_regression<span class="token punctuation">.</span>to<span class="token punctuation">(</span>device<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># training</span>
+<span class="token keyword">for</span> epoch <span class="token keyword">in</span> range<span class="token punctuation">(</span>epochs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    y_pred <span class="token operator">=</span> model_2<span class="token punctuation">(</span>x_train_regression<span class="token punctuation">)</span>
+    loss <span class="token operator">=</span> loss_fn<span class="token punctuation">(</span>y_pred<span class="token punctuation">,</span>y_train_regression<span class="token punctuation">)</span>
+    optimizer<span class="token punctuation">.</span>zero_grad<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    loss<span class="token punctuation">.</span>backward<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    optimizer<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># testing</span>
+    model_2<span class="token punctuation">.</span>eval<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">with</span> torch<span class="token punctuation">.</span>inference_mode<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        test_pred <span class="token operator">=</span> model_2<span class="token punctuation">(</span>x_test_regression<span class="token punctuation">)</span>
+        test_loss <span class="token operator">=</span> loss_fn<span class="token punctuation">(</span>test_pred<span class="token punctuation">,</span>y_test_regression<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># print</span>
+    <span class="token keyword">if</span> epoch <span class="token operator">%</span> <span class="token number">100</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'epoch: {epoch} | loss: {loss:.5f} | test loss: {test_loss:.5f}'</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
             </div>
             <hr/>
 
@@ -1724,28 +1849,50 @@ plt<span class="token punctuation">.</span>show<span class="token punctuation">(
                 下一篇&nbsp;<i class="fa fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2023/05/04/frontend/flutter/flutter-build-5-social-app/flutter-build-5-social-app/">
+                <a href="/2023/05/04/backend/java/udemy-ultimate-java/p1-fundamentals/fundamentals/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="flutter-build-5-social-app">
+                        <img src="/medias/featureimages/5.jpg" class="responsive-img" alt="Ultimate Java Part 1 Fundamentals">
                         
-                        <span class="card-title">flutter-build-5-social-app</span>
+                        <span class="card-title">Ultimate Java Part 1 Fundamentals</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary"></div>
+                    <div class="summary">1. getting start1- Setting Up the Development Environment–[koudaizy.com]
+2- Anatomy of a Java Program–[koudaizy.com]
+</div>
                     <div class="publish-info">
                             <span class="publish-date">
                                 <i class="fa fa-clock-o fa-fw icon-date"></i>2023-05-04
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fa fa-user fa-fw"></i>
-                            malred
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/udemy/" class="post-category" target="_blank">
+                                    udemy
+                                </a>
+                            
+                            <a href="/categories/udemy/java/" class="post-category" target="_blank">
+                                    java
+                                </a>
+                            
                             
                         </span>
                     </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/java/" target="_blank">
+                        <span class="chip bg-color">java</span>
+                    </a>
+                    
+                    <a href="/tags/udemy/" target="_blank">
+                        <span class="chip bg-color">udemy</span>
+                    </a>
+                    
                 </div>
                 
             </div>
@@ -1854,7 +2001,7 @@ plt<span class="token punctuation">.</span>show<span class="token punctuation">(
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">88.3k</span>
+                <span class="white-color">92.4k</span>
             
 
             
