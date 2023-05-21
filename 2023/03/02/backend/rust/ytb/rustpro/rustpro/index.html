@@ -426,14 +426,14 @@ fn main() {
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        446
+                        904
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        2 分
+                        5 分
                     </div>
                     
                 
@@ -567,11 +567,128 @@ fn main() {
 cargo run -- -j 1000 192.168.2.1
 </code></pre>
 <p><img src="20230518212928.png"></p>
-<h1 id="snake-game"><a href="#snake-game" class="headerlink" title="snake game"></a>snake game</h1><h1 id="chat-application"><a href="#chat-application" class="headerlink" title="chat application"></a>chat application</h1><h2 id="init-1"><a href="#init-1" class="headerlink" title="init"></a>init</h2><pre class=" language-shell"><code class="language-shell">mkdir chat && cd chat
+<h1 id="snake-game"><a href="#snake-game" class="headerlink" title="snake game"></a>snake game</h1><h1 id="chat-application-简易回声服务"><a href="#chat-application-简易回声服务" class="headerlink" title="chat application(简易回声服务)"></a>chat application(简易回声服务)</h1><h2 id="init-1"><a href="#init-1" class="headerlink" title="init"></a>init</h2><pre class=" language-shell"><code class="language-shell">mkdir chat && cd chat
 cargo new server --bin
 cargo new client --bin
 </code></pre>
-
+<h2 id="server"><a href="#server" class="headerlink" title="server"></a>server</h2><pre class=" language-rust"><code class="language-rust"><span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span>ErrorKind<span class="token punctuation">,</span> Read<span class="token punctuation">,</span> Write<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>net<span class="token punctuation">:</span><span class="token punctuation">:</span>TcpListener<span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>sync<span class="token punctuation">:</span><span class="token punctuation">:</span>mpsc<span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>thread<span class="token punctuation">;</span>
+<span class="token keyword">const</span> LOCAL<span class="token punctuation">:</span> <span class="token operator">&amp;</span>str <span class="token operator">=</span> <span class="token string">"127.0.0.1:6000"</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> MSG_SIZE<span class="token punctuation">:</span> usize <span class="token operator">=</span> <span class="token number">32</span><span class="token punctuation">;</span>
+<span class="token keyword">fn</span> <span class="token function">sleep</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    thread<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">sleep</span><span class="token punctuation">(</span><span class="token punctuation">:</span><span class="token punctuation">:</span>std<span class="token punctuation">:</span><span class="token punctuation">:</span>time<span class="token punctuation">:</span><span class="token punctuation">:</span>Duration<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">from_millis</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">fn</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 绑定端口</span>
+    <span class="token keyword">let</span> server <span class="token operator">=</span> TcpListener<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">bind</span><span class="token punctuation">(</span>LOCAL<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"listener failed to bind"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 非阻塞</span>
+    server
+        <span class="token punctuation">.</span><span class="token function">set_nonblocking</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"failed to initialize non-blocking"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> <span class="token keyword">mut</span> clients <span class="token operator">=</span> <span class="token function">vec!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 通道</span>
+    <span class="token keyword">let</span> <span class="token punctuation">(</span>tx<span class="token punctuation">,</span> rx<span class="token punctuation">)</span> <span class="token operator">=</span> mpsc<span class="token punctuation">:</span><span class="token punctuation">:</span>channel<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>String<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">loop</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 连接</span>
+        <span class="token keyword">if</span> <span class="token keyword">let</span> <span class="token function">Ok</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">mut</span> socket<span class="token punctuation">,</span> addr<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">=</span> server<span class="token punctuation">.</span><span class="token function">accept</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Client {} connected"</span><span class="token punctuation">,</span> addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">let</span> tx <span class="token operator">=</span> tx<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            clients<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>socket<span class="token punctuation">.</span><span class="token function">try_clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"failed to clone client"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            thread<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">spawn</span><span class="token punctuation">(</span><span class="token keyword">move</span> <span class="token closure-params"><span class="token punctuation">|</span><span class="token punctuation">|</span></span> <span class="token punctuation">{</span>
+                <span class="token keyword">loop</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">let</span> <span class="token keyword">mut</span> buff <span class="token operator">=</span> <span class="token function">vec!</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">;</span> MSG_SIZE<span class="token punctuation">]</span><span class="token punctuation">;</span>
+                    <span class="token comment" spellcheck="true">// 读取信息</span>
+                    <span class="token keyword">match</span> socket<span class="token punctuation">.</span><span class="token function">read_exact</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> buff<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                        <span class="token function">Ok</span><span class="token punctuation">(</span>_<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                            <span class="token keyword">let</span> msg <span class="token operator">=</span> buff<span class="token punctuation">.</span><span class="token function">into_iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">take_while</span><span class="token punctuation">(</span><span class="token operator">|</span><span class="token operator">&amp;</span>x<span class="token operator">|</span> x <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>collect<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>Vec<span class="token operator">&lt;</span>_<span class="token operator">>></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                            <span class="token keyword">let</span> msg <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">from_utf8</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"Invalid utf8 message"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                            <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"{}: {:?}"</span><span class="token punctuation">,</span> addr<span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                            tx<span class="token punctuation">.</span><span class="token function">send</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"failed to send message to rx"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        <span class="token punctuation">}</span>
+                        <span class="token function">Err</span><span class="token punctuation">(</span><span class="token keyword">ref</span> err<span class="token punctuation">)</span> <span class="token keyword">if</span> err<span class="token punctuation">.</span><span class="token function">kind</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> ErrorKind<span class="token punctuation">:</span><span class="token punctuation">:</span>WouldBlock <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                        <span class="token function">Err</span><span class="token punctuation">(</span>_<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                            <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"closing connection with: {}"</span><span class="token punctuation">,</span> addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                            <span class="token keyword">break</span><span class="token punctuation">;</span>
+                        <span class="token punctuation">}</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+                <span class="token function">sleep</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 尝试通过通道接收信息</span>
+        <span class="token keyword">if</span> <span class="token keyword">let</span> <span class="token function">Ok</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span> <span class="token operator">=</span> rx<span class="token punctuation">.</span><span class="token function">try_recv</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            clients <span class="token operator">=</span> clients
+                <span class="token punctuation">.</span><span class="token function">into_iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">filter_map</span><span class="token punctuation">(</span><span class="token operator">|</span><span class="token keyword">mut</span> client<span class="token operator">|</span> <span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">// 转换为字节</span>
+                    <span class="token keyword">let</span> <span class="token keyword">mut</span> buff <span class="token operator">=</span> msg<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">into_bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token comment" spellcheck="true">// 调整缓冲区大小</span>
+                    buff<span class="token punctuation">.</span><span class="token function">resize</span><span class="token punctuation">(</span>MSG_SIZE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token comment" spellcheck="true">// 写入缓冲区</span>
+                    client<span class="token punctuation">.</span><span class="token function">write_all</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>buff<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token operator">|</span>_<span class="token operator">|</span> client<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">ok</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span><span class="token punctuation">)</span>
+                <span class="token comment" spellcheck="true">// 缓冲区数据收集到向量</span>
+                <span class="token punctuation">.</span>collect<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>Vec<span class="token operator">&lt;</span>_<span class="token operator">>></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">sleep</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> 
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="client"><a href="#client" class="headerlink" title="client"></a>client</h2><pre class=" language-rust"><code class="language-rust"><span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span><span class="token keyword">self</span><span class="token punctuation">,</span> ErrorKind<span class="token punctuation">,</span> Read<span class="token punctuation">,</span> Write<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>net<span class="token punctuation">:</span><span class="token punctuation">:</span>TcpStream<span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>sync<span class="token punctuation">:</span><span class="token punctuation">:</span>mpsc<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span><span class="token keyword">self</span><span class="token punctuation">,</span> channel<span class="token punctuation">,</span> TryRecvError<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>thread<span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>time<span class="token punctuation">:</span><span class="token punctuation">:</span>Duration<span class="token punctuation">;</span>
+<span class="token keyword">const</span> LOCAL<span class="token punctuation">:</span> <span class="token operator">&amp;</span>str <span class="token operator">=</span> <span class="token string">"127.0.0.1:6000"</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> MSG_SIZE<span class="token punctuation">:</span> usize <span class="token operator">=</span> <span class="token number">32</span><span class="token punctuation">;</span>
+<span class="token keyword">fn</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> <span class="token keyword">mut</span> client <span class="token operator">=</span> TcpStream<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">connect</span><span class="token punctuation">(</span>LOCAL<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"failed to connect"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    client
+        <span class="token punctuation">.</span><span class="token function">set_nonblocking</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"failed to initialize non-blocking"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> <span class="token punctuation">(</span>tx<span class="token punctuation">,</span> rx<span class="token punctuation">)</span> <span class="token operator">=</span> mpsc<span class="token punctuation">:</span><span class="token punctuation">:</span>channel<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>String<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    thread<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">spawn</span><span class="token punctuation">(</span><span class="token keyword">move</span> <span class="token operator">||</span> <span class="token keyword">loop</span> <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> buff <span class="token operator">=</span> <span class="token function">vec!</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">;</span> MSG_SIZE<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token keyword">match</span> client<span class="token punctuation">.</span><span class="token function">read_exact</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> buff<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">Ok</span><span class="token punctuation">(</span>_<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                <span class="token keyword">let</span> msg <span class="token operator">=</span> buff<span class="token punctuation">.</span><span class="token function">into_iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">take_while</span><span class="token punctuation">(</span><span class="token operator">|</span><span class="token operator">&amp;</span>x<span class="token operator">|</span> x <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>collect<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>Vec<span class="token operator">&lt;</span>_<span class="token operator">>></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"message recv {:?}"</span><span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token function">Err</span><span class="token punctuation">(</span><span class="token keyword">ref</span> err<span class="token punctuation">)</span> <span class="token keyword">if</span> err<span class="token punctuation">.</span><span class="token function">kind</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> ErrorKind<span class="token punctuation">:</span><span class="token punctuation">:</span>WouldBlock <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token function">Err</span><span class="token punctuation">(</span>_<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"connection with server was servered"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">match</span> rx<span class="token punctuation">.</span><span class="token function">try_recv</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">Ok</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                <span class="token keyword">let</span> <span class="token keyword">mut</span> buff <span class="token operator">=</span> msg<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">into_bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                buff<span class="token punctuation">.</span><span class="token function">resize</span><span class="token punctuation">(</span>MSG_SIZE<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                client<span class="token punctuation">.</span><span class="token function">write_all</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>buff<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"writing to socket failed"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"message sent {:?}"</span><span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token function">Err</span><span class="token punctuation">(</span>TryRecvError<span class="token punctuation">:</span><span class="token punctuation">:</span>Empty<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token function">Err</span><span class="token punctuation">(</span>TryRecvError<span class="token punctuation">:</span><span class="token punctuation">:</span>Disconnected<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token keyword">break</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+        thread<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">sleep</span><span class="token punctuation">(</span>Duration<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">from_millis</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"write a message"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">loop</span> <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> buff <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdin</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">read_line</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> buff<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"reading from stdin failed"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> msg <span class="token operator">=</span> buff<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> msg <span class="token operator">==</span> <span class="token string">":quit"</span> <span class="token operator">||</span> tx<span class="token punctuation">.</span><span class="token function">send</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">is_err</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"bye!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id=""><a href="#" class="headerlink" title=""></a></h1>
             </div>
             <hr/>
 
@@ -736,6 +853,64 @@ cargo new client --bin
             <div class="article-badge left-badge text-color">
                 <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
+                <a href="/2023/03/02/backend/rust/rust-ji-chu-jin-jie-wang-luo-bian-cheng/jin-jie/jin-jie/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="rust学习 - 进阶">
+                        
+                        <span class="card-title">rust学习 - 进阶</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary">进阶篇介绍
+泛型
+trait 特征
+定义/作为参数pub trait GetInformation {
+    fn get_name(&amp;self) -> &amp;String;
+    fn get_age(&amp;self)</div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2023-03-02
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/rust/" class="post-category" target="_blank">
+                                    rust
+                                </a>
+                            
+                            <a href="/categories/rust/%E5%9F%BA%E7%A1%80/" class="post-category" target="_blank">
+                                    基础
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/rust/" target="_blank">
+                        <span class="chip bg-color">rust</span>
+                    </a>
+                    
+                    <a href="/tags/%E5%9F%BA%E7%A1%80/" target="_blank">
+                        <span class="chip bg-color">基础</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
                 <a href="/2023/03/02/backend/rust/rust-ubuntu-code/9-biao-zhun-ku/9-biao-zhun-ku/">
                     <div class="card-image">
                         
@@ -752,9 +927,9 @@ cargo new client --bin
 //                           结束项
 </div>
                     <div class="publish-info">
-                        <span class="publish-date">
-                            <i class="fa fa-clock-o fa-fw icon-date"></i>2023-03-02
-                        </span>
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2023-03-02
+                            </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
@@ -780,82 +955,6 @@ cargo new client --bin
                     
                     <a href="/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" target="_blank">
                         <span class="chip bg-color">编译原理</span>
-                    </a>
-                    
-                </div>
-                
-            </div>
-        </div>
-        
-        
-        <div class="article col s12 m6" data-aos="fade-up">
-            <div class="article-badge right-badge text-color">
-                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
-            </div>
-            <div class="card">
-                <a href="/2023/02/26/frontend/udemy-threejs/udemy-threejs/udemy-threejs/">
-                    <div class="card-image">
-                        
-                        
-                        <img src="/medias/featureimages/12.jpg" class="responsive-img" alt="udemy-threejs">
-                        
-                        <span class="card-title">udemy-threejs</span>
-                    </div>
-                </a>
-                <div class="card-content article-content">
-                    <div class="summary">环境
-安装vs,git,ts# 建议使用最新版ts,其他包的types定义才能兼容
-npm i -g typescript 
-
-
-ts部分foo.ts 编译
-编译生成jsfunction foo(bar) {
-  return "hello</div>
-                    <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2023-02-26
-                            </span>
-                        <span class="publish-author">
-                            
-                            <i class="fa fa-bookmark fa-fw icon-category"></i>
-                            
-                            <a href="/categories/%E5%8F%AF%E8%A7%86%E5%8C%96/" class="post-category" target="_blank">
-                                    可视化
-                                </a>
-                            
-                            <a href="/categories/%E5%8F%AF%E8%A7%86%E5%8C%96/threejs/" class="post-category" target="_blank">
-                                    threejs
-                                </a>
-                            
-                            <a href="/categories/%E5%8F%AF%E8%A7%86%E5%8C%96/threejs/%E9%AB%98%E9%98%B6/" class="post-category" target="_blank">
-                                    高阶
-                                </a>
-                            
-                            <a href="/categories/%E5%8F%AF%E8%A7%86%E5%8C%96/threejs/%E9%AB%98%E9%98%B6/%E5%89%8D%E7%AB%AF/" class="post-category" target="_blank">
-                                    前端
-                                </a>
-                            
-                            
-                        </span>
-                    </div>
-                </div>
-                
-                <div class="card-action article-tags">
-                    
-                    <a href="/tags/%E5%89%8D%E7%AB%AF/" target="_blank">
-                        <span class="chip bg-color">前端</span>
-                    </a>
-                    
-                    <a href="/tags/%E5%8F%AF%E8%A7%86%E5%8C%96/" target="_blank">
-                        <span class="chip bg-color">可视化</span>
-                    </a>
-                    
-                    <a href="/tags/threejs/" target="_blank">
-                        <span class="chip bg-color">threejs</span>
-                    </a>
-                    
-                    <a href="/tags/%E9%AB%98%E9%98%B6/" target="_blank">
-                        <span class="chip bg-color">高阶</span>
                     </a>
                     
                 </div>
@@ -966,7 +1065,7 @@ ts部分foo.ts 编译
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">92.4k</span>
+                <span class="white-color">97.1k</span>
             
 
             
