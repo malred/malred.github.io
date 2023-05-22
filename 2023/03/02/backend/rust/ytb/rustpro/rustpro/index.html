@@ -426,14 +426,14 @@ fn main() {
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        907
+                        1.7k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        5 分
+                        10 分
                     </div>
                     
                 
@@ -689,7 +689,300 @@ cargo new client --bin
 <span class="token punctuation">}</span>
 </code></pre>
 <h1 id="CLI-Toy-Blockchain"><a href="#CLI-Toy-Blockchain" class="headerlink" title="CLI Toy Blockchain"></a>CLI Toy Blockchain</h1><p><img src="20230521203621.png"><br><img src="20230521203718.png"></p>
+<h2 id="cargo-toml"><a href="#cargo-toml" class="headerlink" title="cargo.toml"></a>cargo.toml</h2><pre class=" language-toml"><code class="language-toml">[package]
+name = "bc"
+version = "0.1.0"
+edition = "2021"
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = "0.4"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
+sha2 = "0.10.1"
+</code></pre>
+<h2 id="blockchain-rs"><a href="#blockchain-rs" class="headerlink" title="blockchain.rs"></a>blockchain.rs</h2><pre class=" language-rust"><code class="language-rust"><span class="token keyword">use</span> serde_derive<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span>Deserialize<span class="token punctuation">,</span> Serialize<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> sha2<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span>Digest<span class="token punctuation">,</span> Sha256<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>fmt<span class="token punctuation">:</span><span class="token punctuation">:</span>Write<span class="token punctuation">;</span>
+
+<span class="token keyword">use</span> chrono<span class="token punctuation">:</span><span class="token punctuation">:</span>prelude<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">*</span><span class="token punctuation">;</span>
+
+<span class="token attribute attr-name">#[derive(Debug, Clone, Serialize)]</span>
+<span class="token keyword">struct</span> Transaction <span class="token punctuation">{</span> 
+    sender<span class="token punctuation">:</span> String<span class="token punctuation">,</span> 
+    receiver<span class="token punctuation">:</span> String<span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 金额</span>
+    amount<span class="token punctuation">:</span> f32<span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token attribute attr-name">#[derive(Serialize, Debug)]</span>
+<span class="token keyword">pub</span> <span class="token keyword">struct</span> Blockheader <span class="token punctuation">{</span>
+    timestamp<span class="token punctuation">:</span> i64<span class="token punctuation">,</span>
+    nonce<span class="token punctuation">:</span> u32<span class="token punctuation">,</span>
+    pre_hash<span class="token punctuation">:</span> String<span class="token punctuation">,</span>
+    merkle<span class="token punctuation">:</span> String<span class="token punctuation">,</span> 
+    <span class="token comment" spellcheck="true">// 难度</span>
+    difficulty<span class="token punctuation">:</span> u32<span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token attribute attr-name">#[derive(Serialize, Debug)]</span>
+<span class="token keyword">pub</span> <span class="token keyword">struct</span> Block <span class="token punctuation">{</span>
+    header<span class="token punctuation">:</span> Blockheader<span class="token punctuation">,</span>
+    count<span class="token punctuation">:</span> u32<span class="token punctuation">,</span>
+    transactions<span class="token punctuation">:</span> Vec<span class="token operator">&lt;</span>Transaction<span class="token operator">></span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">pub</span> <span class="token keyword">struct</span> Chain <span class="token punctuation">{</span>
+    chain<span class="token punctuation">:</span> Vec<span class="token operator">&lt;</span>Block<span class="token operator">></span><span class="token punctuation">,</span>
+    curr_trans<span class="token punctuation">:</span> Vec<span class="token operator">&lt;</span>Transaction<span class="token operator">></span><span class="token punctuation">,</span>
+    difficulty<span class="token punctuation">:</span> u32<span class="token punctuation">,</span>
+    miner_addr<span class="token punctuation">:</span> String<span class="token punctuation">,</span>
+    reward<span class="token punctuation">:</span> f32<span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 赏金</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">impl</span> Chain <span class="token punctuation">{</span>
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">new</span><span class="token punctuation">(</span>miner_addr<span class="token punctuation">:</span> String<span class="token punctuation">,</span> difficulty<span class="token punctuation">:</span> u32<span class="token punctuation">)</span> <span class="token punctuation">-></span> Chain <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> chain <span class="token operator">=</span> Chain <span class="token punctuation">{</span>
+            chain<span class="token punctuation">:</span> Vec<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            curr_trans<span class="token punctuation">:</span> Vec<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            difficulty<span class="token punctuation">,</span>
+            miner_addr<span class="token punctuation">,</span>
+            reward<span class="token punctuation">:</span> <span class="token number">100.0</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+        chain<span class="token punctuation">.</span><span class="token function">generate_new_block</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        chain
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">new_transaction</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> sender<span class="token punctuation">:</span> String<span class="token punctuation">,</span> receiver<span class="token punctuation">:</span> String<span class="token punctuation">,</span> amount<span class="token punctuation">:</span> f32<span class="token punctuation">)</span> <span class="token punctuation">-></span> bool <span class="token punctuation">{</span>
+        <span class="token keyword">self</span><span class="token punctuation">.</span>curr_trans<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>Transaction <span class="token punctuation">{</span>
+            sender<span class="token punctuation">,</span>
+            receiver<span class="token punctuation">,</span>
+            amount<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">true</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">last_hash</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">self</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> String <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> block <span class="token operator">=</span> <span class="token keyword">match</span> <span class="token keyword">self</span><span class="token punctuation">.</span>chain<span class="token punctuation">.</span><span class="token function">last</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">Some</span><span class="token punctuation">(</span>block<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> block<span class="token punctuation">,</span>
+            None <span class="token operator">=</span><span class="token operator">></span> <span class="token keyword">return</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">from_utf8</span><span class="token punctuation">(</span><span class="token function">vec!</span><span class="token punctuation">[</span><span class="token number">48</span><span class="token punctuation">;</span> <span class="token number">64</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+        Chain<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">hash</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>block<span class="token punctuation">.</span>header<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">update_difficulty</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> difficulty<span class="token punctuation">:</span> u32<span class="token punctuation">)</span> <span class="token punctuation">-></span> bool <span class="token punctuation">{</span>
+        <span class="token keyword">self</span><span class="token punctuation">.</span>difficulty <span class="token operator">=</span> difficulty<span class="token punctuation">;</span>
+        <span class="token keyword">true</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">update_reward</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">,</span> reward<span class="token punctuation">:</span> f32<span class="token punctuation">)</span> <span class="token punctuation">-></span> bool <span class="token punctuation">{</span>
+        <span class="token keyword">self</span><span class="token punctuation">.</span>reward <span class="token operator">=</span> reward<span class="token punctuation">;</span>
+        <span class="token keyword">true</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">generate_new_block</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> bool <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> header <span class="token operator">=</span> Blockheader <span class="token punctuation">{</span>
+            timestamp<span class="token punctuation">:</span> Utc<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">timestamp_millis</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            nonce<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            pre_hash<span class="token punctuation">:</span> <span class="token keyword">self</span><span class="token punctuation">.</span><span class="token function">last_hash</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            merkle<span class="token punctuation">:</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            difficulty<span class="token punctuation">:</span> <span class="token keyword">self</span><span class="token punctuation">.</span>difficulty<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> reward_trans <span class="token operator">=</span> Transaction <span class="token punctuation">{</span>
+            sender<span class="token punctuation">:</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token string">"Root"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            receiver<span class="token punctuation">:</span> <span class="token keyword">self</span><span class="token punctuation">.</span>miner_addr<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            amount<span class="token punctuation">:</span> <span class="token keyword">self</span><span class="token punctuation">.</span>reward<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> block <span class="token operator">=</span> Block <span class="token punctuation">{</span>
+            header<span class="token punctuation">,</span>
+            count<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            transactions<span class="token punctuation">:</span> <span class="token function">vec!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+        block<span class="token punctuation">.</span>transactions<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>reward_trans<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        block<span class="token punctuation">.</span>transactions<span class="token punctuation">.</span><span class="token function">append</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> <span class="token keyword">self</span><span class="token punctuation">.</span>curr_trans<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        block<span class="token punctuation">.</span>count <span class="token operator">=</span> block<span class="token punctuation">.</span>transactions<span class="token punctuation">.</span><span class="token function">len</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> u32<span class="token punctuation">;</span>
+        block<span class="token punctuation">.</span>header<span class="token punctuation">.</span>merkle <span class="token operator">=</span> Chain<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">get_merkle</span><span class="token punctuation">(</span>block<span class="token punctuation">.</span>transactions<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        Chain<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">proof_of_work</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> block<span class="token punctuation">.</span>header<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"{:#?}"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>block<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">self</span><span class="token punctuation">.</span>chain<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>block<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">true</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">fn</span> <span class="token function">get_merkle</span><span class="token punctuation">(</span>curr_trans<span class="token punctuation">:</span> Vec<span class="token operator">&lt;</span>Transaction<span class="token operator">></span><span class="token punctuation">)</span> <span class="token punctuation">-></span> String <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> merkle <span class="token operator">=</span> Vec<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">for</span> t <span class="token keyword">in</span> <span class="token operator">&amp;</span>curr_trans <span class="token punctuation">{</span>
+            <span class="token keyword">let</span> hash <span class="token operator">=</span> Chain<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">hash</span><span class="token punctuation">(</span>t<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            merkle<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>hash<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> merkle<span class="token punctuation">.</span><span class="token function">len</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">%</span> <span class="token number">2</span> <span class="token operator">==</span> <span class="token number">1</span> <span class="token punctuation">{</span>
+            <span class="token keyword">let</span> last <span class="token operator">=</span> merkle<span class="token punctuation">.</span><span class="token function">last</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">cloned</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            merkle<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>last<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">while</span> merkle<span class="token punctuation">.</span><span class="token function">len</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">1</span> <span class="token punctuation">{</span>
+            <span class="token keyword">let</span> <span class="token keyword">mut</span> h1 <span class="token operator">=</span> merkle<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">let</span> <span class="token keyword">mut</span> h2 <span class="token operator">=</span> merkle<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            h1<span class="token punctuation">.</span><span class="token function">push_str</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> h2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">let</span> nh <span class="token operator">=</span> Chain<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">hash</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>h1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            merkle<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>nh<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        merkle<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">proof_of_work</span><span class="token punctuation">(</span>header<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token keyword">mut</span> Blockheader<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">loop</span> <span class="token punctuation">{</span>
+            <span class="token keyword">let</span> hash <span class="token operator">=</span> Chain<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">hash</span><span class="token punctuation">(</span>header<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">let</span> slice <span class="token operator">=</span> <span class="token operator">&amp;</span>hash<span class="token punctuation">[</span><span class="token punctuation">..</span>header<span class="token punctuation">.</span>difficulty <span class="token keyword">as</span> usize<span class="token punctuation">]</span><span class="token punctuation">;</span>
+            <span class="token keyword">match</span> slice<span class="token punctuation">.</span>parse<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>u32<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">Ok</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                    <span class="token keyword">if</span> val <span class="token operator">!=</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+                        header<span class="token punctuation">.</span>nonce <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                        <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Block hash: {}"</span><span class="token punctuation">,</span> hash<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                        <span class="token keyword">break</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+                <span class="token function">Err</span><span class="token punctuation">(</span>_<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                    header<span class="token punctuation">.</span>nonce <span class="token operator">+=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+                    <span class="token keyword">continue</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> hash<span class="token operator">&lt;</span>T<span class="token punctuation">:</span> serde<span class="token punctuation">:</span><span class="token punctuation">:</span>Serialize<span class="token operator">></span><span class="token punctuation">(</span>item<span class="token punctuation">:</span> <span class="token operator">&amp;</span>T<span class="token punctuation">)</span> <span class="token punctuation">-></span> String <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> input <span class="token operator">=</span> serde_json<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>item<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> hasher <span class="token operator">=</span> Sha256<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        hasher<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span>input<span class="token punctuation">.</span><span class="token function">as_bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> res <span class="token operator">=</span> hasher<span class="token punctuation">.</span><span class="token function">finalize</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">let</span> vec_res <span class="token operator">=</span> res<span class="token punctuation">.</span><span class="token function">to_vec</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        Chain<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">hex_to_string</span><span class="token punctuation">(</span>vec_res<span class="token punctuation">.</span><span class="token function">as_slice</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">hex_to_string</span><span class="token punctuation">(</span>vec_res<span class="token punctuation">:</span> <span class="token operator">&amp;</span><span class="token punctuation">[</span>u8<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> String <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> <span class="token keyword">mut</span> s <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span> b <span class="token keyword">in</span> vec_res <span class="token punctuation">{</span>
+            <span class="token function">write!</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> s<span class="token punctuation">,</span> <span class="token string">"{:x}"</span><span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"unable to write"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        s
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="main-rs"><a href="#main-rs" class="headerlink" title="main.rs"></a>main.rs</h2><pre class=" language-rust"><code class="language-rust"><span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>io<span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>io<span class="token punctuation">:</span><span class="token punctuation">:</span>Write<span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>process<span class="token punctuation">;</span>
+
+<span class="token keyword">mod</span> blockchain<span class="token punctuation">;</span>
+
+<span class="token keyword">fn</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> <span class="token keyword">mut</span> miner_addr <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> <span class="token keyword">mut</span> difficulty <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> <span class="token keyword">mut</span> choice <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">print!</span><span class="token punctuation">(</span><span class="token string">"input a miner address: "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">read_line</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> miner_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">print!</span><span class="token punctuation">(</span><span class="token string">"Difficulty: "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">read_line</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> difficulty<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> diff <span class="token operator">=</span> difficulty
+        <span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span>parse<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>u32<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"we need an integer"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"generating genesis block! "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> <span class="token keyword">mut</span> chain <span class="token operator">=</span> blockchain<span class="token punctuation">:</span><span class="token punctuation">:</span>Chain<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span>miner_addr<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> diff<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">loop</span> <span class="token punctuation">{</span>
+        <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Menu"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"1) New Transaction"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"2) Mine block"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"3) Change Difficulty"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"4) Change Reward"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"0) Exit"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">print!</span><span class="token punctuation">(</span><span class="token string">"Enter your choice: "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        choice<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">read_line</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> choice<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">match</span> choice<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token number">0</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"exiting!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                process<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token number">1</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                <span class="token keyword">let</span> <span class="token keyword">mut</span> sender <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">let</span> <span class="token keyword">mut</span> receiver <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">let</span> <span class="token keyword">mut</span> amount <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token function">print!</span><span class="token punctuation">(</span><span class="token string">"enter sender address:"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">read_line</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> sender<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">print!</span><span class="token punctuation">(</span><span class="token string">"enter receiver address: "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">read_line</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> receiver<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">print!</span><span class="token punctuation">(</span><span class="token string">"Enter amount: "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">read_line</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> amount<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">let</span> res <span class="token operator">=</span> chain<span class="token punctuation">.</span><span class="token function">new_transaction</span><span class="token punctuation">(</span>
+                    sender<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    receiver<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">to_string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    amount<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">match</span> res <span class="token punctuation">{</span>
+                    <span class="token keyword">true</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"transaction added"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    <span class="token keyword">false</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"transaction failed"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+            <span class="token number">2</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Generating block"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">let</span> res <span class="token operator">=</span> chain<span class="token punctuation">.</span><span class="token function">generate_new_block</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">match</span> res <span class="token punctuation">{</span>
+                    <span class="token keyword">true</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Block generated successfully"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    <span class="token keyword">false</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Block generation failed"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+            <span class="token number">3</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                <span class="token keyword">let</span> <span class="token keyword">mut</span> new_diff <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">print!</span><span class="token punctuation">(</span><span class="token string">"enter new difficulty: "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">read_line</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> new_diff<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">let</span> res <span class="token operator">=</span> chain<span class="token punctuation">.</span><span class="token function">update_difficulty</span><span class="token punctuation">(</span>new_diff<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">match</span> res <span class="token punctuation">{</span>
+                    <span class="token keyword">true</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Updated Difficulty"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    <span class="token keyword">false</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Failed Update Difficulty"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+            <span class="token number">4</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+                <span class="token keyword">let</span> <span class="token keyword">mut</span> new_reward <span class="token operator">=</span> String<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">print!</span><span class="token punctuation">(</span><span class="token string">"Enter new reward: "</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdout</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">flush</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                io<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">stdin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">read_line</span><span class="token punctuation">(</span><span class="token operator">&amp;</span><span class="token keyword">mut</span> new_reward<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">let</span> res <span class="token operator">=</span> chain<span class="token punctuation">.</span><span class="token function">update_reward</span><span class="token punctuation">(</span>new_reward<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">unwrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">match</span> res <span class="token punctuation">{</span>
+                    <span class="token keyword">true</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Updated reward"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    <span class="token keyword">false</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Failed Update reward"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+            _ <span class="token operator">=</span><span class="token operator">></span> <span class="token function">println!</span><span class="token punctuation">(</span><span class="token string">"Invalid option please retry"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="Intro-to-Rust-lang-Building-a-Web-API-with-Iron"><a href="#Intro-to-Rust-lang-Building-a-Web-API-with-Iron" class="headerlink" title="Intro to Rust-lang (Building a Web API with Iron)"></a>Intro to Rust-lang (Building a Web API with Iron)</h1>
             </div>
             <hr/>
 
@@ -854,18 +1147,22 @@ cargo new client --bin
             <div class="article-badge left-badge text-color">
                 <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2023/03/02/backend/js/udmy-js-high-level/1/1/">
+                <a href="/2023/03/02/backend/rust/rust-ji-chu-jin-jie-wang-luo-bian-cheng/jin-jie/jin-jie/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="udemy-js-high-level">
+                        <img src="/medias/featureimages/0.jpg" class="responsive-img" alt="rust学习 - 进阶">
                         
-                        <span class="card-title">udemy-js-high-level</span>
+                        <span class="card-title">rust学习 - 进阶</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">01 Welcome, Welcome, Welcome!
-02 JavaScript Fundamentals _ Part 1006 Section Intro</div>
+                    <div class="summary">进阶篇介绍
+泛型
+trait 特征
+定义/作为参数pub trait GetInformation {
+    fn get_name(&amp;self) -> &amp;String;
+    fn get_age(&amp;self)</div>
                     <div class="publish-info">
                         <span class="publish-date">
                             <i class="fa fa-clock-o fa-fw icon-date"></i>2023-03-02
@@ -874,8 +1171,12 @@ cargo new client --bin
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/javascript/" class="post-category" target="_blank">
-                                    javascript
+                            <a href="/categories/rust/" class="post-category" target="_blank">
+                                    rust
+                                </a>
+                            
+                            <a href="/categories/rust/%E5%9F%BA%E7%A1%80/" class="post-category" target="_blank">
+                                    基础
                                 </a>
                             
                             
@@ -885,8 +1186,12 @@ cargo new client --bin
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/javascript/" target="_blank">
-                        <span class="chip bg-color">javascript</span>
+                    <a href="/tags/rust/" target="_blank">
+                        <span class="chip bg-color">rust</span>
+                    </a>
+                    
+                    <a href="/tags/%E5%9F%BA%E7%A1%80/" target="_blank">
+                        <span class="chip bg-color">基础</span>
                     </a>
                     
                 </div>
@@ -1073,7 +1378,7 @@ ts部分foo.ts 编译
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">97.2k</span>
+                <span class="white-color">98.5k</span>
             
 
             
