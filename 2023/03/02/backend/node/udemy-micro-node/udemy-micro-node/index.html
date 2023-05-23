@@ -439,7 +439,7 @@ data in microservices
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        196
+                        301
                     </div>
                     
 
@@ -463,9 +463,18 @@ data in microservices
 <ol>
 <li>所有应用共享数据库,则数据库的扩展变得很难,压力更大</li>
 <li>如果可以访问别的应用的数据库,则服务之间耦合,无法做到微服务的子应用独立运行,一旦崩溃,所有耦合的应用都会一起崩溃</li>
-<li>不同团队开发微服务的不同子服务,如果直接访问他应用的数据库,获取的数据的格式和使用方式会失去规范(团队间需要额外沟通)<h2 id="01-04-Big-Problems-with-Data"><a href="#01-04-Big-Problems-with-Data" class="headerlink" title="01-04 Big Problems with Data"></a>01-04 Big Problems with Data</h2><img src="20230517215629.png"><br><img src="20230517215635.png"><br><img src="20230517215745.png"><br><img src="20230517215827.png" alt="如果服务D需要同时依赖A/B/C数据库里的数据,该怎么办"><h2 id="01-05-Sync-Communication-Between-Services"><a href="#01-05-Sync-Communication-Between-Services" class="headerlink" title="01-05 Sync Communication Between Services"></a>01-05 Sync Communication Between Services</h2><img src="20230517215922.png" alt="有同步和异步两种策略"></li>
+<li>不同团队开发微服务的不同子服务,如果直接访问他应用的数据库,获取的数据的格式和使用方式会失去规范(团队间需要额外沟通)<h2 id="01-04-Big-Problems-with-Data"><a href="#01-04-Big-Problems-with-Data" class="headerlink" title="01-04 Big Problems with Data"></a>01-04 Big Problems with Data</h2><img src="20230517215629.png"><br><img src="20230517215635.png"><br><img src="20230517215745.png"><br><img src="20230517215827.png" alt="如果服务D需要同时依赖A/B/C数据库里的数据,该怎么办"><h2 id="05-Sync-Communication-Between-Services"><a href="#05-Sync-Communication-Between-Services" class="headerlink" title="05 Sync Communication Between Services"></a>05 Sync Communication Between Services</h2><img src="20230517215922.png" alt="有同步和异步两种策略"><br><img src="20230523210912.png"><br><img src="20230523211043.png" alt="同步方式是分布请求需要的服务,获取各个服务的数据,然后整合"><br><img src="20230523211136.png" alt="同步方式的优(绿色)缺(黄色)点"><br><img src="20230523212453.png" alt="同步方式可能导致的依赖网过度复杂"><h2 id="01-06-Event-Based-Communication"><a href="#01-06-Event-Based-Communication" class="headerlink" title="01-06 Event-Based Communication"></a>01-06 Event-Based Communication</h2><blockquote>
+<p>异步方式一:<br>异步方式有一个事件总线(可能单点故障),所有服务都从中接收或发送事件</p>
+</blockquote>
+</li>
 </ol>
-<h1 id="02-A-Mini-Microservices-App"><a href="#02-A-Mini-Microservices-App" class="headerlink" title="02 A Mini-Microservices App"></a>02 A Mini-Microservices App</h1><h2 id="02-01-App-Overview"><a href="#02-01-App-Overview" class="headerlink" title="02-01 App Overview"></a>02-01 App Overview</h2><p><img src="20230517215412.png"></p>
+<p><img src="20230523212737.png" alt="由服务D发出特定事件UserQuery"><br><img src="20230523212832.png" alt="事件A接收到事件,触发UserQueryResult,事件D接收事件,获得A传递的数据,其他数据同理"></p>
+<h2 id="01-07-A-Crazy-Way-of-Storing-Data"><a href="#01-07-A-Crazy-Way-of-Storing-Data" class="headerlink" title="01-07 A Crazy Way of Storing Data"></a>01-07 A Crazy Way of Storing Data</h2><blockquote>
+<p>异步方式二:<br>每次创建新对象,就通知D,D存储需要的数据,而非第一种方式实时请求,当其他服务挂掉,D的本地数据还在</p>
+</blockquote>
+<p><img src="20230523213140.png"><br><img src="20230523213201.png" alt="使需要的数据更精确和简练"><br><img src="20230523213331.png" alt="根据需要的数据构建数据库"><br><img src="20230523213501.png" alt="A创建了一个product数据,就发送事件通知D,D记录该数据"><br><img src="20230523213620.png" alt="同理A创建了user,发送事件,D记录"><br><img src="20230523213705.png" alt="同理"></p>
+<h2 id="01-08-Pros-and-Cons-of-Async-Communication"><a href="#01-08-Pros-and-Cons-of-Async-Communication" class="headerlink" title="01-08 Pros and Cons of Async Communication"></a>01-08 Pros and Cons of Async Communication</h2><p><img src="20230523214307.png" alt="异步方式优缺点"></p>
+<h1 id="02-A-Mini-Microservices-App"><a href="#02-A-Mini-Microservices-App" class="headerlink" title="02 A Mini-Microservices App"></a>02 A Mini-Microservices App</h1><h2 id="02-01-App-Overview"><a href="#02-01-App-Overview" class="headerlink" title="02-01 App Overview"></a>02-01 App Overview</h2><p><img src="20230517215412.png"><br><img src="20230523214923.png"><br><img src="20230523214927.png"><br><img src="20230523214939.png"><br><img src="20230523214948.png"><br><img src="20230523215001.png"><br><img src="20230523215536.png"></p>
 
             </div>
             <hr/>
@@ -710,18 +719,19 @@ google cloud &amp; google kubernetes</div>
                 下一篇&nbsp;<i class="fa fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2023/03/02/backend/rust/rust-ubuntu-code/10-brainfuck-bian-yi-qi/10-brainfuck-bian-yi-qi/">
+                <a href="/2023/03/02/backend/rust/rust-ubuntu-code/1-jie-shao/1-jie-shao/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="rust写编译器 10. brainfuck编译器">
+                        <img src="/medias/featureimages/9.jpg" class="responsive-img" alt="rust写编译器 1.介绍">
                         
-                        <span class="card-title">rust写编译器 10. brainfuck编译器</span>
+                        <span class="card-title">rust写编译器 1.介绍</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">语法解析
-opcode定义</div>
+                    <div class="summary">国内统计使用最多的语言
+想学的语言排行  
+</div>
                     <div class="publish-info">
                             <span class="publish-date">
                                 <i class="fa fa-clock-o fa-fw icon-date"></i>2023-03-02
@@ -861,7 +871,7 @@ opcode定义</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">98.5k</span>
+                <span class="white-color">99.8k</span>
             
 
             
