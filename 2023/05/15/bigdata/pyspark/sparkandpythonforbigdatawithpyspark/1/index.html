@@ -432,14 +432,14 @@ p">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        661
+                        1.1k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        3 分
+                        6 分
                     </div>
                     
                 
@@ -589,7 +589,200 @@ df<span class="token punctuation">.</span>orderBy<span class="token punctuation"
 <span class="token comment" spellcheck="true"># 降序</span>
 df<span class="token punctuation">.</span>orderBy<span class="token punctuation">(</span>df<span class="token punctuation">[</span><span class="token string">'Time on App'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>desc<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'Time on App'</span><span class="token punctuation">,</span><span class="token string">'Email'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span> 
 </code></pre>
-<h2 id="29-Missing-Data"><a href="#29-Missing-Data" class="headerlink" title="29 - Missing Data"></a>29 - Missing Data</h2>
+<h2 id="29-Missing-Data"><a href="#29-Missing-Data" class="headerlink" title="29 - Missing Data"></a>29 - Missing Data</h2><p><img src="20230527152921.png" alt="创建csv"><br><img src="20230527122229.png"><br><img src="20230527152253.png"><br><img src="20230527152427.png"><br><img src="20230527152526.png"><br><img src="20230527152941.png"><br><img src="20230527153701.png"><br><img src="20230527153709.png"><br><img src="20230527153713.png"><br><img src="20230527154204.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true">#!/usr/bin/env python</span>
+<span class="token comment" spellcheck="true"># coding: utf-8</span>
+
+<span class="token comment" spellcheck="true"># In[47]:</span>
+
+
+<span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>sql <span class="token keyword">import</span> SparkSession
+
+
+<span class="token comment" spellcheck="true"># In[48]:</span>
+
+
+spark <span class="token operator">=</span> SparkSession<span class="token punctuation">.</span>builder<span class="token punctuation">.</span>appName<span class="token punctuation">(</span><span class="token string">'miss'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>getOrCreate<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[49]:</span>
+
+
+df <span class="token operator">=</span> spark<span class="token punctuation">.</span>read<span class="token punctuation">.</span>csv<span class="token punctuation">(</span><span class="token string">'miss.csv'</span><span class="token punctuation">,</span>header<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>inferSchema<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[50]:</span>
+
+
+df<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[51]:</span>
+
+
+<span class="token comment" spellcheck="true"># 删除带缺失值的数据</span>
+df<span class="token punctuation">.</span>na<span class="token punctuation">.</span>drop<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[52]:</span>
+
+
+<span class="token comment" spellcheck="true"># thresh: null值数量超过thresh个的数据才被删除</span>
+df<span class="token punctuation">.</span>na<span class="token punctuation">.</span>drop<span class="token punctuation">(</span>thresh<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[53]:</span>
+
+
+<span class="token comment" spellcheck="true"># how: 删除策略(all/any)</span>
+df<span class="token punctuation">.</span>na<span class="token punctuation">.</span>drop<span class="token punctuation">(</span>how<span class="token operator">=</span><span class="token string">'all'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[54]:</span>
+
+
+<span class="token comment" spellcheck="true"># subset: 指定子集（列）含null值的数据才删除 </span>
+df<span class="token punctuation">.</span>na<span class="token punctuation">.</span>drop<span class="token punctuation">(</span>subset<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'Name'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[55]:</span>
+
+
+<span class="token comment" spellcheck="true"># pyspark自可以自动推断类型，在填充缺失值时很有帮助</span>
+df<span class="token punctuation">.</span>printSchema<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[56]:</span>
+
+
+<span class="token comment" spellcheck="true"># 输入字符串，就自动填充字符串类型的数据</span>
+df<span class="token punctuation">.</span>na<span class="token punctuation">.</span>fill<span class="token punctuation">(</span><span class="token string">'FILL VALUE'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[58]:</span>
+
+
+<span class="token comment" spellcheck="true"># 输入number，就自动填充number类型的数据</span>
+df<span class="token punctuation">.</span>na<span class="token punctuation">.</span>fill<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[59]:</span>
+
+
+<span class="token comment" spellcheck="true"># 指定列填充指定数据</span>
+df<span class="token punctuation">.</span>na<span class="token punctuation">.</span>fill<span class="token punctuation">(</span><span class="token string">'No Name'</span><span class="token punctuation">,</span>subset<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'Name'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[60]:</span>
+
+
+<span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>sql<span class="token punctuation">.</span>functions <span class="token keyword">import</span> mean
+
+
+<span class="token comment" spellcheck="true"># In[64]:</span>
+
+
+mean_val <span class="token operator">=</span> df<span class="token punctuation">.</span>select<span class="token punctuation">(</span>mean<span class="token punctuation">(</span>df<span class="token punctuation">[</span><span class="token string">'Sales'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span>
+mean_sale <span class="token operator">=</span> mean_val<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+mean_sale
+
+
+<span class="token comment" spellcheck="true"># In[65]:</span>
+
+
+<span class="token comment" spellcheck="true"># 给缺失值填充该列的平均值</span>
+df<span class="token punctuation">.</span>na<span class="token punctuation">.</span>fill<span class="token punctuation">(</span>mean_sale<span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token string">'Sales'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[66]:</span>
+
+
+df<span class="token punctuation">.</span>na<span class="token punctuation">.</span>fill<span class="token punctuation">(</span>df<span class="token punctuation">.</span>select<span class="token punctuation">(</span>mean<span class="token punctuation">(</span>df<span class="token punctuation">[</span><span class="token string">'Sales'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span><span class="token punctuation">[</span><span class="token string">'Sales'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+ 
+</code></pre>
+<h2 id="30-Dates-and-Timestamps"><a href="#30-Dates-and-Timestamps" class="headerlink" title="30 - Dates and Timestamps"></a>30 - Dates and Timestamps</h2><p><img src="20230527160413.png"><br><img src="20230527160427.png"><br><img src="20230527160444.png"><br><img src="20230527160454.png"><br><img src="20230527160505.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true">#!/usr/bin/env python</span>
+<span class="token comment" spellcheck="true"># coding: utf-8</span>
+
+<span class="token comment" spellcheck="true"># In[9]:</span>
+
+
+<span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>sql <span class="token keyword">import</span> SparkSession
+spark <span class="token operator">=</span> SparkSession<span class="token punctuation">.</span>builder<span class="token punctuation">.</span>appName<span class="token punctuation">(</span><span class="token string">'miss'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>getOrCreate<span class="token punctuation">(</span><span class="token punctuation">)</span>
+df <span class="token operator">=</span> spark<span class="token punctuation">.</span>read<span class="token punctuation">.</span>csv<span class="token punctuation">(</span><span class="token string">'appl_stock.csv'</span><span class="token punctuation">,</span>header<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>inferSchema<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[10]:</span>
+
+
+df<span class="token punctuation">.</span>head<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[12]:</span>
+
+
+df<span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'Date'</span><span class="token punctuation">,</span><span class="token string">'Open'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[16]:</span>
+
+
+<span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>sql<span class="token punctuation">.</span>functions <span class="token keyword">import</span> <span class="token punctuation">(</span>dayofmonth<span class="token punctuation">,</span>hour<span class="token punctuation">,</span>dayofyear<span class="token punctuation">,</span>
+                                   month<span class="token punctuation">,</span>year<span class="token punctuation">,</span>weekofyear<span class="token punctuation">,</span>
+                                   format_number<span class="token punctuation">,</span>date_format<span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[18]:</span>
+
+
+<span class="token comment" spellcheck="true"># 获取每个Date数据(year-month-day)的day</span>
+df<span class="token punctuation">.</span>select<span class="token punctuation">(</span>dayofmonth<span class="token punctuation">(</span>df<span class="token punctuation">[</span><span class="token string">'Date'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[19]:</span>
+
+
+<span class="token comment" spellcheck="true"># 获取每个Date数据(year-month-day)的month</span>
+df<span class="token punctuation">.</span>select<span class="token punctuation">(</span>month<span class="token punctuation">(</span>df<span class="token punctuation">[</span><span class="token string">'Date'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[20]:</span>
+
+
+<span class="token comment" spellcheck="true"># 获取每个Date数据(year-month-day)的year</span>
+df<span class="token punctuation">.</span>select<span class="token punctuation">(</span>year<span class="token punctuation">(</span>df<span class="token punctuation">[</span><span class="token string">'Date'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[24]:</span>
+
+
+<span class="token comment" spellcheck="true"># 得到Date数据里的year并作为新的一列合并到原表格</span>
+newdf <span class="token operator">=</span> df<span class="token punctuation">.</span>withColumn<span class="token punctuation">(</span><span class="token string">'Year'</span><span class="token punctuation">,</span>year<span class="token punctuation">(</span>df<span class="token punctuation">[</span><span class="token string">'Date'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[29]:</span>
+
+
+<span class="token comment" spellcheck="true"># 每年的平均Close</span>
+result <span class="token operator">=</span> newdf<span class="token punctuation">.</span>groupBy<span class="token punctuation">(</span><span class="token string">'Year'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>mean<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'Year'</span><span class="token punctuation">,</span><span class="token string">'avg(Close)'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[33]:</span>
+
+
+<span class="token comment" spellcheck="true"># 重命名列</span>
+new <span class="token operator">=</span> result<span class="token punctuation">.</span>withColumnRenamed<span class="token punctuation">(</span><span class="token string">'avg(Close)'</span><span class="token punctuation">,</span><span class="token string">'Average CLosing Price'</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># In[39]:</span>
+
+
+<span class="token comment" spellcheck="true"># 格式化新列，保留两位小数</span>
+new<span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'Year'</span><span class="token punctuation">,</span>format_number<span class="token punctuation">(</span><span class="token string">'Average CLosing Price'</span><span class="token punctuation">,</span><span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">.</span>alias<span class="token punctuation">(</span><span class="token string">'avg close'</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+ 
+</code></pre>
+<h1 id=""><a href="#" class="headerlink" title=""></a></h1>
             </div>
             <hr/>
 
@@ -754,19 +947,20 @@ df<span class="token punctuation">.</span>orderBy<span class="token punctuation"
             <div class="article-badge left-badge text-color">
                 <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2023/05/15/frontend/vue/complete-vue-developer-2023-zero-to-mastery-pinia-vitest/complete-vue-developer-2023-zero-to-mastery-pinia-vitest/">
+                <a href="/2023/05/15/security/the-complete-cyber/the-complete-cyber-security-course-hackers-exposed/the-complete-cyber-security-course-hackers-exposed/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/23.jpg" class="responsive-img" alt="Complete-Vue-Developer-2023-Zero-to-Mastery(Pinia, Vitest)">
+                        <img src="/medias/featureimages/22.jpg" class="responsive-img" alt="The-Complete-Cyber-Security-Course-Hackers-Exposed!">
                         
-                        <span class="card-title">Complete-Vue-Developer-2023-Zero-to-Mastery(Pinia, Vitest)</span>
+                        <span class="card-title">The-Complete-Cyber-Security-Course-Hackers-Exposed!</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">01 - Introduction
-analyse
-出现时间 angular-&gt;react-&gt;vueangular内置了很多东西,很全面react只提供ui相关,功能少,其他功能都是自由组合(第三方)vue希望结合其他两个框架的</div>
+                    <div class="summary">introduction1.1. Welcome and Introduction to the Instructor!
+1.2. Security Quick Win!
+
+打开生成的这个文档会发送邮件给我们给的邮箱,但是视频里的word比</div>
                     <div class="publish-info">
                         <span class="publish-date">
                             <i class="fa fa-clock-o fa-fw icon-date"></i>2023-05-15
@@ -775,16 +969,12 @@ analyse
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/vue/" class="post-category" target="_blank">
-                                    vue
+                            <a href="/categories/security/" class="post-category" target="_blank">
+                                    security
                                 </a>
                             
-                            <a href="/categories/vue/pinia/" class="post-category" target="_blank">
-                                    pinia
-                                </a>
-                            
-                            <a href="/categories/vue/pinia/vitest/" class="post-category" target="_blank">
-                                    vitest
+                            <a href="/categories/security/network/" class="post-category" target="_blank">
+                                    network
                                 </a>
                             
                             
@@ -794,16 +984,12 @@ analyse
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/vue/" target="_blank">
-                        <span class="chip bg-color">vue</span>
+                    <a href="/tags/network/" target="_blank">
+                        <span class="chip bg-color">network</span>
                     </a>
                     
-                    <a href="/tags/pinia/" target="_blank">
-                        <span class="chip bg-color">pinia</span>
-                    </a>
-                    
-                    <a href="/tags/vitest/" target="_blank">
-                        <span class="chip bg-color">vitest</span>
+                    <a href="/tags/security/" target="_blank">
+                        <span class="chip bg-color">security</span>
                     </a>
                     
                 </div>
@@ -817,28 +1003,51 @@ analyse
                 下一篇&nbsp;<i class="fa fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2023/05/15/security/the-complete-cyber/the-complete-cyber-security-course-network-security-2/the-complete-cyber-security-course-network-security-2/">
+                <a href="/2023/05/15/frontend/qt/qt6core/qt6core-beginner/qt6core-beginners/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/23.jpg" class="responsive-img" alt="The Complete Cyber Security Course  Network Security!2">
+                        <img src="/medias/featureimages/14.jpg" class="responsive-img" alt="qt6core-beginners">
                         
-                        <span class="card-title">The Complete Cyber Security Course  Network Security!2</span>
+                        <span class="card-title">qt6core-beginners</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary"></div>
+                    <div class="summary">introduction1.1. What does this course cover
+1.2. What this course doesn’t cover
+1.3. Who should take this course
+1.4. C</div>
                     <div class="publish-info">
                             <span class="publish-date">
                                 <i class="fa fa-clock-o fa-fw icon-date"></i>2023-05-15
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fa fa-user fa-fw"></i>
-                            malred
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/qt/" class="post-category" target="_blank">
+                                    qt
+                                </a>
+                            
+                            <a href="/categories/qt/c/" class="post-category" target="_blank">
+                                    c++
+                                </a>
+                            
                             
                         </span>
                     </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/qt/" target="_blank">
+                        <span class="chip bg-color">qt</span>
+                    </a>
+                    
+                    <a href="/tags/c/" target="_blank">
+                        <span class="chip bg-color">c++</span>
+                    </a>
+                    
                 </div>
                 
             </div>
@@ -947,7 +1156,7 @@ analyse
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">100.6k</span>
+                <span class="white-color">102.1k</span>
             
 
             
