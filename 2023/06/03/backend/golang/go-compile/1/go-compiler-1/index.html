@@ -436,14 +436,14 @@ let x = 5 + 5; -&amp;gt; [LET,INDENTIFIER(“">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        3.1k
+                        4.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        16 分
+                        20 分
                     </div>
                     
                 
@@ -537,7 +537,10 @@ let result <span class="token operator">=</span> <span class="token function">ad
 <span class="token punctuation">)</span>
 </code></pre>
 <h2 id="1-3-词法分析器"><a href="#1-3-词法分析器" class="headerlink" title="1.3 词法分析器"></a>1.3 词法分析器</h2><blockquote>
-<p>词法分析器接收源代码(字符串),然后调用NextToken()逐个遍历字符进行词法分析<br>生产环境,将文件名和行号附加到词法单元,最好使用io.Reader加上文件名来初始化词法分析器</p>
+<p>词法分析器接收源代码(字符串),然后调用NextToken()逐个遍历字符进行词法分析  </p>
+</blockquote>
+<blockquote>
+<p>生产环境,将文件名和行号附加到词法单元,最好使用io.Reader加上文件名来初始化词法分析器</p>
 </blockquote>
 <pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// lexer/lexer.go</span>
 <span class="token keyword">package</span> lexer
@@ -759,7 +762,10 @@ let result <span class="token operator">=</span> <span class="token function">ad
 <span class="token punctuation">}</span>
 </code></pre>
 <blockquote>
-<p>现在添加将数字转为词法单元的功能<br>数字的识别还可以是浮点数/16进制/8进制等,但是书中为了教学而简化了</p>
+<p>现在添加将数字转为词法单元的功能</p>
+</blockquote>
+<blockquote>
+<p>数字的识别还可以是浮点数/16进制/8进制等,但是书中为了教学而简化了</p>
 </blockquote>
 <pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// 跳过空格</span>
 <span class="token keyword">func</span> <span class="token punctuation">(</span>l <span class="token operator">*</span>Lexer<span class="token punctuation">)</span> <span class="token function">skipWhitespace</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
@@ -1043,7 +1049,10 @@ let result <span class="token operator">=</span> <span class="token function">ad
 <span class="token punctuation">}</span>
 </code></pre>
 <blockquote>
-<p>进一步拓展,添加新关键字的解析 true false if else return<br>将新关键字分别添加到token的常量列表和keywords关键字map里</p>
+<p>进一步拓展,添加新关键字的解析 true false if else return </p>
+</blockquote>
+<blockquote>
+<p>将新关键字分别添加到token的常量列表和keywords关键字map里</p>
 </blockquote>
 <pre class=" language-go"><code class="language-go"><span class="token keyword">const</span> <span class="token punctuation">(</span>
     <span class="token comment" spellcheck="true">// ...</span>
@@ -1382,8 +1391,14 @@ let result <span class="token operator">=</span> <span class="token function">ad
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h1 id="编写REPL"><a href="#编写REPL" class="headerlink" title="编写REPL"></a>编写REPL</h1><blockquote>
-<p>REPL即Read-Eval-Print-Loop(读取-求值-打印循环)<br>REPL读取输入,传给解释器求值,任何输出,并重复之前的步骤<br>这里是输入源代码,然后每次读取一行,直到遇到EOF,期间输出词法生成器生成的词法单元</p>
+<h2 id="1-5-编写REPL"><a href="#1-5-编写REPL" class="headerlink" title="1.5 编写REPL"></a>1.5 编写REPL</h2><blockquote>
+<p>REPL即Read-Eval-Print-Loop(读取-求值-打印循环)</p>
+</blockquote>
+<blockquote>
+<p>REPL读取输入,传给解释器求值,任何输出,并重复之前的步骤</p>
+</blockquote>
+<blockquote>
+<p>这里是输入源代码,然后每次读取一行,直到遇到EOF,期间输出词法生成器生成的词法单元</p>
 </blockquote>
 <pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// repl/repl.go</span>
 <span class="token keyword">package</span> repl
@@ -1444,6 +1459,120 @@ let result <span class="token operator">=</span> <span class="token function">ad
 </blockquote>
 <p><img src="20230603200203.png"></p>
 <h1 id="2-语法分析"><a href="#2-语法分析" class="headerlink" title="2. 语法分析"></a>2. 语法分析</h1><h2 id="2-1-语法分析器"><a href="#2-1-语法分析器" class="headerlink" title="2.1 语法分析器"></a>2.1 语法分析器</h2><blockquote>
+<p>语法分析器将输入的数据(通常是文本或词法单元形式的源代码)构建成一个数据结构(通常是某种解析树,抽象语法树…),同时检查语法是否正确</p>
+</blockquote>
+<blockquote>
+<p>json,xml等序列化语言的解析器和语法解析器(编程语言的)一样,都是把输入的文本构建成能表示这个输入的数据结构,但是json解析器的输入可以直接看出其数据结构{xx: ‘xxx’},而语法解析器却很难直接看出其解析生成的数据结构</p>
+</blockquote>
+<blockquote>
+<p>AST抽象语法树,抽象是指AST省略了源代码可见的某些细节(如; \n // 空格 {} [] ()). 不过,并没有一个通用的AST格式 </p>
+</blockquote>
+<blockquote>
+<p>js有MagicLexer和MagicParser工具来构建AST(抽象语法树)</p>
+</blockquote>
+<h2 id="2-2-为什么不用语法分析器生成器"><a href="#2-2-为什么不用语法分析器生成器" class="headerlink" title="2.2 为什么不用语法分析器生成器"></a>2.2 为什么不用语法分析器生成器</h2><blockquote>
+<p>语法分析器生成器(如yacc,bison,ANTLR)可以根据描述生成特定语言的语法解析器</p>
+</blockquote>
+<blockquote>
+<p>它们使用的是上下文无关法(CFG),最常用的CFG格式符号是BNF或EBNF</p>
+</blockquote>
+<blockquote>
+<p>很多资料提到可以跳过语法分析器,这是因为语法分析器的研究非常透彻,有很多可以直接用的成果,当然,为了学习考虑,最好是自己写一个,当然,不会耗费太多时间</p>
+</blockquote>
+<h2 id="2-3-为Monkey语言编写语法分析器"><a href="#2-3-为Monkey语言编写语法分析器" class="headerlink" title="2.3 为Monkey语言编写语法分析器"></a>2.3 为Monkey语言编写语法分析器</h2><blockquote>
+<p>语法分析主要有两种策略: 自上而下和自下而上. 每种策略都有很多变体(如自上而下的递归下降分析,Earley分析,预测分析)</p>
+</blockquote>
+<blockquote>
+<p>我们使用递归下降语法分析,是基于自上而下的运算符优先级分析法,发明人是沃恩·普拉特,所以也叫普拉特语法分析器</p>
+</blockquote>
+<blockquote>
+<p>自上而下和自下而上的区别是,前者从构建AST的根节点开始,然后下降,后者则相反. 新手推荐使用自上而下的递归下降语法分析,这更接近我们对AST的认知和AST的构造方式</p>
+</blockquote>
+<h2 id="2-4-语法分析器的第一步-解析let语句"><a href="#2-4-语法分析器的第一步-解析let语句" class="headerlink" title="2.4 语法分析器的第一步: 解析let语句"></a>2.4 语法分析器的第一步: 解析let语句</h2><blockquote>
+<p>正确解析原let语句,意味着语法分析器需要生成一个AST,该AST可以准确表示原let语句中包含的信息</p>
+</blockquote>
+<blockquote>
+<p>(先跳过带表达式的let)</p>
+</blockquote>
+<blockquote>
+<p>let的语句形式: let &lt;标识符&gt; = &lt;表达式&gt;</p>
+</blockquote>
+<blockquote>
+<p>语句不会产生值,而表达式会(如5产生5,add(5,5)也会返回一个值)</p>
+</blockquote>
+<blockquote>
+<p>具体的语句和表达式的定义要看是什么编程语言,有的语言函数字面量是表达式,有的语言则只能作为函数声明语句的一部分</p>
+</blockquote>
+<blockquote>
+<p>此时,我们的AST需要两种不同节点: 表达式和语句</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// ast/ast.go</span>
+<span class="token keyword">package</span> ast
+
+<span class="token comment" spellcheck="true">// 每个节点都需要实现Node接口</span>
+<span class="token keyword">type</span> Node <span class="token keyword">interface</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 返回与该节点关联的字面量(该方法仅用于调试和测试)</span>
+    <span class="token function">TokenLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">type</span> Statement <span class="token keyword">interface</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 实现Node接口</span>
+    Node
+    <span class="token comment" spellcheck="true">// 占位方法,可以让go编译器帮忙找出误用(如Expression用成Statement)</span>
+    <span class="token function">statementNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">type</span> Expression <span class="token keyword">interface</span> <span class="token punctuation">{</span>
+    Node
+    <span class="token function">expressionNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>第一个Node实现(根节点),每个Monkey程序都是一系列位于Program.Statements中的语句</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// ast/ast.go</span>
+<span class="token keyword">type</span> Program <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Statements <span class="token punctuation">[</span><span class="token punctuation">]</span>Statement
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>p <span class="token operator">*</span>Program<span class="token punctuation">)</span> <span class="token function">TokenLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>p<span class="token punctuation">.</span>Statements<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> p<span class="token punctuation">.</span>Statements<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">TokenLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token string">""</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>为了解析let,需要一个字段代表字面量(被绑定<br>上一个值),一个字段代表let语句里产生值的表达式,一个字段代表词法单元(用于实现TokenLiteral)</p>
+</blockquote>
+<blockquote>
+<p>let里的标识符不会产生值,但是为了简单,所以类型是Identifier的ExpressionNode,在其他需要用到标识符产生的值的地方,可以直接复用Identifier</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// ast/ast.go</span>
+<span class="token comment" spellcheck="true">// 标识符</span>
+<span class="token keyword">type</span> Identifier <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Token token<span class="token punctuation">.</span>Token <span class="token comment" spellcheck="true">// token.IDENT词法单元</span>
+    Value <span class="token builtin">string</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>Identifier<span class="token punctuation">)</span> <span class="token function">expressionNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>Identifier<span class="token punctuation">)</span> <span class="token function">TokenLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> i<span class="token punctuation">.</span>Token<span class="token punctuation">.</span>Literal <span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// let语句</span>
+<span class="token keyword">type</span> LetStatement <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Token token<span class="token punctuation">.</span>Token <span class="token comment" spellcheck="true">// token.LET词法单元</span>
+    Name  <span class="token operator">*</span>Identifier <span class="token comment" spellcheck="true">// 标识符</span>
+    Value Expression  <span class="token comment" spellcheck="true">// 产生值的表达式</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>ls <span class="token operator">*</span>LetStatement<span class="token punctuation">)</span> <span class="token function">statementNode</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>ls <span class="token operator">*</span>LetStatement<span class="token punctuation">)</span> <span class="token function">TokenLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> ls<span class="token punctuation">.</span>Token<span class="token punctuation">.</span>Literal <span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>此时let x = 5;解析后的AST为:</p>
 </blockquote>
 
             </div>
@@ -1846,7 +1975,7 @@ import (
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">106.3k</span>
+                <span class="white-color">107.3k</span>
             
 
             
