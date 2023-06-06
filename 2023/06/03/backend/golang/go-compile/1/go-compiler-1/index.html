@@ -436,14 +436,14 @@ let x = 5 + 5; -&amp;gt; [LET,INDENTIFIER(“">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        16.8k
+                        18.9k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        81 分
+                        91 分
                     </div>
                     
                 
@@ -4156,15 +4156,17 @@ leftExp <span class="token operator">=</span> <span class="token function">infix
 <p>将evalStatement改名为evalProgram</p>
 </blockquote>
 <pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// 解析program</span>
-<span class="token keyword">func</span> <span class="token function">evalProgram</span><span class="token punctuation">(</span>stmts <span class="token punctuation">[</span><span class="token punctuation">]</span>ast<span class="token punctuation">.</span>Statement<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+<span class="token keyword">func</span> <span class="token function">evalProgram</span><span class="token punctuation">(</span>program <span class="token operator">*</span>ast<span class="token punctuation">.</span>Program<span class="token punctuation">,</span> env <span class="token operator">*</span>object<span class="token punctuation">.</span>Environment<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
     <span class="token keyword">var</span> result object<span class="token punctuation">.</span>Object
 
-    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> statement <span class="token operator">:=</span> <span class="token keyword">range</span> stmts <span class="token punctuation">{</span>
-        result <span class="token operator">=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>statement<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> statement <span class="token operator">:=</span> <span class="token keyword">range</span> program<span class="token punctuation">.</span>Statements <span class="token punctuation">{</span>
+        result <span class="token operator">=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>statement<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
 
-        <span class="token comment" spellcheck="true">// 如果是return语句的结果,就返回return的值</span>
-        <span class="token keyword">if</span> returnValue<span class="token punctuation">,</span> ok <span class="token operator">:=</span> result<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>ReturnValue<span class="token punctuation">)</span><span class="token punctuation">;</span> ok <span class="token punctuation">{</span>
-            <span class="token keyword">return</span> returnValue<span class="token punctuation">.</span>Value
+        <span class="token keyword">switch</span> result <span class="token operator">:=</span> result<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> <span class="token operator">*</span>object<span class="token punctuation">.</span>ReturnValue<span class="token punctuation">:</span>
+            <span class="token keyword">return</span> result<span class="token punctuation">.</span>Value
+        <span class="token keyword">case</span> <span class="token operator">*</span>object<span class="token punctuation">.</span>Error<span class="token punctuation">:</span>
+            <span class="token keyword">return</span> result
         <span class="token punctuation">}</span>
     <span class="token punctuation">}</span>
 
@@ -4176,7 +4178,7 @@ leftExp <span class="token operator">=</span> <span class="token function">infix
     <span class="token comment" spellcheck="true">// 语句 -> 继续遍历</span>
     <span class="token comment" spellcheck="true">// 根节点</span>
     <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>Program<span class="token punctuation">:</span>
-        <span class="token keyword">return</span> <span class="token function">evalProgram</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Statements<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token function">evalProgram</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span>
     <span class="token comment" spellcheck="true">// ...</span>
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
@@ -4420,7 +4422,454 @@ leftExp <span class="token operator">=</span> <span class="token function">infix
     <span class="token keyword">return</span> <span class="token boolean">false</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2 id="3-9-绑定与环境"><a href="#3-9-绑定与环境" class="headerlink" title="3.9 绑定与环境"></a>3.9 绑定与环境</h2>
+<h2 id="3-9-绑定与环境"><a href="#3-9-绑定与环境" class="headerlink" title="3.9 绑定与环境"></a>3.9 绑定与环境</h2><blockquote>
+<p>添加对let语句的支持,为解释器添加绑定功能.除了let,还需要支持对标识符求值</p>
+</blockquote>
+<blockquote>
+<p>let x = 25; 不仅需要对let求值,而且需要保证let之后,后续对标识符求值也是25</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 语句 -> 继续遍历</span>
+    <span class="token comment" spellcheck="true">// 根节点</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>Program<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">evalProgram</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Statements<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 块语句</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>BlockStatement<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">evalBlockStatement</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// Let语句</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>LetStatement<span class="token punctuation">:</span>
+        val <span class="token operator">:=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Value<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">isError</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> val
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// ?</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>接下来要做什么?就是要跟踪let产生的值,val需要和node.Name.Value绑定</p>
+</blockquote>
+<blockquote>
+<p>这里要用到’环境’,它其实是一个将字符串和对象关联的哈希映射,可以在环境中用关联的名称来跟踪值</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// object/environment.go</span>
+<span class="token keyword">package</span> object
+
+<span class="token keyword">type</span> Environment <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    store <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Object
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">NewEnvironment</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Environment <span class="token punctuation">{</span>
+    s <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Object<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Environment<span class="token punctuation">{</span>store<span class="token punctuation">:</span> s<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>e <span class="token operator">*</span>Environment<span class="token punctuation">)</span> <span class="token function">Get</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>Object<span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    obj<span class="token punctuation">,</span> ok <span class="token operator">:=</span> e<span class="token punctuation">.</span>store<span class="token punctuation">[</span>name<span class="token punctuation">]</span>
+    <span class="token keyword">return</span> obj<span class="token punctuation">,</span> ok
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>e <span class="token operator">*</span>Environment<span class="token punctuation">)</span> <span class="token function">Set</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">,</span> value Object<span class="token punctuation">)</span> Object <span class="token punctuation">{</span>
+    e<span class="token punctuation">.</span>store<span class="token punctuation">[</span>name<span class="token punctuation">]</span> <span class="token operator">=</span> value
+    <span class="token keyword">return</span> value
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>这里不直接使用map,而是选择封装,后续会有用处</p>
+</blockquote>
+<blockquote>
+<p>现在,将env通过参数传递给eval使用</p>
+</blockquote>
+<blockquote>
+<p>每次调用Eval应该得到新环境</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// evaluate/evaluate_test.go</span>
+<span class="token keyword">func</span> <span class="token function">testEval</span><span class="token punctuation">(</span>input <span class="token builtin">string</span><span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    l <span class="token operator">:=</span> lexer<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>input<span class="token punctuation">)</span>
+    p <span class="token operator">:=</span> parser<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>l<span class="token punctuation">)</span>
+    pro <span class="token operator">:=</span> p<span class="token punctuation">.</span><span class="token function">ParseProgram</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    env <span class="token operator">:=</span> object<span class="token punctuation">.</span><span class="token function">NewEnvironment</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token function">Eval</span><span class="token punctuation">(</span>pro<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>跟踪求值</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">evalIdentifier</span><span class="token punctuation">(</span>node <span class="token operator">*</span>ast<span class="token punctuation">.</span>Identifier<span class="token punctuation">,</span> env <span class="token operator">*</span>object<span class="token punctuation">.</span>Environment<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    val<span class="token punctuation">,</span> ok <span class="token operator">:=</span> env<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Value<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token function">newError</span><span class="token punctuation">(</span><span class="token string">"identifier not found: "</span> <span class="token operator">+</span> node<span class="token punctuation">.</span>Value<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> val
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">,</span> env <span class="token operator">*</span>object<span class="token punctuation">.</span>Environment<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 语句 -> 继续遍历</span>
+    <span class="token comment" spellcheck="true">// 根节点</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>Program<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">evalProgram</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Statements<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 块语句</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>BlockStatement<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">evalBlockStatement</span><span class="token punctuation">(</span>node<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// Let语句</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>LetStatement<span class="token punctuation">:</span>
+        val <span class="token operator">:=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Value<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">isError</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> val
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 关联标识符和值</span>
+        env<span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Name<span class="token punctuation">.</span>Value<span class="token punctuation">,</span> val<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 标识符</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>Identifier<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">evalIdentifier</span><span class="token punctuation">(</span>node<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestErrorHandling</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        input           <span class="token builtin">string</span>
+        expectedMessage <span class="token builtin">string</span>
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token punctuation">{</span><span class="token string">"5 + true;"</span><span class="token punctuation">,</span> <span class="token string">"type mismatch: INTEGER + BOOLEAN"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"5 + true; 5;"</span><span class="token punctuation">,</span> <span class="token string">"type mismatch: INTEGER + BOOLEAN"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"-true"</span><span class="token punctuation">,</span> <span class="token string">"unknown operator: -BOOLEAN"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"true + false;"</span><span class="token punctuation">,</span> <span class="token string">"unknown operator: BOOLEAN + BOOLEAN"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"5; true + false; 5;"</span><span class="token punctuation">,</span> <span class="token string">"unknown operator: BOOLEAN + BOOLEAN"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"if (10 > 1) {true+false;}"</span><span class="token punctuation">,</span> <span class="token string">"unknown operator: BOOLEAN + BOOLEAN"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"if (10 > 1) {{false+false;} return 1;}"</span><span class="token punctuation">,</span> <span class="token string">"unknown operator: BOOLEAN + BOOLEAN"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"foobar;"</span><span class="token punctuation">,</span> <span class="token string">"identifier not found: foobar"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> tt <span class="token operator">:=</span> <span class="token keyword">range</span> ts <span class="token punctuation">{</span>
+        eval <span class="token operator">:=</span> <span class="token function">testEval</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>input<span class="token punctuation">)</span>
+        errobj<span class="token punctuation">,</span> ok <span class="token operator">:=</span> eval<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>Error<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+            t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"no error obj returned. got=%T(%+v)"</span><span class="token punctuation">,</span> eval<span class="token punctuation">,</span> eval<span class="token punctuation">)</span>
+            <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> errobj<span class="token punctuation">.</span>Message <span class="token operator">!=</span> tt<span class="token punctuation">.</span>expectedMessage <span class="token punctuation">{</span>
+            t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"wrong error msg: expected=%q, got=%q"</span><span class="token punctuation">,</span> tt<span class="token punctuation">.</span>expectedMessage<span class="token punctuation">,</span> errobj<span class="token punctuation">.</span>Message<span class="token punctuation">)</span>
+            <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">func</span> <span class="token function">TestLetStatement</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        input    <span class="token builtin">string</span>
+        expected <span class="token builtin">int64</span>
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token punctuation">{</span><span class="token string">"let a = 5; a;"</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"let a = 5 * 5; a;"</span><span class="token punctuation">,</span> <span class="token number">25</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"let a = 5; let b = a; b;"</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"let a=5;let b = a; let c = a + b + 5;c;"</span><span class="token punctuation">,</span> <span class="token number">15</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> tt <span class="token operator">:=</span> <span class="token keyword">range</span> ts <span class="token punctuation">{</span>
+        <span class="token function">testIntegerObject</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> <span class="token function">testEval</span><span class="token punctuation">(</span>tt<span class="token punctuation">.</span>input<span class="token punctuation">)</span><span class="token punctuation">,</span> tt<span class="token punctuation">.</span>expected<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-10-函数和函数调用"><a href="#3-10-函数和函数调用" class="headerlink" title="3.10 函数和函数调用"></a>3.10 函数和函数调用</h2><blockquote>
+<p>将实现传递函数、高阶函数、闭包等功能</p>
+</blockquote>
+<blockquote>
+<p>需要完成两件事,1.对象系统中定义函数的内部表示;2.在Eval中添加对函数调用的支持</p>
+</blockquote>
+<blockquote>
+<p>1.函数的内部表示;之所以需要内部表示,是因为函数和其他值一样可以绑定到变量、用于表达式、传递给其他函数、从其他函数中返回一个函数;函数也需要用某种形式来表示,才能传递、赋值和返回函数</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">type</span> FunctionLiteral <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Token      token<span class="token punctuation">.</span>Token <span class="token comment" spellcheck="true">// 'fn'词法单元</span>
+    Parameters <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>Identifier
+    Body       <span class="token operator">*</span>BlockStatement
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>看一下ast中对函数的定义,函数对象不需要token,但是需要Parameters和Body,因为没有函数体就不能对函数求值,没有参数就无法对函数体求值,除了参数和函数体,还需要env字段</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// object/object.go</span>
+<span class="token keyword">type</span> Function <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Parameters <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>ast<span class="token punctuation">.</span>Identifier
+    Body       <span class="token operator">*</span>ast<span class="token punctuation">.</span>BlockStatement
+    Env        <span class="token operator">*</span>Environment
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>f <span class="token operator">*</span>Function<span class="token punctuation">)</span> <span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span> ObjectType <span class="token punctuation">{</span> <span class="token keyword">return</span> FUNCTION_OBJ <span class="token punctuation">}</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>f <span class="token operator">*</span>Function<span class="token punctuation">)</span> <span class="token function">Inspect</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> out bytes<span class="token punctuation">.</span>Buffer
+
+    params <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> p <span class="token operator">:=</span> <span class="token keyword">range</span> f<span class="token punctuation">.</span>Parameters <span class="token punctuation">{</span>
+        params <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>params<span class="token punctuation">,</span> p<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    out<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"fn"</span><span class="token punctuation">)</span>
+    out<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"("</span><span class="token punctuation">)</span>
+    out<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>strings<span class="token punctuation">.</span><span class="token function">Join</span><span class="token punctuation">(</span>params<span class="token punctuation">,</span> <span class="token string">", "</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    out<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">") {\n}"</span><span class="token punctuation">)</span>
+    out<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>f<span class="token punctuation">.</span>Body<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    out<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"\n}"</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> out<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>因为给函数对象一个env字段,所以函数有了自己独立的内部环境,可以形成闭包</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">,</span> env <span class="token operator">*</span>object<span class="token punctuation">.</span>Environment<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 语句 -> 继续遍历</span>
+    <span class="token comment" spellcheck="true">// 根节点</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>Program<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">evalProgram</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Statements<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 块语句</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>BlockStatement<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">evalBlockStatement</span><span class="token punctuation">(</span>node<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// Let语句</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>LetStatement<span class="token punctuation">:</span>
+        val <span class="token operator">:=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Value<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">isError</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> val
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 关联标识符和值</span>
+        env<span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Name<span class="token punctuation">.</span>Value<span class="token punctuation">,</span> val<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 标识符</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>Identifier<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token function">evalIdentifier</span><span class="token punctuation">(</span>node<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 函数语句</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>FunctionLiteral<span class="token punctuation">:</span>
+        params <span class="token operator">:=</span> node<span class="token punctuation">.</span>Parameters
+        body <span class="token operator">:=</span> node<span class="token punctuation">.</span>Body
+        <span class="token keyword">return</span> <span class="token operator">&amp;</span>object<span class="token punctuation">.</span>Function<span class="token punctuation">{</span>Parameters<span class="token punctuation">:</span> params<span class="token punctuation">,</span> Body<span class="token punctuation">:</span> body<span class="token punctuation">,</span> Env<span class="token punctuation">:</span> env<span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestFunctionObject</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    input <span class="token operator">:=</span> <span class="token string">"fn(x) { x + 2;};"</span>
+    eval <span class="token operator">:=</span> <span class="token function">testEval</span><span class="token punctuation">(</span>input<span class="token punctuation">)</span>
+    fn<span class="token punctuation">,</span> ok <span class="token operator">:=</span> eval<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>Function<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        t<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"object is not function"</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>fn<span class="token punctuation">.</span>Parameters<span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">1</span> <span class="token punctuation">{</span>
+        t<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"function has wrong parameters"</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> fn<span class="token punctuation">.</span>Parameters<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token string">"x"</span> <span class="token punctuation">{</span>
+        t<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"parameters is not 'x'"</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">}</span>
+    expectedBody <span class="token operator">:=</span> <span class="token string">"(x + 2)"</span>
+    <span class="token keyword">if</span> fn<span class="token punctuation">.</span>Body<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> expectedBody <span class="token punctuation">{</span>
+        t<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"body is not '(x + 2)'"</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>添加对函数的求值</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">,</span> env <span class="token operator">*</span>object<span class="token punctuation">.</span>Environment<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// 调用函数 </span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>CallExpression<span class="token punctuation">:</span>
+        function <span class="token operator">:=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Function<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">isError</span><span class="token punctuation">(</span>function<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> function
+        <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>获取调用的函数,不管是标识符还是定义函数,都会返回函数对象;为了使用函数对象,需要先对调用表达式的参数进行求值(add(4+1,1+4)-&gt;add(5,5))</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">evalExpressions</span><span class="token punctuation">(</span>exps <span class="token punctuation">[</span><span class="token punctuation">]</span>ast<span class="token punctuation">.</span>Expression<span class="token punctuation">,</span> env <span class="token operator">*</span>object<span class="token punctuation">.</span>Environment<span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> result <span class="token punctuation">[</span><span class="token punctuation">]</span>object<span class="token punctuation">.</span>Object
+
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> e <span class="token operator">:=</span> <span class="token keyword">range</span> exps <span class="token punctuation">{</span>
+        evaluated <span class="token operator">:=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">isError</span><span class="token punctuation">(</span>evaluated<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>object<span class="token punctuation">.</span>Object<span class="token punctuation">{</span>evaluated<span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        result <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> evaluated<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> result
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">,</span> env <span class="token operator">*</span>object<span class="token punctuation">.</span>Environment<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// 调用函数 </span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>CallExpression<span class="token punctuation">:</span>
+        function <span class="token operator">:=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Function<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">isError</span><span class="token punctuation">(</span>function<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> function
+        <span class="token punctuation">}</span>
+        args <span class="token operator">:=</span> <span class="token function">evalExpressions</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Arguments<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>args<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span> <span class="token operator">&amp;&amp;</span> <span class="token function">isError</span><span class="token punctuation">(</span>args<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> args<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>调用函数,需要对函数体求值,但是不能直接使用块语句求值,因为函数体包含参数,用块语句的方法解析会有未知参数错误</p>
+</blockquote>
+<blockquote>
+<p>函数参数不能直接添加到当前环境,而是应该保留已有的绑定,同时添加新的绑定,这叫”拓展已有的环境”.这样需要创建新的环境实例,还有一个指向待拓展环境的指针</p>
+</blockquote>
+<blockquote>
+<p>当新环境Get时,如果新环境没有,则会往上一层环境去找,相当于拓展了环境边界</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// object/environment.go</span>
+<span class="token keyword">package</span> object
+
+<span class="token keyword">type</span> Environment <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    store <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Object
+    <span class="token comment" spellcheck="true">// 外层包裹自己的环境</span>
+    outer <span class="token operator">*</span>Environment
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">NewEnvironment</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Environment <span class="token punctuation">{</span>
+    s <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>Object<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Environment<span class="token punctuation">{</span>store<span class="token punctuation">:</span> s<span class="token punctuation">,</span> outer<span class="token punctuation">:</span> <span class="token boolean">nil</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 创建新环境,父级为outer</span>
+<span class="token keyword">func</span> <span class="token function">NewEnclosedEnvironment</span><span class="token punctuation">(</span>outer <span class="token operator">*</span>Environment<span class="token punctuation">)</span> <span class="token operator">*</span>Environment <span class="token punctuation">{</span>
+    env <span class="token operator">:=</span> <span class="token function">NewEnvironment</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    env<span class="token punctuation">.</span>outer <span class="token operator">=</span> outer
+    <span class="token keyword">return</span> env
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>e <span class="token operator">*</span>Environment<span class="token punctuation">)</span> <span class="token function">Get</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>Object<span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    obj<span class="token punctuation">,</span> ok <span class="token operator">:=</span> e<span class="token punctuation">.</span>store<span class="token punctuation">[</span>name<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token operator">&amp;&amp;</span> e<span class="token punctuation">.</span>outer <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        obj<span class="token punctuation">,</span> ok <span class="token operator">=</span> e<span class="token punctuation">.</span>outer<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> obj<span class="token punctuation">,</span> ok
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>e <span class="token operator">*</span>Environment<span class="token punctuation">)</span> <span class="token function">Set</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">,</span> value Object<span class="token punctuation">)</span> Object <span class="token punctuation">{</span>
+    e<span class="token punctuation">.</span>store<span class="token punctuation">[</span>name<span class="token punctuation">]</span> <span class="token operator">=</span> value
+    <span class="token keyword">return</span> value
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>现在的环境分为了内部和外部,相当于划分了变量的作用域</p>
+</blockquote>
+<blockquote>
+<p>现在,如果函数调用时有新的实参绑定,则创建新环境(使用函数自带的环境),然后将绑定添加到该环境</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// 解包函数返回值(如果不接包,会冒泡,然后停止后续的语句求值)</span>
+<span class="token keyword">func</span> <span class="token function">unwrapReturnValue</span><span class="token punctuation">(</span>obj object<span class="token punctuation">.</span>Object<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> returnValue<span class="token punctuation">,</span> ok <span class="token operator">:=</span> obj<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>ReturnValue<span class="token punctuation">)</span><span class="token punctuation">;</span> ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> returnValue<span class="token punctuation">.</span>Value
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> obj
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 拓展环境</span>
+<span class="token keyword">func</span> <span class="token function">extendFunctionEnv</span><span class="token punctuation">(</span>fn <span class="token operator">*</span>object<span class="token punctuation">.</span>Function<span class="token punctuation">,</span> args <span class="token punctuation">[</span><span class="token punctuation">]</span>object<span class="token punctuation">.</span>Object<span class="token punctuation">)</span> <span class="token operator">*</span>object<span class="token punctuation">.</span>Environment <span class="token punctuation">{</span>
+    env <span class="token operator">:=</span> object<span class="token punctuation">.</span><span class="token function">NewEnclosedEnvironment</span><span class="token punctuation">(</span>fn<span class="token punctuation">.</span>Env<span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> paramIdx<span class="token punctuation">,</span> param <span class="token operator">:=</span> <span class="token keyword">range</span> fn<span class="token punctuation">.</span>Parameters <span class="token punctuation">{</span>
+        env<span class="token punctuation">.</span><span class="token function">Set</span><span class="token punctuation">(</span>param<span class="token punctuation">.</span>Value<span class="token punctuation">,</span> args<span class="token punctuation">[</span>paramIdx<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> env
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 函数体求值</span>
+<span class="token keyword">func</span> <span class="token function">applyFunction</span><span class="token punctuation">(</span>fn object<span class="token punctuation">.</span>Object<span class="token punctuation">,</span> args <span class="token punctuation">[</span><span class="token punctuation">]</span>object<span class="token punctuation">.</span>Object<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    function<span class="token punctuation">,</span> ok <span class="token operator">:=</span> fn<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>Function<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token function">newError</span><span class="token punctuation">(</span><span class="token string">"not a function: %s"</span><span class="token punctuation">,</span> fn<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    extendedEnv <span class="token operator">:=</span> <span class="token function">extendFunctionEnv</span><span class="token punctuation">(</span>function<span class="token punctuation">,</span> args<span class="token punctuation">)</span>
+    evaluated <span class="token operator">:=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>function<span class="token punctuation">.</span>Body<span class="token punctuation">,</span> extendedEnv<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token function">unwrapReturnValue</span><span class="token punctuation">(</span>evaluated<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">,</span> env <span class="token operator">*</span>object<span class="token punctuation">.</span>Environment<span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// 调用函数</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>CallExpression<span class="token punctuation">:</span>
+        function <span class="token operator">:=</span> <span class="token function">Eval</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Function<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">isError</span><span class="token punctuation">(</span>function<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> function
+        <span class="token punctuation">}</span>
+        args <span class="token operator">:=</span> <span class="token function">evalExpressions</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Arguments<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>args<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">1</span> <span class="token operator">&amp;&amp;</span> <span class="token function">isError</span><span class="token punctuation">(</span>args<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> args<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> <span class="token function">applyFunction</span><span class="token punctuation">(</span>function<span class="token punctuation">,</span> args<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>可以看出,我们现在可以使用闭包了,闭包是指函数隔离出其中定义的环境,并会随时附带.每当调用函数时便可以访问其所附带的环境</p>
+</blockquote>
+<p><img src="b.png"></p>
+<blockquote>
+<p>这里的newAdder是高阶函数,高阶函数是指返回其他函数或将其他函数作为参数的函数</p>
+</blockquote>
+<blockquote>
+<p>当我们调用addTwo,它求值不是在当前环境求值,而是在函数环境中求值,这是通过拓展定义函数时的环境并将其传递给Eval()实现的</p>
+</blockquote>
+<blockquote>
+<p>此时,函数也可作为参数</p>
+</blockquote>
+<p><img src="20230606091934.png"><br><img src="20230606091922.png"></p>
+<h2 id="3-11-如何处理垃圾"><a href="#3-11-如何处理垃圾" class="headerlink" title="3.11 如何处理垃圾"></a>3.11 如何处理垃圾</h2><blockquote>
+<p>一段代码:</p>
+</blockquote>
+<pre><code>let counter = fn(x){
+    if (x&gt;100) {
+        return true;
+    }else{
+        let foo = 9999;
+        counter(x + 1);
+    }
+};
+</code></pre>
+<blockquote>
+<p>如果跟踪integer对象,会发现这段代码产生了约400个integer对象,但是我们这里的foo(以及x+1的求值)并没有使用,却占用了大量空间</p>
+</blockquote>
+<blockquote>
+<p>我们的对象存放在内存中,如果创建过多对象,会占用非常多的内存</p>
+</blockquote>
+<blockquote>
+<p>我们直接借用了Go的垃圾回收器,不需要自己写</p>
+</blockquote>
+<blockquote>
+<p>GC涉及很多算法和实现,而且Go默认不支持手动管理内存,所以这里不实现自己的GC</p>
+</blockquote>
+<h1 id="4-拓展解释器"><a href="#4-拓展解释器" class="headerlink" title="4. 拓展解释器"></a>4. 拓展解释器</h1>
             </div>
             <hr/>
 
@@ -4784,7 +5233,7 @@ import (
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">119.8k</span>
+                <span class="white-color">121.9k</span>
             
 
             
