@@ -444,14 +444,14 @@ let x = 5 + 5; -&amp;gt; [LET,INDENTIFIER(“">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        25.2k
+                        25.5k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        123 分
+                        124 分
                     </div>
                     
                 
@@ -6532,7 +6532,37 @@ hash["name"]
 <blockquote>
 <p>这里中缀表达式10+5在do块中作为单个参数传递给quote.但是不同的是,这里不会对10+5求值.而是让quote返回一个表达这个表达式的数据结构,并且可以被代码访问</p>
 </blockquote>
-
+<blockquote>
+<p>如果需要用quote构建一个AST节点,其中使用了标识符(绑定了数字字面量),这样的话是不行的,因为quote不会对标识符求值,所以我们需要一个unquote来对字面量求值,让quote使用该标识符的值</p>
+</blockquote>
+<pre class=" language-Elixir"><code class="language-Elixir">iex(6)> my_number = 99
+99
+iex(7)> quote do: 10 + 5 + unquote(my_number)
+{:+,[context: Elixir,import: Kernel],
+[{:+,[context: Elixir,import: Kernel],[10,5],99}]}
+</code></pre>
+<blockquote>
+<p>unquote用来”跳出”quote上下文并对其中的代码进行求值</p>
+</blockquote>
+<blockquote>
+<p>quote和unquote都是Elixir提供的工具,用于控制代码的求值时机和求值方式,并将代码转化为数据.大多数情况下它们是在宏里使用</p>
+</blockquote>
+<blockquote>
+<p>Elixir中还可以使用defmacro来定义宏,下面的例子是将使用+运算符的中缀表达式转换为使用-的中缀表达式</p>
+</blockquote>
+<pre class=" language-Elixir"><code class="language-Elixir">defmodule MacroExample do
+    defmacro plus_to_minus(expression) do
+        args = elem(expression,2)
+        quote do
+            unquote(Enum.at(args,0)) - unquote(Enum.at(args,1))
+        end
+    end
+end
+</code></pre>
+<blockquote>
+<p>最重要的一点: 作为参数传递给宏的所有内容都相当于在quote中,也就是说,宏的参数不进行求值,可以像任何其他数据一样访问</p>
+</blockquote>
+<h2 id="5-2-Monkey的宏系统"><a href="#5-2-Monkey的宏系统" class="headerlink" title="5.2 Monkey的宏系统"></a>5.2 Monkey的宏系统</h2>
             </div>
             <hr/>
 
@@ -6697,20 +6727,17 @@ hash["name"]
             <div class="article-badge left-badge text-color">
                 <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2023/06/07/shui-ke/ji-zu-su-cheng-ban/a/">
+                <a href="/2023/06/07/shui-ke/ji-zu-qi-mo-fu-xi/a/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/19.jpg" class="responsive-img" alt="计组_速成">
+                        <img src="/medias/featureimages/19.jpg" class="responsive-img" alt="计组">
                         
-                        <span class="card-title">计组_速成</span>
+                        <span class="card-title">计组</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">计组速成1-1 计算机系统概论
-计组速成2-1 原码反码补码
-计组速成2-2 IEEE754存储格式考点
-计组速成2-3 定点数加减法运算
+                    <div class="summary">
 </div>
                     <div class="publish-info">
                         <span class="publish-date">
@@ -6920,7 +6947,7 @@ import (
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">163.7k</span>
+                <span class="white-color">164.9k</span>
             
 
             
