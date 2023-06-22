@@ -427,14 +427,14 @@ EJB在分布式场景中">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        1.4k
+                        1.9k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        5 分
+                        6 分
                     </div>
                     
                 
@@ -534,7 +534,52 @@ EJB在分布式场景中">
 <li>业务对象的构建管理: 业务对象无需关心所依赖的对象如何构建如何取得,而是由Ioc Service Provider将对象的构建逻辑(new)从客户端对象那里剥离出来,以免这部分逻辑污染业务对象的实现</li>
 <li>业务对象间的依赖绑定: 是Ioc Service Provider的最终使命,它结合之前构建和管理的所有业务对象,以及各个业务对象间可以识别的依赖关系,将对象所依赖的对象注入绑定,从而保证每个业务对象在使用的时候,可以处于就绪状态</li>
 </ul>
-<h2 id="3-2-运筹帷幄的秘密—–IoC-Service-Provider如何管理对象间的依赖关系"><a href="#3-2-运筹帷幄的秘密—–IoC-Service-Provider如何管理对象间的依赖关系" class="headerlink" title="3.2 运筹帷幄的秘密—–IoC Service Provider如何管理对象间的依赖关系"></a>3.2 运筹帷幄的秘密—–IoC Service Provider如何管理对象间的依赖关系</h2>
+<h2 id="3-2-运筹帷幄的秘密—–IoC-Service-Provider如何管理对象间的依赖关系"><a href="#3-2-运筹帷幄的秘密—–IoC-Service-Provider如何管理对象间的依赖关系" class="headerlink" title="3.2 运筹帷幄的秘密—–IoC Service Provider如何管理对象间的依赖关系"></a>3.2 运筹帷幄的秘密—–IoC Service Provider如何管理对象间的依赖关系</h2><blockquote>
+<p>ioc service provider需要知道所管理和掌握的被注入对象和依赖对象之间的对应关系,才能正常进行依赖注入</p>
+</blockquote>
+<blockquote>
+<p>以下是主流的ioc service provider使用的注册对象管理信息的方式</p>
+</blockquote>
+<h3 id="3-2-1-直接编码方式"><a href="#3-2-1-直接编码方式" class="headerlink" title="3.2.1 直接编码方式"></a>3.2.1 直接编码方式</h3><blockquote>
+<p>当前大部分ioc容器都应该支持直接编码方式.(PicoContainer,Spring,Avalon)</p>
+</blockquote>
+<blockquote>
+<p>在容器启动前,我们通过程序编码的方式将被注入对象和依赖对象注册到容器中,并明确它们之间的依赖注入关系</p>
+</blockquote>
+<p><img src="20230622102236.png"><br><img src="20230622102402.png"></p>
+<h3 id="3-2-2-配置文件方式"><a href="#3-2-2-配置文件方式" class="headerlink" title="3.2.2 配置文件方式"></a>3.2.2 配置文件方式</h3><p><img src="20230622102445.png"></p>
+<h3 id="3-2-3-元数据方式"><a href="#3-2-3-元数据方式" class="headerlink" title="3.2.3 元数据方式"></a>3.2.3 元数据方式</h3><p><img src="20230622102623.png"><br><img src="20230622102706.png"></p>
+<h1 id="4-spring的ioc容器之beanFactory"><a href="#4-spring的ioc容器之beanFactory" class="headerlink" title="4. spring的ioc容器之beanFactory"></a>4. spring的ioc容器之beanFactory</h1><blockquote>
+<p>spring的ioc容器是一个提供ioc支持的轻量级容器</p>
+</blockquote>
+<p><img src="20230622102802.png"></p>
+<blockquote>
+<p>spring提供了两种容器类型: BeanFactory和ApplicationContext</p>
+</blockquote>
+<ul>
+<li>BeanFactory: 默认采用延迟初始化策略(lazy-load),只有当客户端对象需要访问容器中某个受管对象时,才对受管对象进行初始化和依赖注入.适用于资源有限,并且功能要求不是很严格的场景</li>
+<li>ApplicationContext: 在BeanFactory基础上实现,提供更多高级特性,默认容器启动会全部初始化并绑定完成.适用于资源充足,要求更多功能的场景</li>
+</ul>
+<p><img src="20230622103311.png"><br><img src="20230622103336.png"></p>
+<blockquote>
+<p>beanfactory是生成bean的工厂,spring提倡POJO,则把每个业务对象都看作一个javaBean对象</p>
+</blockquote>
+<blockquote>
+<p>beanfactory类似组装厂,将所以业务对象给他,他来依赖注入,客户端之间从中取得成品</p>
+</blockquote>
+<p><img src="20230622103637.png"></p>
+<h2 id="4-1-拥有BeanFactory之后的生活"><a href="#4-1-拥有BeanFactory之后的生活" class="headerlink" title="4.1 拥有BeanFactory之后的生活"></a>4.1 拥有BeanFactory之后的生活</h2><blockquote>
+<p>有了ioc容器,程序员不需要管理依赖关系,就算没有ioc服务,也应该使用ioc的思想来开发</p>
+</blockquote>
+<blockquote>
+<p>xml方式管理依赖关系</p>
+</blockquote>
+<p><img src="20230622103848.png"></p>
+<blockquote>
+<p>创建bean工厂,传入配置文件路径,工厂读取文件内容并依赖注入</p>
+</blockquote>
+<p><img src="20230622104019.png"><br><img src="20230622104028.png"></p>
+<h2 id="4-2-BeanFactory的对象注册与依赖绑定方式"><a href="#4-2-BeanFactory的对象注册与依赖绑定方式" class="headerlink" title="4.2 BeanFactory的对象注册与依赖绑定方式"></a>4.2 BeanFactory的对象注册与依赖绑定方式</h2>
             </div>
             <hr/>
 
@@ -895,7 +940,7 @@ Web界面设计
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">164.9k</span>
+                <span class="white-color">167.9k</span>
             
 
             

@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="keywords" content="a, HTML,CSS,React,Vue,Java,Go,微服务,linux">
+    <meta name="keywords" content="TCP/IP网络编程, HTML,CSS,React,Vue,Java,Go,微服务,linux">
     <meta name="description" content="第一部分 开始网络编程1. 理解网络编程和套接字1.1 理解网络编程和套接字
 c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类似,而网络编程和文件IO也有很多相似之处
 
@@ -17,7 +17,7 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
     <meta name="format-detection" content="telephone=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>a | malred-blog</title>
+    <title>TCP/IP网络编程 | malred-blog</title>
     <link rel="icon" type="image/png" href="/favicon.png">
 
     <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
@@ -288,13 +288,13 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
 
 
 
-<div class="bg-cover post-cover" style="background-image: url('/medias/featureimages/1.jpg')">
+<div class="bg-cover post-cover" style="background-image: url('/medias/featureimages/11.jpg')">
     <div class="container">
         <div class="row">
             <div class="col s12 m12 l12">
                 <div class="brand">
                     <div class="description center-align post-title">
-                        a
+                        TCP/IP网络编程
                     </div>
                 </div>
             </div>
@@ -425,14 +425,14 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        923
+                        1.3k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        3 分
+                        5 分
                     </div>
                     
                 
@@ -564,7 +564,82 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
     <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h4 id="构建打电话套接字"><a href="#构建打电话套接字" class="headerlink" title="构建打电话套接字"></a>构建打电话套接字</h4>
+<h4 id="构建打电话套接字"><a href="#构建打电话套接字" class="headerlink" title="构建打电话套接字"></a>构建打电话套接字</h4><blockquote>
+<p>服务端创建的套接字是服务端套接字,又叫监听(listening)套接字</p>
+</blockquote>
+<blockquote>
+<p>接下来介绍用于请求连接的客户端套接字</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/socket.h></span></span>
+<span class="token comment" spellcheck="true">// 成功返回0,失败返回-1</span>
+<span class="token keyword">int</span> <span class="token function">connect</span><span class="token punctuation">(</span><span class="token keyword">int</span> sockfd<span class="token punctuation">,</span> <span class="token keyword">struct</span> sockaddr <span class="token operator">*</span>serv_addr<span class="token punctuation">,</span> socklen_t addrlen<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>客户端程序只需要1,调用socket函数创建套接字;2,调用connect函数向服务器端发送连接请求</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token comment" spellcheck="true">// hello_client.c</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/socket.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+<span class="token keyword">void</span> <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> sock<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> sockaddr_in serv_addr<span class="token punctuation">;</span>
+    <span class="token keyword">char</span> message<span class="token punctuation">[</span><span class="token number">30</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> str_len<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>argc <span class="token operator">!=</span> <span class="token number">3</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Usage: %s &lt;IP> &lt;port>\n"</span><span class="token punctuation">,</span> argv<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 创建套接字,但不马上分为客户端和服务器端,</span>
+    <span class="token comment" spellcheck="true">// 调用bind、listen函数的是服务器端,调用connect的是客户端</span>
+    sock <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span>PF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>sock <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token string">"socket() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">memset</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>serv_addr<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>serv_addr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    serv_addr<span class="token punctuation">.</span>sin_family <span class="token operator">=</span> AF_INET<span class="token punctuation">;</span>
+    serv_addr<span class="token punctuation">.</span>sin_addr<span class="token punctuation">.</span>s_addr <span class="token operator">=</span> <span class="token function">inet_addr</span><span class="token punctuation">(</span>argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    serv_addr<span class="token punctuation">.</span>sin_port <span class="token operator">=</span> <span class="token function">htons</span><span class="token punctuation">(</span><span class="token function">atoi</span><span class="token punctuation">(</span>argv<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">connect</span><span class="token punctuation">(</span>sock<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>serv_addr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>serv_addr<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token string">"connect() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    str_len <span class="token operator">=</span> <span class="token function">read</span><span class="token punctuation">(</span>sock<span class="token punctuation">,</span> message<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>str_len <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token string">"read() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Message from server: %s\n"</span><span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">close</span><span class="token punctuation">(</span>sock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span> <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>message<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token function">fputs</span><span class="token punctuation">(</span>message<span class="token punctuation">,</span> <span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">fputc</span><span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">,</span> <span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="在linux平台下运行"><a href="#在linux平台下运行" class="headerlink" title="在linux平台下运行"></a>在linux平台下运行</h4><blockquote>
+<p>编译</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">gcc hello_server.c -o hserver
+gcc hello_client.c -o hclient
+</code></pre>
+<p><img src="20230622055826.png"></p>
+<h3 id="1-2-基于linux的文件操作"><a href="#1-2-基于linux的文件操作" class="headerlink" title="1.2 基于linux的文件操作"></a>1.2 基于linux的文件操作</h3><blockquote>
+<p>对linux而言,socket操作和文件操作是一样的,socket也被认为是文件的一种,数据传输过程中可以使用文件IO相关函数,而windows需要调用特殊的数据传输相关函数</p>
+</blockquote>
+<h4 id="底层文件访问-Low-Level-File-Access-和文件描述符-File-Descriptor"><a href="#底层文件访问-Low-Level-File-Access-和文件描述符-File-Descriptor" class="headerlink" title="底层文件访问(Low-Level File Access)和文件描述符(File Descriptor)"></a>底层文件访问(Low-Level File Access)和文件描述符(File Descriptor)</h4>
             </div>
             <hr/>
 
@@ -704,7 +779,7 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
                     </span>
                     <a href="https://malred.github.io" class="b-link-green">malred-blog</a>
                     <i class="fa fa-angle-right fa-lg fa-fw text-color"></i>
-                    <a href="/2023/06/21/ji-suan-ji-li-lun/tcp-ip-wang-luo-bian-cheng/a/" class="b-link-green">a</a>
+                    <a href="/2023/06/21/ji-suan-ji-li-lun/tcp-ip-wang-luo-bian-cheng/a/" class="b-link-green">TCP/IP网络编程</a>
                 </p>
             </div>
         </div>
@@ -725,30 +800,26 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fa fa-dot-circle-o"></i>&nbsp;本篇
-            </div>
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2023/06/21/ji-suan-ji-li-lun/tcp-ip-wang-luo-bian-cheng/a/">
+                <a href="/2023/06/22/ji-suan-ji-li-lun/mysql-shi-zen-yang-yun-xing-de/a/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="a">
+                        <img src="/medias/featureimages/2.jpg" class="responsive-img" alt="mysql是怎样运行的">
                         
-                        <span class="card-title">a</span>
+                        <span class="card-title">mysql是怎样运行的</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">第一部分 开始网络编程1. 理解网络编程和套接字1.1 理解网络编程和套接字
-c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类似,而网络编程和文件IO也有很多相似之处
-
-网络编程和套接字概要
-网络编程就是编写程序使</div>
+                    <div class="summary">1. 装作自己是个小白–初始mysql
+mysql的运行过程和微信(c/s架构)类似,它的服务器程序直接与要存储的数据打交道,多个客户端程序可以连接到这个服务端程序,发送增删改查请求,然后服务器程序可以对数据进行处理.这些操作需要登录了my</div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2023-06-21
-                            </span>
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2023-06-22
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
@@ -757,24 +828,23 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
                                     理论
                                 </a>
                             
-                            <a href="/categories/%E7%90%86%E8%AE%BA/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" class="post-category" target="_blank">
-                                    计算机网络
+                            <a href="/categories/%E7%90%86%E8%AE%BA/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="post-category" target="_blank">
+                                    数据库
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/%E7%90%86%E8%AE%BA/" target="_blank">
-                        <span class="chip bg-color">理论</span>
+                    <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" target="_blank">
+                        <span class="chip bg-color">数据库</span>
                     </a>
                     
-                    <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" target="_blank">
-                        <span class="chip bg-color">计算机网络</span>
+                    <a href="/tags/%E7%90%86%E8%AE%BA/" target="_blank">
+                        <span class="chip bg-color">理论</span>
                     </a>
                     
                 </div>
@@ -931,7 +1001,7 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">164.9k</span>
+                <span class="white-color">167.9k</span>
             
 
             

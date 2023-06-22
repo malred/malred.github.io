@@ -414,14 +414,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        1.3k
+                        2.5k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        4 分
+                        8 分
                     </div>
                     
                 
@@ -526,7 +526,90 @@
 <p>SSI演化为在html里嵌入更复杂的代码,并使用更强大的解释器.这一模式衍生出PHP、ASP、JSP和ColdFusion等一系列引擎,同时也是Mustache、ERB、Velocity等web模板引擎的基础.</p>
 </blockquote>
 <h3 id="1-5-http请求"><a href="#1-5-http请求" class="headerlink" title="1.5 http请求"></a>1.5 http请求</h3><blockquote>
-<p>是一种请求-响应协议,以一个请求开始</p>
+<p>是一种请求-响应协议,以一个请求开始,http请求和其他所有http报文(message)一样,由一系列文本行组成,会按照以下顺序排列</p>
+</blockquote>
+<ol>
+<li>请求行(request-line)</li>
+<li>零个或任意多个请求首部(header)</li>
+<li>一个空行</li>
+<li>可选的报文主体(body)</li>
+</ol>
+<pre class=" language-http"><code class="language-http">GET /Protocols/rfc2616/rfc2616.html HTTP/1.1
+<span class="token header-name keyword">Host:</span> www.w3.org
+<span class="token header-name keyword">User-Agent:</span> Mozilla/5.0
+(empty line)
+</code></pre>
+<blockquote>
+<p>上面代码的第一行就是请求行</p>
+</blockquote>
+<blockquote>
+<p>第一个单词为请求方法(request method),然后跟着的是统一文件描述符(URI),以及所用的http版本</p>
+</blockquote>
+<blockquote>
+<p>接下来的两个文本行是请求的首部,而最后一行是空行,即使报文的主体内容为空,这个空行也必须存在(我: 可能因为浏览器编译需要这个?).是否包含主体内容,则根据请求方法而定</p>
+</blockquote>
+<h4 id="1-5-1-请求方法"><a href="#1-5-1-请求方法" class="headerlink" title="1.5.1 请求方法"></a>1.5.1 请求方法</h4><blockquote>
+<p>请求方法是请求行中的第一个单词,指明了客户端对资源执行的操作</p>
+</blockquote>
+<blockquote>
+<p>http0.9只有get方法,http1.0添加了post和head方法,http1.1添加了put,delete,options,trace,connect方法,并允许开发者自行添加更多方法.</p>
+</blockquote>
+<blockquote>
+<p>各个http方法的作用如下:</p>
+</blockquote>
+<ul>
+<li>GET 命令服务器返回指定资源</li>
+<li>HEAD 与get方法的作用类似,不同在于不要求服务器返回报文的主体.通常用于不获取报文主体的情况下,取到响应的首部</li>
+<li>POST 命令服务器将报文主体中的数据传递给URI指定的资源,具体会对这些数据做什么则是服务器自己决定</li>
+<li>PUT 命令服务器将报文主体中的数据设置为URI指定的资源,如果URI指定位置已经有数据存在,就用报文主体中的数据去代替已有的数据,如果资源尚未存在,则在URI指定的位置上创建一个新资源</li>
+<li>DELETE 命令服务器删除URI指定的资源</li>
+<li>TRACE 命令服务器返回请求本身.客户端可以知道介于它和服务器之间的其他服务器是如何处理请求的</li>
+<li>OPTIONS 命令服务器返回它支持的http方法列表</li>
+<li>CONNECT 命令服务器与客户端建立一个物理连接,通常用于设置SSL隧道以开启HTTPS功能</li>
+<li>PATCH 命令服务器使用报文主体中的数据对URI指定的资源进行修改</li>
+</ul>
+<h4 id="1-5-2-安全的请求方法"><a href="#1-5-2-安全的请求方法" class="headerlink" title="1.5.2 安全的请求方法"></a>1.5.2 安全的请求方法</h4><blockquote>
+<p>如果一个http方法只要求服务器提供信息而不会对服务器的状态做任何修改,则是安全的(safe)</p>
+</blockquote>
+<ul>
+<li>安全的: GET,HEAD,OPTIONS,TRACE</li>
+<li>不安全的: POST,PUT,DELETE</li>
+</ul>
+<h4 id="1-5-3-幂等的请求方法"><a href="#1-5-3-幂等的请求方法" class="headerlink" title="1.5.3 幂等的请求方法"></a>1.5.3 幂等的请求方法</h4><blockquote>
+<p>如果一个http方法在使用相同的数据进行第二次调用的时候,不会对服务器的状态造成任何改变,则是幂等的</p>
+</blockquote>
+<blockquote>
+<p>安全的方法天生是幂等的(只要求返回数据,不对服务器修改)</p>
+</blockquote>
+<blockquote>
+<p>PUT和DELETE不安全,但是幂等,因为同样的数据第二次调用PUT或DELETE不会导致服务器状态改变</p>
+</blockquote>
+<blockquote>
+<p>POST既不安全也不幂等,多次用同样数据POST是否会改变服务器状态是由服务器自身决定的</p>
+</blockquote>
+<h4 id="1-5-4-浏览器对请求方法的支持"><a href="#1-5-4-浏览器对请求方法的支持" class="headerlink" title="1.5.4 浏览器对请求方法的支持"></a>1.5.4 浏览器对请求方法的支持</h4><blockquote>
+<p>GET是最基本的http方法,所有浏览器都支持</p>
+</blockquote>
+<blockquote>
+<p>POST从HTML2.0开始通过添加HTML表单实现,可以通过form标签的method属性来设置get或post请求方法</p>
+</blockquote>
+<blockquote>
+<p>HTML不支持除了GET和POST以外的方法</p>
+</blockquote>
+<blockquote>
+<p>用户可以通过XHR(XMLHttpRequest)来获得对put和delete方法的支持.XHR是浏览器对象,是一系列浏览器API,允许程序员向服务器发送HTTP请求.XHR不止支持xml,还支持包括json以及纯文本在内的任何格式的请求和响应</p>
+</blockquote>
+<h4 id="1-5-5-请求首部"><a href="#1-5-5-请求首部" class="headerlink" title="1.5.5 请求首部"></a>1.5.5 请求首部</h4><blockquote>
+<p>http请求的首部记录了请求本身以及客户端有关的信息.请求首部由任意多个用冒号分隔的纯文本键值对组成,最后以回车(CR)和换行(LF)结尾</p>
+</blockquote>
+<blockquote>
+<p>HTTP1.1 RFC对主要的http请求字段进行了标准化,过去非标准的http请求以x-作为前缀.</p>
+</blockquote>
+<blockquote>
+<p>大多数http请求首部是可选的,宿主(Host)首部字段是http1.1唯一强制要求的.根据请求方法不同,如果请求报文中包含可选的主体,那么请求首部还需要带有内容长度(Content-Length)字段或者传输编码(Transfer-Encoding)字段</p>
+</blockquote>
+<p><img src="20230622100946.png"><br><img src="20230622100958.png"></p>
+<h3 id="1-6-HTTP-响应"><a href="#1-6-HTTP-响应" class="headerlink" title="1.6 HTTP 响应"></a>1.6 HTTP 响应</h3><blockquote>
 </blockquote>
 
             </div>
@@ -697,9 +780,9 @@
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="a">
+                        <img src="/medias/featureimages/11.jpg" class="responsive-img" alt="TCP/IP网络编程">
                         
-                        <span class="card-title">a</span>
+                        <span class="card-title">TCP/IP网络编程</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
@@ -893,7 +976,7 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">164.9k</span>
+                <span class="white-color">167.9k</span>
             
 
             
