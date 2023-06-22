@@ -432,14 +432,14 @@ GC要做两件事
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        404
+                        925
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        1 分
+                        3 分
                     </div>
                     
                 
@@ -484,7 +484,53 @@ GC要做两件事
 <h3 id="GC标记-清除算法"><a href="#GC标记-清除算法" class="headerlink" title="GC标记-清除算法"></a>GC标记-清除算法</h3><blockquote>
 <p>1960年,由John McCarthy在论文中发布</p>
 </blockquote>
-
+<h3 id="引用计数法"><a href="#引用计数法" class="headerlink" title="引用计数法"></a>引用计数法</h3><blockquote>
+<p>1960年,George E. Collins在论文中发布.但是Harold McBeth在1963年指出,引用计数法有一个缺点,即不能解决循环引用(两个及两个以上对象循环互相引用)</p>
+</blockquote>
+<h3 id="GC复制算法"><a href="#GC复制算法" class="headerlink" title="GC复制算法"></a>GC复制算法</h3><blockquote>
+<p>1963年,Marvin L. Minsky在论文中发布.GC复制算法把内存分成两部分</p>
+</blockquote>
+<h3 id="50年来-GC的根本没有改变"><a href="#50年来-GC的根本没有改变" class="headerlink" title="50年来,GC的根本没有改变"></a>50年来,GC的根本没有改变</h3><blockquote>
+<p>这50年间,新算法基本只是把前文提到的3种算法进行组合或应用</p>
+</blockquote>
+<h3 id="未知的第四种算法"><a href="#未知的第四种算法" class="headerlink" title="未知的第四种算法"></a>未知的第四种算法</h3><blockquote>
+<p>还未出现</p>
+</blockquote>
+<h2 id="为什么我们现在要学GC"><a href="#为什么我们现在要学GC" class="headerlink" title="为什么我们现在要学GC"></a>为什么我们现在要学GC</h2><h3 id="GC–存在即合理"><a href="#GC–存在即合理" class="headerlink" title="GC–存在即合理"></a>GC–存在即合理</h3><blockquote>
+<p>大多数语言都搭载GC</p>
+</blockquote>
+<blockquote>
+<p>不同场景使用GC算法不同: 游戏场景,需要选用GC导致的暂停时间最短的算法;编码应用场景(如音乐和动画),则需要选用整体处理时间最短的算法</p>
+</blockquote>
+<h3 id="多种多样的处理程序的实现"><a href="#多种多样的处理程序的实现" class="headerlink" title="多种多样的处理程序的实现"></a>多种多样的处理程序的实现</h3><blockquote>
+<p>近来,有一股发布语言处理程序的风潮,它们搭载不同的GC算法,优秀的GC也是语言的一大卖点</p>
+</blockquote>
+<blockquote>
+<p>GC性能是语言处理程序的性能评价的一大要素</p>
+</blockquote>
+<h3 id="留意内存空间的用法"><a href="#留意内存空间的用法" class="headerlink" title="留意内存空间的用法"></a>留意内存空间的用法</h3><blockquote>
+<p>比如在使用java时不留意内存管理,而无意中把内存挥霍一空(比如循环里创建无用的对象)</p>
+</blockquote>
+<h3 id="不会过时的技术"><a href="#不会过时的技术" class="headerlink" title="不会过时的技术"></a>不会过时的技术</h3><h3 id="更何况-GC很有趣"><a href="#更何况-GC很有趣" class="headerlink" title="更何况,GC很有趣"></a>更何况,GC很有趣</h3><h2 id="读者对象"><a href="#读者对象" class="headerlink" title="读者对象"></a>读者对象</h2><blockquote>
+<p>本书由1.算法篇和2.实现篇组成</p>
+</blockquote>
+<blockquote>
+<p>读实现篇需要有c和c++的知识(c的函数指针,c++的模板)</p>
+</blockquote>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p><img src="20230622114832.png"><br><img src="20230622114844.png"><br><img src="20230622114926.png"></p>
+<h1 id="算法篇"><a href="#算法篇" class="headerlink" title="算法篇"></a>算法篇</h1><h2 id="1-学习gc之前"><a href="#1-学习gc之前" class="headerlink" title="1. 学习gc之前"></a>1. 学习gc之前</h2><h3 id="1-1-对象-头-域"><a href="#1-1-对象-头-域" class="headerlink" title="1.1 对象/头/域"></a>1.1 对象/头/域</h3><blockquote>
+<p>GC的世界中,对象表示”通过应用程序利用的数据的集合”.对象配置在内存空间里.GC根据情况间配置好的对象进行移动或销毁操作,因此,对象是GC的基本单位.</p>
+</blockquote>
+<blockquote>
+<p>对象一般由头(header)和域(field)构成</p>
+</blockquote>
+<h4 id="1-1-1-头"><a href="#1-1-1-头" class="headerlink" title="1.1.1 头"></a>1.1.1 头</h4><blockquote>
+<p>保存对象本身信息(对象和种类)的部分</p>
+</blockquote>
+<blockquote>
+<p>不同GC,头存的信息也不同</p>
+</blockquote>
+<h4 id="1-1-2-域"><a href="#1-1-2-域" class="headerlink" title="1.1.2 域"></a>1.1.2 域</h4>
             </div>
             <hr/>
 
@@ -645,63 +691,63 @@ GC要做两件事
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fa fa-dot-circle-o"></i>&nbsp;本篇
-            </div>
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2023/06/22/ji-suan-ji-li-lun/la-ji-hui-shou-suan-fa-she-ji-yu-shi-xian/a/">
+                <a href="/2023/06/22/ji-suan-ji-li-lun/xian-dai-javascript-ku-kai-fa/z/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="垃圾回收算法设计与实现">
+                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="现代JavaScript库开发">
                         
-                        <span class="card-title">垃圾回收算法设计与实现</span>
+                        <span class="card-title">现代JavaScript库开发</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">序章GC的定义
-GC是Garbage Collection的简称
+                    <div class="summary">1. 从零开发一个JavaScript库1.1 如何开始
 
-垃圾的回收
-垃圾就是程序不用的内存空间
+如何确定要开发什么库呢?
 
-GC要做两件事
-找到内存空间里的垃圾
-回收垃圾,让程序能再次利用这部分空间
 
-没有GC的世界
-没有GC,程序员就需要手动内存管理,</div>
+从项目中寻找灵感,将项目中的一些功能进行抽象设计,提取通用逻辑,进行额外处理,形成一个公共库的原型;一般项目中也会存在一些公共函数和组件等,是很好的灵</div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2023-06-22
-                            </span>
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2023-06-22
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/%E7%90%86%E8%AE%BA/" class="post-category" target="_blank">
+                            <a href="/categories/%E5%89%8D%E7%AB%AF/" class="post-category" target="_blank">
+                                    前端
+                                </a>
+                            
+                            <a href="/categories/%E5%89%8D%E7%AB%AF/%E7%90%86%E8%AE%BA/" class="post-category" target="_blank">
                                     理论
                                 </a>
                             
-                            <a href="/categories/%E7%90%86%E8%AE%BA/GC/" class="post-category" target="_blank">
-                                    GC
+                            <a href="/categories/%E5%89%8D%E7%AB%AF/%E7%90%86%E8%AE%BA/javascript/" class="post-category" target="_blank">
+                                    javascript
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
+                    
+                    <a href="/tags/%E5%89%8D%E7%AB%AF/" target="_blank">
+                        <span class="chip bg-color">前端</span>
+                    </a>
                     
                     <a href="/tags/%E7%90%86%E8%AE%BA/" target="_blank">
                         <span class="chip bg-color">理论</span>
                     </a>
                     
-                    <a href="/tags/GC/" target="_blank">
-                        <span class="chip bg-color">GC</span>
+                    <a href="/tags/javascript/" target="_blank">
+                        <span class="chip bg-color">javascript</span>
                     </a>
                     
                 </div>
@@ -866,7 +912,7 @@ mysql的运行过程和微信(c/s架构)类似,它的服务器程序直接与要
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">167.9k</span>
+                <span class="white-color">170.9k</span>
             
 
             

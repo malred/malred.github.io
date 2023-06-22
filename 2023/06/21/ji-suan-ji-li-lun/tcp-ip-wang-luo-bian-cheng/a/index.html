@@ -425,14 +425,14 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        1.3k
+                        2.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        5 分
+                        9 分
                     </div>
                     
                 
@@ -639,7 +639,99 @@ gcc hello_client.c -o hclient
 <h3 id="1-2-基于linux的文件操作"><a href="#1-2-基于linux的文件操作" class="headerlink" title="1.2 基于linux的文件操作"></a>1.2 基于linux的文件操作</h3><blockquote>
 <p>对linux而言,socket操作和文件操作是一样的,socket也被认为是文件的一种,数据传输过程中可以使用文件IO相关函数,而windows需要调用特殊的数据传输相关函数</p>
 </blockquote>
-<h4 id="底层文件访问-Low-Level-File-Access-和文件描述符-File-Descriptor"><a href="#底层文件访问-Low-Level-File-Access-和文件描述符-File-Descriptor" class="headerlink" title="底层文件访问(Low-Level File Access)和文件描述符(File Descriptor)"></a>底层文件访问(Low-Level File Access)和文件描述符(File Descriptor)</h4>
+<h4 id="底层文件访问-Low-Level-File-Access-和文件描述符-File-Descriptor"><a href="#底层文件访问-Low-Level-File-Access-和文件描述符-File-Descriptor" class="headerlink" title="底层文件访问(Low-Level File Access)和文件描述符(File Descriptor)"></a>底层文件访问(Low-Level File Access)和文件描述符(File Descriptor)</h4><blockquote>
+<p>这里的底层是指的是”与标准无关的操作系统独立提供的”,稍后讲解的函数是由linux提供的,而非ANSI标准定义的函数,要使用linux提供的文件IO函数,需要先理解文件描述符的概念</p>
+</blockquote>
+<p><img src="20230622201229.png" alt="c语言标准输入输出和标准错误在linux的文件描述符"></p>
+<blockquote>
+<p>文件和套接字一般经过创建过程才会被分配文件描述符.上表中的3中输入输出对象即时未经过特殊的创建过程也会在程序允许后自动分配文件描述符</p>
+</blockquote>
+<blockquote>
+<p>文件描述符(文件句柄): 学校附近有个服务站,打个电话就能复印需要的论文,而有一个常客叫英秀,每次都复印同一篇,时间长了,每次都要说论文全名非常繁琐,于是与电话站约定用18号来代表该论文,每次如果复引的论文标题超过50个字,就会约定一个新的不重复的号码来表示该论文.这里的号码就是文件描述符,论文对应文件,每当生成文件或套接字,操作系统将返回分配给它们的整数.在linux下称为描述符,windows下称为句柄</p>
+</blockquote>
+<h4 id="打开文件"><a href="#打开文件" class="headerlink" title="打开文件"></a>打开文件</h4><blockquote>
+<p>该函数需要两个参数: 1.打开的目标文件名及路径信息;2.文件打开模式(文件特性信息)</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/types.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/stat.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;fcntl.h></span></span>
+
+<span class="token comment" spellcheck="true">// 成功返回文件描述符,失败返回-1</span>
+<span class="token keyword">int</span> <span class="token function">open</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>path<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>参数2(可以用 | 符号一次传递多个)可能取值:</p>
+</blockquote>
+<p><img src="20230622202228.png"></p>
+<h4 id="关闭文件"><a href="#关闭文件" class="headerlink" title="关闭文件"></a>关闭文件</h4><pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+
+<span class="token comment" spellcheck="true">// 成功返回0,失败返回-1</span>
+<span class="token comment" spellcheck="true">// fd是需要关闭的文件或套接字的文件描述符</span>
+<span class="token keyword">int</span> <span class="token function">close</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>该函数不仅可以关闭文件,还可以关闭套接字,说明linux不区分文件和套接字</p>
+</blockquote>
+<h4 id="将数据写入文件"><a href="#将数据写入文件" class="headerlink" title="将数据写入文件"></a>将数据写入文件</h4><blockquote>
+<p>套接字向其他计算机传输数据也会用到该函数</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+
+<span class="token comment" spellcheck="true">// 成功时返回写入的字节数,失败返回-1</span>
+<span class="token comment" spellcheck="true">// fd: 数据传输对象的文件描述符</span>
+<span class="token comment" spellcheck="true">// buf: 保存要传输数据的缓冲地址值</span>
+<span class="token comment" spellcheck="true">// nbytes: 要传输的数据的字节数</span>
+ssize_t <span class="token function">write</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">void</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> size_t nbytes<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>size_t是通过typedef声明的unsigned int类型,而ssize_t是通过typedef声明的signed int类型</p>
+</blockquote>
+<blockquote>
+<p>size_t和ssize_t都是元数据类型(primitive),在sys/types.h头文件中一般有typedef声明定义,算是给基本数据类型起了别名.</p>
+</blockquote>
+<blockquote>
+<p>起别名是因为不同时代、不同操作系统的数据类型的表现会不断改变,需要修改程序中使用的数据类型.如果之前需要声明4字节数据的地方使用了size_t会ssize_t,则可以大大减少代码变动,只需要修改并编译size_t和ssize_t的typedef声明即可.</p>
+</blockquote>
+<blockquote>
+<p>为了给基本数据类型起别名,一般会添加大量typedef声明,为了和程序员定义的新数据类型区分,操作系统定义的数据类型会添加后缀_t</p>
+</blockquote>
+<blockquote>
+<p>代码: 创建新文件并保存数据</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token comment" spellcheck="true">//low_open.c</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;fcntl.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token keyword">void</span> <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> fd<span class="token punctuation">;</span>
+    <span class="token keyword">char</span> buf<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"Let's go!\n"</span><span class="token punctuation">;</span>
+
+    fd <span class="token operator">=</span> <span class="token function">open</span><span class="token punctuation">(</span><span class="token string">"data.txt"</span><span class="token punctuation">,</span> O_CREAT <span class="token operator">|</span> O_WRONLY <span class="token operator">|</span> O_TRUNC<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fd <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token string">"open() error!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"file descriptor: %d \n"</span><span class="token punctuation">,</span> fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">write</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> buf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>buf<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token string">"write() error!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">close</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span> <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>message<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token function">fputs</span><span class="token punctuation">(</span>message<span class="token punctuation">,</span> <span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">fputc</span><span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">,</span> <span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230622203939.png"></p>
+<h4 id="读取文件中的数据"><a href="#读取文件中的数据" class="headerlink" title="读取文件中的数据"></a>读取文件中的数据</h4><pre class=" language-c"><code class="language-c">
+</code></pre>
+
             </div>
             <hr/>
 
@@ -1001,7 +1093,7 @@ mysql的运行过程和微信(c/s架构)类似,它的服务器程序直接与要
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">167.9k</span>
+                <span class="white-color">170.9k</span>
             
 
             
