@@ -425,14 +425,14 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        3.4k
+                        4.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        14 分
+                        19 分
                     </div>
                     
                 
@@ -1020,7 +1020,170 @@ hServerWin 9190
 hClientWin 127.0.0.1 9190
 </code></pre>
 <p><img src="20230623062325.png"></p>
-<h4 id="基于windows的IO函数"><a href="#基于windows的IO函数" class="headerlink" title="基于windows的IO函数"></a>基于windows的IO函数</h4>
+<h4 id="基于windows的IO函数"><a href="#基于windows的IO函数" class="headerlink" title="基于windows的IO函数"></a>基于windows的IO函数</h4><pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;winsock2.h></span></span>
+<span class="token comment" spellcheck="true">// 成功返回传输字节数,失败返回SOCKET_ERROR</span>
+<span class="token comment" spellcheck="true">// s: 数据传输对象连接的套接字句柄</span>
+<span class="token comment" spellcheck="true">// buf: 缓冲</span>
+<span class="token comment" spellcheck="true">// len: 传输的字节数</span>
+<span class="token comment" spellcheck="true">// flags: 传输时的选项 </span>
+<span class="token keyword">int</span> <span class="token function">send</span><span class="token punctuation">(</span>SOCKET s<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span> buf<span class="token punctuation">,</span> <span class="token keyword">int</span> len<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>与linux的write函数比,之上多出了flags参数.其实linux也有send函数,来自于BSD套接字</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;winsock2.h></span></span>
+<span class="token comment" spellcheck="true">// 成功返回接收的字节数(收到EOF时为0),失败返回SOCKET_ERROR</span>
+<span class="token comment" spellcheck="true">// s: 数据接收对象连接的套接字句柄</span>
+<span class="token keyword">int</span> <span class="token function">recv</span><span class="token punctuation">(</span>SOCKET  s<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> <span class="token keyword">int</span> len<span class="token punctuation">,</span> <span class="token keyword">int</span> flags<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>linux的read和write不等于windows的send和recv</p>
+</blockquote>
+<h2 id="2-套接字类型与协议设置"><a href="#2-套接字类型与协议设置" class="headerlink" title="2. 套接字类型与协议设置"></a>2. 套接字类型与协议设置</h2><h3 id="2-1-套接字协议及其数据传输特性"><a href="#2-1-套接字协议及其数据传输特性" class="headerlink" title="2.1 套接字协议及其数据传输特性"></a>2.1 套接字协议及其数据传输特性</h3><h4 id="2-1-1-协议-Protocol"><a href="#2-1-1-协议-Protocol" class="headerlink" title="2.1.1 协议(Protocol)"></a>2.1.1 协议(Protocol)</h4><blockquote>
+<p>相隔很远的人需要通话,需要先确定对话方式,如果双方决定使用电话,则电话就是两人对话的协议,协议是对话中使用的通信规则,也就是说是计算机间对话必备通信规则</p>
+</blockquote>
+<h4 id="2-1-2-创建套接字"><a href="#2-1-2-创建套接字" class="headerlink" title="2.1.2 创建套接字"></a>2.1.2 创建套接字</h4><pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys.socket.h></span></span>
+<span class="token comment" spellcheck="true">// 成功返回文件描述符,失败返回-1</span>
+<span class="token comment" spellcheck="true">// domain 套接字使用的协议簇(Protocol family)信息</span>
+<span class="token comment" spellcheck="true">// type 套接字数据传输类型信息</span>
+<span class="token comment" spellcheck="true">// protocol 通信使用的协议</span>
+<span class="token keyword">int</span> <span class="token function">socket</span><span class="token punctuation">(</span><span class="token keyword">int</span> domain<span class="token punctuation">,</span> <span class="token keyword">int</span> type<span class="token punctuation">,</span> <span class="token keyword">int</span> protocol<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h4 id="2-1-3-协议簇"><a href="#2-1-3-协议簇" class="headerlink" title="2.1.3 协议簇"></a>2.1.3 协议簇</h4><p><img src="20230625191310.png"></p>
+<blockquote>
+<p>PF_INET对应ipv4,其他协议簇要么不常用要么没普及</p>
+</blockquote>
+<h4 id="2-1-4-套接字类型"><a href="#2-1-4-套接字类型" class="headerlink" title="2.1.4 套接字类型"></a>2.1.4 套接字类型</h4><blockquote>
+<p>指的是套接字的数据传输方式,就算是同一个协议簇,也有不同的传输方式</p>
+</blockquote>
+<ol>
+<li>面向连接的套接字(SOCK_STREAM) </li>
+</ol>
+<p>类似于通过传送带传送数据.</p>
+<p>特点: </p>
+<ul>
+<li>传输过程中数据不会消失</li>
+<li>按序传输数据</li>
+<li>传输的数据不存在数据边界</li>
+</ul>
+<blockquote>
+<p>收发数据的套接字内部有缓冲(字节数组),会将传输的数据保存到该数组,只要不超过数组容量,就有可能在数据填充满缓冲区后通过1次read函数调用读取全部,也有可能分成多次read调用进行读取,也就是说,面向连接的套接字中,read和write调用的次数没有太大意义.所以不存在数据边界(Boundary)</p>
+</blockquote>
+<blockquote>
+<p>缓冲区是字节数组构成的,如果read读取比接收数据满,则缓冲有可能被填满,但是满了之后会停止接收,此时传输端套接字也停止发送,但是不会丢失,后续缓冲读取了,会再次开启传输</p>
+</blockquote>
+<blockquote>
+<p>该类型套接字的连接必须一一对应</p>
+</blockquote>
+<blockquote>
+<p>概况: 可靠的、按序传递的、基于字节的面向连接的数据传输方式的套接字</p>
+</blockquote>
+<ol start="2">
+<li>面向消息的套接字(SOCK_DGRAM)<blockquote>
+<p>类似于摩托车快递</p>
+</blockquote>
+</li>
+</ol>
+<ul>
+<li>强调快速传输而非传输顺序</li>
+<li>传输的数据可能丢失也可能销毁</li>
+<li>传输的数据有数据边界</li>
+<li>限制每次传输的数据大小</li>
+</ul>
+<blockquote>
+<p>如果2个摩托车发送两份数据(分批发送,每份大小有限制),接收者也要分2次接收,这就是数据边界</p>
+</blockquote>
+<blockquote>
+<p>不可靠的、不按序传递的、以数据的高速传输为目的的套接字</p>
+</blockquote>
+<blockquote>
+<p>面向消息的套接字不存在连接的概念</p>
+</blockquote>
+<h4 id="2-1-5-协议的最终选择"><a href="#2-1-5-协议的最终选择" class="headerlink" title="2.1.5 协议的最终选择"></a>2.1.5 协议的最终选择</h4><blockquote>
+<p>如果同一个协议簇中存在多个数据传输方式相同的协议,则需要指定第三个参数</p>
+</blockquote>
+<blockquote>
+<p>ipv4协议簇中面向连接的套接字 -&gt; TCP协议</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token keyword">int</span> tcp_socket <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span>PF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">,</span> IPPROTO_TCP<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>ipv4协议簇中面向消息的套接字 -&gt; UDP协议</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token keyword">int</span> udp_socket <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span>PF_INET<span class="token punctuation">,</span> SOCK_DGRAM<span class="token punctuation">,</span> IPPROTO_UDP<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h4 id="2-1-6-面向连接的套接字-TCP套接字示例"><a href="#2-1-6-面向连接的套接字-TCP套接字示例" class="headerlink" title="2.1.6 面向连接的套接字: TCP套接字示例"></a>2.1.6 面向连接的套接字: TCP套接字示例</h4><blockquote>
+<p>为了验证不存在数据边界的特性,让客户端多次调用read接收服务端数据,让服务端write的次数和read的次数不同</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token comment" spellcheck="true">// tcp_client.c </span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/socket.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+<span class="token keyword">void</span> <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> sock<span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> sockaddr_in serv_addr<span class="token punctuation">;</span>
+    <span class="token keyword">char</span> message<span class="token punctuation">[</span><span class="token number">30</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> str_len<span class="token punctuation">;</span>
+    <span class="token keyword">int</span> idx <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> read_len <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>argc <span class="token operator">!=</span> <span class="token number">3</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Usage: %s &lt;IP> &lt;port>\n"</span><span class="token punctuation">,</span> argv<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 创建套接字,但不马上分为客户端和服务器端,</span>
+    <span class="token comment" spellcheck="true">// 调用bind、listen函数的是服务器端,调用connect的是客户端</span>
+    sock <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span>PF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>sock <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token string">"socket() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">memset</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>serv_addr<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>serv_addr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    serv_addr<span class="token punctuation">.</span>sin_family <span class="token operator">=</span> AF_INET<span class="token punctuation">;</span>
+    serv_addr<span class="token punctuation">.</span>sin_addr<span class="token punctuation">.</span>s_addr <span class="token operator">=</span> <span class="token function">inet_addr</span><span class="token punctuation">(</span>argv<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    serv_addr<span class="token punctuation">.</span>sin_port <span class="token operator">=</span> <span class="token function">htons</span><span class="token punctuation">(</span><span class="token function">atoi</span><span class="token punctuation">(</span>argv<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">connect</span><span class="token punctuation">(</span>sock<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>serv_addr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>serv_addr<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token string">"connect() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>read_len <span class="token operator">=</span> <span class="token function">read</span><span class="token punctuation">(</span>sock<span class="token punctuation">,</span> <span class="token operator">&amp;</span>message<span class="token punctuation">[</span>idx<span class="token operator">++</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>read_len <span class="token operator">==</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+            <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token string">"read() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        str_len <span class="token operator">+</span><span class="token operator">=</span> read_len<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Message from server: %s\n"</span><span class="token punctuation">,</span> message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Function read call count: %d \n"</span><span class="token punctuation">,</span> str_len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">close</span><span class="token punctuation">(</span>sock<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span> <span class="token function">error_handling</span><span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>message<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token function">fputs</span><span class="token punctuation">(</span>message<span class="token punctuation">,</span> <span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">fputc</span><span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">,</span> <span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>在while循环里反复调用read,每次读取1字节,如果返回0(为假),就跳出循环,str_len存储读取的总字节数</p>
+</blockquote>
+<p><img src="20230625200806.png"></p>
+<h3 id="2-2-windows平台下的实现及验证"><a href="#2-2-windows平台下的实现及验证" class="headerlink" title="2.2 windows平台下的实现及验证"></a>2.2 windows平台下的实现及验证</h3><pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;winsock2.h></span></span>
+SOCKET <span class="token function">socket</span><span class="token punctuation">(</span><span class="token keyword">int</span> af<span class="token punctuation">,</span> <span class="token keyword">int</span> type<span class="token punctuation">,</span> <span class="token keyword">int</span> protocol<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>这里的SOCKET结构体用来保存整数型套接字句柄</p>
+</blockquote>
+
             </div>
             <hr/>
 
@@ -1382,7 +1545,7 @@ mysql的运行过程和微信(c/s架构)类似,它的服务器程序直接与要
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">179.3k</span>
+                <span class="white-color">188.4k</span>
             
 
             

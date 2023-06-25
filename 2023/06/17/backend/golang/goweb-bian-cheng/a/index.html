@@ -414,14 +414,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        4.5k
+                        7.1k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        16 分
+                        27 分
                     </div>
                     
                 
@@ -748,7 +748,430 @@ go run server.go
 <h2 id="2-ChitChat论坛"><a href="#2-ChitChat论坛" class="headerlink" title="2. ChitChat论坛"></a>2. ChitChat论坛</h2><blockquote>
 <p>论坛应用: 允许用户登录,允许发布新帖和回复</p>
 </blockquote>
-<h3 id="2-1-ChitChat简介"><a href="#2-1-ChitChat简介" class="headerlink" title="2.1 ChitChat简介"></a>2.1 ChitChat简介</h3>
+<h3 id="2-1-ChitChat简介"><a href="#2-1-ChitChat简介" class="headerlink" title="2.1 ChitChat简介"></a>2.1 ChitChat简介</h3><h3 id="2-2-应用设计"><a href="#2-2-应用设计" class="headerlink" title="2.2 应用设计"></a>2.2 应用设计</h3><p><img src="20230625083059.png"></p>
+<h3 id="2-3-数据模型"><a href="#2-3-数据模型" class="headerlink" title="2.3 数据模型"></a>2.3 数据模型</h3><blockquote>
+<p>使用postgreSql数据库</p>
+</blockquote>
+<ul>
+<li>user 用户信息</li>
+<li>session 论坛用户当前的登录会话</li>
+<li>thread 论坛里的帖子,每个帖子记录了多个用户之间的对话</li>
+<li>post 在帖子里添加的回复</li>
+</ul>
+<p><img src="20230625083253.png"></p>
+<h3 id="2-4-请求的接收与处理"><a href="#2-4-请求的接收与处理" class="headerlink" title="2.4 请求的接收与处理"></a>2.4 请求的接收与处理</h3><ol>
+<li>客户端发送请求到服务器一个URL上</li>
+<li>服务器的多路复用器将请求重定向到对应处理器</li>
+<li>处理器处理请求并执行操作</li>
+<li>处理器调用模板引擎,生成html返回给客户端</li>
+</ol>
+<h4 id="2-4-1-多路复用器"><a href="#2-4-1-多路复用器" class="headerlink" title="2.4.1 多路复用器"></a>2.4.1 多路复用器</h4><pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token string">"net/http"</span>
+ 
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 默认的多路复用器</span>
+    mux <span class="token operator">:=</span> http<span class="token punctuation">.</span><span class="token function">NewServeMux</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    files <span class="token operator">:=</span> http<span class="token punctuation">.</span><span class="token function">FileServer</span><span class="token punctuation">(</span>http<span class="token punctuation">.</span><span class="token function">Dir</span><span class="token punctuation">(</span><span class="token string">"/public"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    mux<span class="token punctuation">.</span><span class="token function">Handle</span><span class="token punctuation">(</span><span class="token string">"/static/"</span><span class="token punctuation">,</span> http<span class="token punctuation">.</span><span class="token function">StripPrefix</span><span class="token punctuation">(</span><span class="token string">"/static/"</span><span class="token punctuation">,</span> files<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    mux<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">,</span> index<span class="token punctuation">)</span>
+
+    server <span class="token operator">:=</span> <span class="token operator">&amp;</span>http<span class="token punctuation">.</span>Server<span class="token punctuation">{</span>
+        Addr<span class="token punctuation">:</span>    <span class="token string">"0.0.0.0:8080"</span><span class="token punctuation">,</span>
+        Handler<span class="token punctuation">:</span> mux<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    server<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>这里的mux是net/http提供的默认的多路复用器,它的HandleFunc方法接收URL和处理器名称,会将对应URL的请求转发给对应处理器处理,这里没有严格区分处理器函数和处理器的区别,后面会说</p>
+</blockquote>
+<h4 id="2-4-2-服务静态文件"><a href="#2-4-2-服务静态文件" class="headerlink" title="2.4.2 服务静态文件"></a>2.4.2 服务静态文件</h4><pre class=" language-go"><code class="language-go">files <span class="token operator">:=</span> http<span class="token punctuation">.</span><span class="token function">FileServer</span><span class="token punctuation">(</span>http<span class="token punctuation">.</span><span class="token function">Dir</span><span class="token punctuation">(</span><span class="token string">"/public"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+mux<span class="token punctuation">.</span><span class="token function">Handle</span><span class="token punctuation">(</span><span class="token string">"/static/"</span><span class="token punctuation">,</span> http<span class="token punctuation">.</span><span class="token function">StripPrefix</span><span class="token punctuation">(</span><span class="token string">"/static/"</span><span class="token punctuation">,</span> files<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>用FileServer指定了静态资源去哪个目录找,然后传递给多路复用器,当接收到/static/的请求时,多路复用器会去掉/static/然后去public找相应的文件</p>
+</blockquote>
+<blockquote>
+<p>比如<a target="_blank" rel="noopener" href="http://localhost/static/html/index.html,%E4%BC%9A%E8%BF%94%E5%9B%9Epublic/html/index.html%E8%BF%99%E4%B8%AA%E6%96%87%E4%BB%B6">http://localhost/static/html/index.html,会返回public/html/index.html这个文件</a></p>
+</blockquote>
+<h4 id="2-4-3-创建处理器函数"><a href="#2-4-3-创建处理器函数" class="headerlink" title="2.4.3 创建处理器函数"></a>2.4.3 创建处理器函数</h4><pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">index</span><span class="token punctuation">(</span>w http<span class="token punctuation">.</span>ResponseWriter<span class="token punctuation">,</span> r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    files <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">{</span><span class="token string">"templates/layout.html"</span><span class="token punctuation">,</span> <span class="token string">"templates/navbar.html"</span><span class="token punctuation">,</span> <span class="token string">"templates/index.html"</span><span class="token punctuation">}</span>
+    templates <span class="token operator">:=</span> template<span class="token punctuation">.</span><span class="token function">Must</span><span class="token punctuation">(</span>template<span class="token punctuation">.</span><span class="token function">ParseFiles</span><span class="token punctuation">(</span>files<span class="token operator">...</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> threads<span class="token punctuation">,</span> err <span class="token operator">:=</span> data<span class="token punctuation">.</span><span class="token function">Threads</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        templates<span class="token punctuation">.</span><span class="token function">ExecuteTemplate</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token string">"layout"</span><span class="token punctuation">,</span> threads<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>还有其他的</p>
+</blockquote>
+<p>跳过,源代码不全,而且没有给出源代码的github地址</p>
+<h1 id="第二部分-web应用的基本组成部分"><a href="#第二部分-web应用的基本组成部分" class="headerlink" title="第二部分 web应用的基本组成部分"></a>第二部分 web应用的基本组成部分</h1><h2 id="3-接收请求"><a href="#3-接收请求" class="headerlink" title="3. 接收请求"></a>3. 接收请求</h2><h3 id="3-1-go的net-http标准库"><a href="#3-1-go的net-http标准库" class="headerlink" title="3.1 go的net/http标准库"></a>3.1 go的net/http标准库</h3><blockquote>
+<p>web应用框架都认为自己提供的约定和模式是最佳实践,但是如果开发者没有正确理解,则可能发展为货物崇拜编程(cargo cult programming),比如http是无状态,所以才用cookie来在客户端实现数据持久化,用会话的方式在服务器上实现数据持久化,不了解这点的以为框架提供的接口就是唯一要做的事,而却不理解底层发生了什么</p>
+</blockquote>
+<p><img src="20230625103842.png"></p>
+<h3 id="3-2-使用go构建服务器"><a href="#3-2-使用go构建服务器" class="headerlink" title="3.2 使用go构建服务器"></a>3.2 使用go构建服务器</h3><p><img src="20230625103913.png"></p>
+<h4 id="3-2-1-go-web服务器"><a href="#3-2-1-go-web服务器" class="headerlink" title="3.2.1 go web服务器"></a>3.2.1 go web服务器</h4><blockquote>
+<p>go和其他编程语言不太一样,go提供了一系列创建web服务器的标准库.创建服务器只需要调用ListenAndServer就行,如果传入的网络地址参数是空串,则会默认监听80端口,如果处理器参数为nil,则使用默认的DefaultServeMux多路复用器</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"net/http"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 最简单的web服务器</span>
+    http<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">,</span> <span class="token boolean">nil</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>Server可以设置更详细的配置</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"net/http"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    server <span class="token operator">:=</span> http<span class="token punctuation">.</span>Server<span class="token punctuation">{</span>
+        Addr<span class="token punctuation">:</span>    <span class="token string">"127.0.0.1:8080"</span><span class="token punctuation">,</span>
+        Handler<span class="token punctuation">:</span> <span class="token boolean">nil</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    server<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>Server可选的配置</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">type</span> Server <span class="token keyword">struct</span> <span class="token punctuation">{</span> 
+    Addr <span class="token builtin">string</span> 
+    Handler Handler 
+    TLSConfig <span class="token operator">*</span>tls<span class="token punctuation">.</span>Config 
+    ReadTimeout time<span class="token punctuation">.</span>Duration 
+    ReadHeaderTimeout time<span class="token punctuation">.</span>Duration 
+    WriteTimeout time<span class="token punctuation">.</span>Duration 
+    IdleTimeout time<span class="token punctuation">.</span>Duration 
+    MaxHeaderBytes <span class="token builtin">int</span> 
+    TLSNextProto <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token keyword">func</span><span class="token punctuation">(</span><span class="token operator">*</span>Server<span class="token punctuation">,</span> <span class="token operator">*</span>tls<span class="token punctuation">.</span>Conn<span class="token punctuation">,</span> Handler<span class="token punctuation">)</span> 
+    ConnState <span class="token keyword">func</span><span class="token punctuation">(</span>net<span class="token punctuation">.</span>Conn<span class="token punctuation">,</span> ConnState<span class="token punctuation">)</span> 
+    ErrorLog <span class="token operator">*</span>log<span class="token punctuation">.</span>Logger  
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="3-2-2-通过https提供服务"><a href="#3-2-2-通过https提供服务" class="headerlink" title="3.2.2 通过https提供服务"></a>3.2.2 通过https提供服务</h4><blockquote>
+<p>当客户端和服务器共享私密信息时,一般会使用https进行加密,如果用了支付功能,甚至是强制的(根据支付卡行业数据安全标准),https实际上是将http通信放到ssl上进行</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"net/http"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    server <span class="token operator">:=</span> http<span class="token punctuation">.</span>Server<span class="token punctuation">{</span>
+        Addr<span class="token punctuation">:</span>    <span class="token string">"127.0.0.1:8080"</span><span class="token punctuation">,</span>
+        Handler<span class="token punctuation">:</span> <span class="token boolean">nil</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    server<span class="token punctuation">.</span><span class="token function">ListenAndServeTLS</span><span class="token punctuation">(</span><span class="token string">"cert.pem"</span><span class="token punctuation">,</span> <span class="token string">"key.pem"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>cert.pem是SSL证书,key.pem是服务器的私钥,生产环境中需要从VeriSign、Thawte、Comodo SSL这样的CA取得,如果是为了测试,使用自己生成的就行,可以使用go标准库生成</p>
+</blockquote>
+<blockquote>
+<p>SSL,TLS和HTTPS</p>
+</blockquote>
+<blockquote>
+<p>ssl是一种通过公钥基础设施为通信双方提供数据加密和身份验证的协议,之后由IETF接收SSL后,改名为LTS,HTTPS就是SSL之上的HTTP,实际上就是在SSL/TLS连接的上层进行HTTP通信</p>
+</blockquote>
+<blockquote>
+<p>https需要SSL/TLS证书进行加密和验证,SSL证书存储在服务器上,是一种用X.509进行格式化的数据,为了保证可靠性,一般由证书分发机构CA签发,客户端向服务器发送请求,服务器会把证书和响应返回给客户端,客户端确认证书真实性后,生成一个随机密钥,使用证书里的公钥对随机密钥加密,产生对称密钥,在双方通信时,负责对通信进行加密</p>
+</blockquote>
+<blockquote>
+<p>生成SSL证书和密钥并不复杂,SSL证书实际上就是一个将扩展密钥用法设置成服务器身份验证操作的X.509证书</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"crypto/rand"</span>
+    <span class="token string">"crypto/rsa"</span>
+    <span class="token string">"crypto/x509"</span>
+    <span class="token string">"crypto/x509/pkix"</span>
+    <span class="token string">"encoding/pem"</span>
+    <span class="token string">"math/big"</span>
+    <span class="token string">"net"</span>
+    <span class="token string">"os"</span>
+    <span class="token string">"time"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    max <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>big<span class="token punctuation">.</span>Int<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Lsh</span><span class="token punctuation">(</span>big<span class="token punctuation">.</span><span class="token function">NewInt</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">128</span><span class="token punctuation">)</span>
+    serialNumber<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> rand<span class="token punctuation">.</span><span class="token function">Int</span><span class="token punctuation">(</span>rand<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> max<span class="token punctuation">)</span>
+    subject <span class="token operator">:=</span> pkix<span class="token punctuation">.</span>Name<span class="token punctuation">{</span>
+        Organization<span class="token punctuation">:</span>       <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">{</span><span class="token string">"Manning Publications Co."</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        OrganizationalUnit<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">{</span><span class="token string">"Books"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        CommonName<span class="token punctuation">:</span>         <span class="token string">"Go Web Programming"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    template <span class="token operator">:=</span> x509<span class="token punctuation">.</span>Certificate<span class="token punctuation">{</span>
+        SerialNumber<span class="token punctuation">:</span> serialNumber<span class="token punctuation">,</span>
+        Subject<span class="token punctuation">:</span>      subject<span class="token punctuation">,</span>
+        NotBefore<span class="token punctuation">:</span>    time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        NotAfter<span class="token punctuation">:</span>     time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Add</span><span class="token punctuation">(</span><span class="token number">365</span> <span class="token operator">*</span> <span class="token number">24</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Hour<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        KeyUsage<span class="token punctuation">:</span>     x509<span class="token punctuation">.</span>KeyUsageKeyEncipherment <span class="token operator">|</span> x509<span class="token punctuation">.</span>KeyUsageDigitalSignature<span class="token punctuation">,</span>
+        ExtKeyUsage<span class="token punctuation">:</span>  <span class="token punctuation">[</span><span class="token punctuation">]</span>x509<span class="token punctuation">.</span>ExtKeyUsage<span class="token punctuation">{</span>x509<span class="token punctuation">.</span>ExtKeyUsageServerAuth<span class="token punctuation">}</span><span class="token punctuation">,</span>
+        IPAddresses<span class="token punctuation">:</span>  <span class="token punctuation">[</span><span class="token punctuation">]</span>net<span class="token punctuation">.</span>IP<span class="token punctuation">{</span>net<span class="token punctuation">.</span><span class="token function">ParseIP</span><span class="token punctuation">(</span><span class="token string">"127.0.0.1"</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    pk<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> rsa<span class="token punctuation">.</span><span class="token function">GenerateKey</span><span class="token punctuation">(</span>rand<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> <span class="token number">2048</span><span class="token punctuation">)</span>
+
+    derBytes<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> x509<span class="token punctuation">.</span><span class="token function">CreateCertificate</span><span class="token punctuation">(</span>rand<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> <span class="token operator">&amp;</span>template<span class="token punctuation">,</span> <span class="token operator">&amp;</span>template<span class="token punctuation">,</span> <span class="token operator">&amp;</span>pk<span class="token punctuation">.</span>PublicKey<span class="token punctuation">,</span> pk<span class="token punctuation">)</span>
+    certOut<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Create</span><span class="token punctuation">(</span><span class="token string">"cert.pem"</span><span class="token punctuation">)</span>
+    pem<span class="token punctuation">.</span><span class="token function">Encode</span><span class="token punctuation">(</span>certOut<span class="token punctuation">,</span> <span class="token operator">&amp;</span>pem<span class="token punctuation">.</span>Block<span class="token punctuation">{</span>Type<span class="token punctuation">:</span> <span class="token string">"CERTIFICATE"</span><span class="token punctuation">,</span> Bytes<span class="token punctuation">:</span> derBytes<span class="token punctuation">}</span><span class="token punctuation">)</span>
+    certOut<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    keyOut<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Create</span><span class="token punctuation">(</span><span class="token string">"key.pem"</span><span class="token punctuation">)</span>
+    pem<span class="token punctuation">.</span><span class="token function">Encode</span><span class="token punctuation">(</span>keyOut<span class="token punctuation">,</span> <span class="token operator">&amp;</span>pem<span class="token punctuation">.</span>Block<span class="token punctuation">{</span>Type<span class="token punctuation">:</span> <span class="token string">"RSA PRIVATE KEY"</span><span class="token punctuation">,</span> Bytes<span class="token punctuation">:</span> x509<span class="token punctuation">.</span><span class="token function">MarshalPKCS1PrivateKey</span><span class="token punctuation">(</span>pk<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    keyOut<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>首先,用一个Certificate结构对证书进行配置</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go">    template <span class="token operator">:=</span> x509<span class="token punctuation">.</span>Certificate<span class="token punctuation">{</span>
+        SerialNumber<span class="token punctuation">:</span> serialNumber<span class="token punctuation">,</span>
+        Subject<span class="token punctuation">:</span>      subject<span class="token punctuation">,</span>
+        NotBefore<span class="token punctuation">:</span>    time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        NotAfter<span class="token punctuation">:</span>     time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Add</span><span class="token punctuation">(</span><span class="token number">365</span> <span class="token operator">*</span> <span class="token number">24</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Hour<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        KeyUsage<span class="token punctuation">:</span>     x509<span class="token punctuation">.</span>KeyUsageKeyEncipherment <span class="token operator">|</span> x509<span class="token punctuation">.</span>KeyUsageDigitalSignature<span class="token punctuation">,</span>
+        ExtKeyUsage<span class="token punctuation">:</span>  <span class="token punctuation">[</span><span class="token punctuation">]</span>x509<span class="token punctuation">.</span>ExtKeyUsage<span class="token punctuation">{</span>x509<span class="token punctuation">.</span>ExtKeyUsageServerAuth<span class="token punctuation">}</span><span class="token punctuation">,</span>
+        IPAddresses<span class="token punctuation">:</span>  <span class="token punctuation">[</span><span class="token punctuation">]</span>net<span class="token punctuation">.</span>IP<span class="token punctuation">{</span>net<span class="token punctuation">.</span><span class="token function">ParseIP</span><span class="token punctuation">(</span><span class="token string">"127.0.0.1"</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>结构中的证书序列号(SerialNumber)用于记录CA分发的唯一号码(这里用随机整数替代).然后,创建了一个专有名称(distinguished name),设置为证书的标题(subject).证书的有效期设置为1年.keyUsage和ExtKeyUsage指明该证书用于服务器身份验证.最后设置该证书只能在IP 127.0.0.1之上运行</p>
+</blockquote>
+<blockquote>
+<p>生成了一个RSA私钥</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go">pk<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> rsa<span class="token punctuation">.</span><span class="token function">GenerateKey</span><span class="token punctuation">(</span>rand<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> <span class="token number">2048</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>使用公钥,私钥,等参数生成ssl证书,创建一个经过DER编码格式化的字符串切片</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go">derBytes<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> x509<span class="token punctuation">.</span><span class="token function">CreateCertificate</span><span class="token punctuation">(</span>rand<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> <span class="token operator">&amp;</span>template<span class="token punctuation">,</span> <span class="token operator">&amp;</span>template<span class="token punctuation">,</span> <span class="token operator">&amp;</span>pk<span class="token punctuation">.</span>PublicKey<span class="token punctuation">,</span> pk<span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>将证书编码到cert.pem</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go">    certOut<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Create</span><span class="token punctuation">(</span><span class="token string">"cert.pem"</span><span class="token punctuation">)</span>
+    pem<span class="token punctuation">.</span><span class="token function">Encode</span><span class="token punctuation">(</span>certOut<span class="token punctuation">,</span> <span class="token operator">&amp;</span>pem<span class="token punctuation">.</span>Block<span class="token punctuation">{</span>Type<span class="token punctuation">:</span> <span class="token string">"CERTIFICATE"</span><span class="token punctuation">,</span> Bytes<span class="token punctuation">:</span> derBytes<span class="token punctuation">}</span><span class="token punctuation">)</span>
+    certOut<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>pem编码的方式将之前生成的密钥编码到key.pem</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go">    keyOut<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> os<span class="token punctuation">.</span><span class="token function">Create</span><span class="token punctuation">(</span><span class="token string">"key.pem"</span><span class="token punctuation">)</span>
+    pem<span class="token punctuation">.</span><span class="token function">Encode</span><span class="token punctuation">(</span>keyOut<span class="token punctuation">,</span> <span class="token operator">&amp;</span>pem<span class="token punctuation">.</span>Block<span class="token punctuation">{</span>Type<span class="token punctuation">:</span> <span class="token string">"RSA PRIVATE KEY"</span><span class="token punctuation">,</span> Bytes<span class="token punctuation">:</span> x509<span class="token punctuation">.</span><span class="token function">MarshalPKCS1PrivateKey</span><span class="token punctuation">(</span>pk<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    keyOut<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>如果证书是由CA签发的,则证书文件中将包含服务器签名和CA签名,服务器签名在前,CA签名在后</p>
+</blockquote>
+<blockquote>
+<p>SSL证书:</p>
+</blockquote>
+<blockquote>
+<p>X.509时国际电信联盟电信标准化部门(ITU-T)为公钥基础设施制定的一个标准,包含了公钥证书的标准格式.一个x.509证书是一个经过编码的ASN.1格式的电子文档,ASN.1既是一个标准,也是一种表示法,描述了表示电信以及计算机网络数据的规则和结构.X.509证书可以使用多种格式编码,其中一种是BER,BER指定了一种自解释并且自定义的格式用于对ASN.1数据结构进行编码.DER是BER的子集,只提供了一种编码SN.1值的方法.ssl证书可以以多种不同格式保存,其中就有PEM,PEM格式会对DER格式的X.509证书进行Base64编码,并且这种格式的文件都以—–BEGIN CERTIFICATE —–开头,以—–END CERTIFICATE —–结尾.</p>
+</blockquote>
+<h3 id="3-3-处理器和处理器函数"><a href="#3-3-处理器和处理器函数" class="headerlink" title="3.3 处理器和处理器函数"></a>3.3 处理器和处理器函数</h3><h4 id="3-3-1-处理请求"><a href="#3-3-1-处理请求" class="headerlink" title="3.3.1 处理请求"></a>3.3.1 处理请求</h4><blockquote>
+<p>在GO语言中,一个处理器就是一个拥有ServeHTTP方法的接口,这个方法接收ResponseWriter和*Request两个参数.</p>
+</blockquote>
+<blockquote>
+<p>DefaultServeMux多路复用器既是ServeMux实例,同时也是Handler结构的实例,是一个特殊的处理器,也是多路复用器,它的处理器比较特殊,是用来转发URL请求到不同处理器的.</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"net/http"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> MyHandler <span class="token keyword">struct</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>h <span class="token operator">*</span>MyHandler<span class="token punctuation">)</span> <span class="token function">ServeHTTP</span><span class="token punctuation">(</span>w http<span class="token punctuation">.</span>ResponseWriter<span class="token punctuation">,</span> r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token string">"Hello World!"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    handler <span class="token operator">:=</span> MyHandler<span class="token punctuation">{</span><span class="token punctuation">}</span>
+    server <span class="token operator">:=</span> http<span class="token punctuation">.</span>Server<span class="token punctuation">{</span>
+        Addr<span class="token punctuation">:</span>    <span class="token string">"127.0.0.1:8080"</span><span class="token punctuation">,</span>
+        Handler<span class="token punctuation">:</span> <span class="token operator">&amp;</span>handler<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span> 
+    server<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>此时,无论访问127.0.0.1:8080/xxx都会显示hello world</p>
+</blockquote>
+<h4 id="3-3-2-使用多个处理器"><a href="#3-3-2-使用多个处理器" class="headerlink" title="3.3.2 使用多个处理器"></a>3.3.2 使用多个处理器</h4><blockquote>
+<p>通过http.Handler将处理器绑定到DefaultServeMux</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"net/http"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> HelloHandler <span class="token keyword">struct</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>h <span class="token operator">*</span>HelloHandler<span class="token punctuation">)</span> <span class="token function">ServeHTTP</span><span class="token punctuation">(</span>w http<span class="token punctuation">.</span>ResponseWriter<span class="token punctuation">,</span> r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token string">"Hello"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> WorldHandler <span class="token keyword">struct</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>h <span class="token operator">*</span>WorldHandler<span class="token punctuation">)</span> <span class="token function">ServeHTTP</span><span class="token punctuation">(</span>w http<span class="token punctuation">.</span>ResponseWriter<span class="token punctuation">,</span> r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token string">"World"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    hhandler <span class="token operator">:=</span> HelloHandler<span class="token punctuation">{</span><span class="token punctuation">}</span>
+    whandler <span class="token operator">:=</span> WorldHandler<span class="token punctuation">{</span><span class="token punctuation">}</span>
+    server <span class="token operator">:=</span> http<span class="token punctuation">.</span>Server<span class="token punctuation">{</span>
+        Addr<span class="token punctuation">:</span> <span class="token string">"127.0.0.1:8080"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    http<span class="token punctuation">.</span><span class="token function">Handle</span><span class="token punctuation">(</span><span class="token string">"/hello"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>hhandler<span class="token punctuation">)</span>
+    http<span class="token punctuation">.</span><span class="token function">Handle</span><span class="token punctuation">(</span><span class="token string">"/world"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>whandler<span class="token punctuation">)</span>
+    server<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="3-3-3-处理器函数"><a href="#3-3-3-处理器函数" class="headerlink" title="3.3.3 处理器函数"></a>3.3.3 处理器函数</h4><blockquote>
+<p>是和处理器有相同行为的函数,与ServeHttp方法有相同的签名</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"net/http"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">hello</span><span class="token punctuation">(</span>w http<span class="token punctuation">.</span>ResponseWriter<span class="token punctuation">,</span> r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token string">"Hello"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">world</span><span class="token punctuation">(</span>w http<span class="token punctuation">.</span>ResponseWriter<span class="token punctuation">,</span> r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token string">"World"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    server <span class="token operator">:=</span> http<span class="token punctuation">.</span>Server<span class="token punctuation">{</span>
+        Addr<span class="token punctuation">:</span> <span class="token string">"127.0.0.1:8080"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    http<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span><span class="token string">"/hello"</span><span class="token punctuation">,</span> hello<span class="token punctuation">)</span>
+    http<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span><span class="token string">"/world"</span><span class="token punctuation">,</span> world<span class="token punctuation">)</span>
+    server<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>HandlerFunc会将处理器函数f转换为带f方法的Handler结构,其实是简化了创建结构体然后再实现ServeHTTP方法的步骤</p>
+</blockquote>
+<blockquote>
+<p>HandlerFunc源码</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">HandleFunc</span><span class="token punctuation">(</span>pattern <span class="token builtin">string</span><span class="token punctuation">,</span> handler <span class="token keyword">func</span><span class="token punctuation">(</span>ResponseWriter<span class="token punctuation">,</span> <span class="token operator">*</span>Request<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    DefaultServeMux<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span>pattern<span class="token punctuation">,</span> handler<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>mux <span class="token operator">*</span>ServeMux<span class="token punctuation">)</span> <span class="token function">HandleFunc</span><span class="token punctuation">(</span>pattern <span class="token builtin">string</span><span class="token punctuation">,</span> handler <span class="token keyword">func</span><span class="token punctuation">(</span>ResponseWriter<span class="token punctuation">,</span> <span class="token operator">*</span>Request<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> handler <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"http: nil handler"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    mux<span class="token punctuation">.</span><span class="token function">Handle</span><span class="token punctuation">(</span>pattern<span class="token punctuation">,</span> <span class="token function">HandlerFunc</span><span class="token punctuation">(</span>handler<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">type</span> muxEntry <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    h       Handler
+    pattern <span class="token builtin">string</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">type</span> ServeMux <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    mu    sync<span class="token punctuation">.</span>RWMutex
+    m     <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>muxEntry
+    es    <span class="token punctuation">[</span><span class="token punctuation">]</span>muxEntry <span class="token comment" spellcheck="true">// slice of entries sorted from longest to shortest.</span>
+    hosts <span class="token builtin">bool</span>       <span class="token comment" spellcheck="true">// whether any patterns contain hostnames</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>mux <span class="token operator">*</span>ServeMux<span class="token punctuation">)</span> <span class="token function">Handle</span><span class="token punctuation">(</span>pattern <span class="token builtin">string</span><span class="token punctuation">,</span> handler Handler<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    mux<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> mux<span class="token punctuation">.</span>mu<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> pattern <span class="token operator">==</span> <span class="token string">""</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"http: invalid pattern"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> handler <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"http: nil handler"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 如果已经注册过该url</span>
+    <span class="token keyword">if</span> <span class="token boolean">_</span><span class="token punctuation">,</span> exist <span class="token operator">:=</span> mux<span class="token punctuation">.</span>m<span class="token punctuation">[</span>pattern<span class="token punctuation">]</span><span class="token punctuation">;</span> exist <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"http: multiple registrations for "</span> <span class="token operator">+</span> pattern<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 如果还没有存放url的map</span>
+    <span class="token keyword">if</span> mux<span class="token punctuation">.</span>m <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        mux<span class="token punctuation">.</span>m <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span>muxEntry<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    e <span class="token operator">:=</span> muxEntry<span class="token punctuation">{</span>h<span class="token punctuation">:</span> handler<span class="token punctuation">,</span> pattern<span class="token punctuation">:</span> pattern<span class="token punctuation">}</span>
+    mux<span class="token punctuation">.</span>m<span class="token punctuation">[</span>pattern<span class="token punctuation">]</span> <span class="token operator">=</span> e
+    <span class="token comment" spellcheck="true">// 如果最后一位是/</span>
+    <span class="token keyword">if</span> pattern<span class="token punctuation">[</span><span class="token function">len</span><span class="token punctuation">(</span>pattern<span class="token punctuation">)</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token string">'/'</span> <span class="token punctuation">{</span>
+        mux<span class="token punctuation">.</span>es <span class="token operator">=</span> <span class="token function">appendSorted</span><span class="token punctuation">(</span>mux<span class="token punctuation">.</span>es<span class="token punctuation">,</span> e<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> pattern<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">!=</span> <span class="token string">'/'</span> <span class="token punctuation">{</span>
+        mux<span class="token punctuation">.</span>hosts <span class="token operator">=</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="3-3-4-串联多个处理器和处理器函数"><a href="#3-3-4-串联多个处理器和处理器函数" class="headerlink" title="3.3.4 串联多个处理器和处理器函数"></a>3.3.4 串联多个处理器和处理器函数</h4><p><img src="20230625165718.png"></p>
+<blockquote>
+<p>像日志记录、安全检查和错误处理这样的操作通常被称为横切关注点,为了防止代码重复和代码依赖问题,我们可以用串联技术分隔代码中的横切关注点</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"net/http"</span>
+    <span class="token string">"reflect"</span>
+    <span class="token string">"runtime"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">hello</span><span class="token punctuation">(</span>w http<span class="token punctuation">.</span>ResponseWriter<span class="token punctuation">,</span> r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> <span class="token string">"Hello"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">log</span><span class="token punctuation">(</span>h http<span class="token punctuation">.</span>HandlerFunc<span class="token punctuation">)</span> http<span class="token punctuation">.</span>HandlerFunc <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">func</span><span class="token punctuation">(</span>w http<span class="token punctuation">.</span>ResponseWriter<span class="token punctuation">,</span> r <span class="token operator">*</span>http<span class="token punctuation">.</span>Request<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        name <span class="token operator">:=</span> runtime<span class="token punctuation">.</span><span class="token function">FuncForPC</span><span class="token punctuation">(</span>reflect<span class="token punctuation">.</span><span class="token function">ValueOf</span><span class="token punctuation">(</span>h<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Pointer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Name</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"Handler function called - "</span><span class="token punctuation">,</span> name<span class="token punctuation">)</span>
+        <span class="token function">h</span><span class="token punctuation">(</span>w<span class="token punctuation">,</span> r<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    server <span class="token operator">:=</span> http<span class="token punctuation">.</span>Server<span class="token punctuation">{</span>
+        Addr<span class="token punctuation">:</span> <span class="token string">"127.0.0.1:8080"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    http<span class="token punctuation">.</span><span class="token function">HandleFunc</span><span class="token punctuation">(</span><span class="token string">"/hello"</span><span class="token punctuation">,</span> <span class="token function">log</span><span class="token punctuation">(</span>hello<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    server<span class="token punctuation">.</span><span class="token function">ListenAndServe</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230625170116.png"></p>
+<blockquote>
+<p>还可以串联起更多,这种做法也称为管道处理</p>
+</blockquote>
+<p><img src="20230625170230.png"></p>
+
             </div>
             <hr/>
 
@@ -1113,7 +1536,7 @@ c语言的print和scanf进行控制台输入输出,控制台IO和文件IO很类�
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">179.3k</span>
+                <span class="white-color">188.4k</span>
             
 
             

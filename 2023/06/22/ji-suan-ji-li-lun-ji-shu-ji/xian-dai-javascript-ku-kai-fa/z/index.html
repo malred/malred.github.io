@@ -434,14 +434,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        1.8k
+                        2.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        7 分
+                        8 分
                     </div>
                     
                 
@@ -698,7 +698,53 @@ console<span class="token punctuation">.</span><span class="token function">log<
 <blockquote>
 <p>一般一个js库都会依赖另外一些库,不同技术体系下,依赖关系有不同的解决方案</p>
 </blockquote>
-<h3 id="2-2-1-传统体系"><a href="#2-2-1-传统体系" class="headerlink" title="2.2.1 传统体系"></a>2.2.1 传统体系</h3>
+<h3 id="2-2-1-传统体系"><a href="#2-2-1-传统体系" class="headerlink" title="2.2.1 传统体系"></a>2.2.1 传统体系</h3><blockquote>
+<p>一般是在HTML文件里用script标签引入JavaScript文件,这种体系下,每个库都要提供一个js文件</p>
+</blockquote>
+<blockquote>
+<p>如果想使用一个库,需要想手动引入要用的库以及该库所依赖的库</p>
+</blockquote>
+<pre class=" language-html"><code class="language-html"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>lib/type.js<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script language-javascript"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>lib/clone.js<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script language-javascript"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span><span class="token punctuation">></span></span><span class="token script language-javascript">
+    <span class="token keyword">let</span> a <span class="token operator">=</span> <span class="token punctuation">{</span>c<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">}</span>
+    <span class="token keyword">let</span> b <span class="token operator">=</span> <span class="token function">clone</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+</span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+</code></pre>
+<blockquote>
+<p>这种方式对大型库很不友好,使用者要手动引入很多文件,为了兼容传统体系,需要将所有代码及其依赖的库的代码合并成一个文件.也存在例外,比如jquery需要依赖jquery,react要依赖react</p>
+</blockquote>
+<h3 id="2-2-2-nodejs体系"><a href="#2-2-2-nodejs体系" class="headerlink" title="2.2.2 nodejs体系"></a>2.2.2 nodejs体系</h3><blockquote>
+<p>nodejs遵循commonjs规范,内置依赖解析系统,使用require系统函数就可以依赖一个模块</p>
+</blockquote>
+<pre class=" language-js"><code class="language-js"><span class="token keyword">const</span> clone <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./clone.js'</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>使用require引用文件时,被引用文件的路径需要遵循规则,引用支持相对路径、绝对路径、第三方包,如果忽略后缀,则会被当作nodejs的模块去解析</p>
+</blockquote>
+<blockquote>
+<p>nodejs模块目录下需要有一个package.json文件,用于定义模块的一些属性.如果要新建模块,可以用npm工具快速初始化,然后在lib目录下新建并初始化clone模块</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">mkdir clone
+cd clone
+npm init
+</code></pre>
+<blockquote>
+<p>package.json里会有一个main字段,定义的是当前模块对应的逻辑入口文件,当该模块被其他模块引用时,nodejs会找到main字段对应的文件</p>
+</blockquote>
+<p><img src="20230625061357.png"></p>
+<blockquote>
+<p>在index.js里引入</p>
+</blockquote>
+<pre class=" language-js"><code class="language-js"><span class="token keyword">const</span> clone <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./lib/clone'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">let</span> a <span class="token operator">=</span> <span class="token punctuation">{</span>c<span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">}</span>
+<span class="token keyword">let</span> b <span class="token operator">=</span> <span class="token function">clone</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>nodejs体系下,只需要提供对commonjs或UMD模块的支持即可</p>
+</blockquote>
+<h3 id="2-2-3-工具化体系"><a href="#2-2-3-工具化体系" class="headerlink" title="2.2.3 工具化体系"></a>2.2.3 工具化体系</h3>
             </div>
             <hr/>
 
@@ -1061,7 +1107,7 @@ GC要做两件事
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">179.3k</span>
+                <span class="white-color">188.4k</span>
             
 
             
