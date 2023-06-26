@@ -427,14 +427,14 @@ nest new nest-event">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        194
+                        2.3k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        1 分
+                        12 分
                     </div>
                     
                 
@@ -536,7 +536,676 @@ nest g co
     <span class="token function">remove</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span> id<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token punctuation">}</span>
 </code></pre>
 <p><img src="20230625211147.png"></p>
-<h2 id="3-6-Request-Payload-Data-Transfer-Objects"><a href="#3-6-Request-Payload-Data-Transfer-Objects" class="headerlink" title="3.6. Request Payload - Data Transfer Objects"></a>3.6. Request Payload - Data Transfer Objects</h2>
+<h2 id="3-6-Request-Payload-Data-Transfer-Objects"><a href="#3-6-Request-Payload-Data-Transfer-Objects" class="headerlink" title="3.6. Request Payload - Data Transfer Objects"></a>3.6. Request Payload - Data Transfer Objects</h2><p><img src="20230626104125.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">CreateEventDto</span> <span class="token punctuation">{</span>
+    name<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    description<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    when<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    address<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626104909.png"></p>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Post</span><span class="token punctuation">(</span><span class="token punctuation">)</span> 
+    <span class="token function">create</span><span class="token punctuation">(</span>@<span class="token function">Body</span><span class="token punctuation">(</span><span class="token punctuation">)</span> input<span class="token punctuation">:</span> CreateEventDto<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// DTO: data transfer object 定义了一个数据结构</span>
+        <span class="token keyword">return</span> input<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-7-The-Update-Payload"><a href="#3-7-The-Update-Payload" class="headerlink" title="3.7. The Update Payload"></a>3.7. The Update Payload</h2><pre class=" language-ts"><code class="language-ts">    @<span class="token function">Patch</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span>
+    <span class="token function">update</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span> id<span class="token punctuation">,</span> @<span class="token function">Body</span><span class="token punctuation">(</span><span class="token punctuation">)</span> input<span class="token punctuation">:</span> UpdateEventDto<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> input<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>可选参数</p>
+</blockquote>
+<p><img src="20230626105308.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">UpdateEventDto</span> <span class="token punctuation">{</span>
+    name<span class="token operator">?</span><span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// ?代表可选</span>
+    description<span class="token operator">?</span><span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    when<span class="token operator">?</span><span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    address<span class="token operator">?</span><span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>另一种方式</p>
+</blockquote>
+<pre class=" language-shell"><code class="language-shell">npm i --save @nestjs/mapped-types
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> PartialType <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@nestjs/mapped-types"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> CreateEventDto <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"./create-event.dto"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 继承CreateEventDto的所有字段,并且是可选的</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">UpdateEventDto</span> <span class="token keyword">extends</span> <span class="token class-name">PartialType</span><span class="token punctuation">(</span>CreateEventDto<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-8-A-Working-API-Example"><a href="#3-8-A-Working-API-Example" class="headerlink" title="3.8. A Working API Example"></a>3.8. A Working API Example</h2><p><img src="20230626111017.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">Event</span> <span class="token punctuation">{</span>
+    id<span class="token punctuation">:</span> <span class="token keyword">number</span><span class="token punctuation">;</span>
+    name<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    description<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    when<span class="token punctuation">:</span> Date<span class="token punctuation">;</span>
+    address<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626111218.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> Controller<span class="token punctuation">,</span> Get<span class="token punctuation">,</span> Post<span class="token punctuation">,</span> Delete<span class="token punctuation">,</span> Patch<span class="token punctuation">,</span> Param<span class="token punctuation">,</span> Body<span class="token punctuation">,</span> HttpCode <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/common'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> CreateEventDto <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./create-event.dto'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> UpdateEventDto <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./update-event.dto'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Event <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./event.entity'</span><span class="token punctuation">;</span>
+
+@<span class="token function">Controller</span><span class="token punctuation">(</span><span class="token string">'events'</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">EventsController</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> events<span class="token punctuation">:</span> Event<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token function">findAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// localhost:3000/events/id</span>
+    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span>
+    <span class="token function">findOne</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span> id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span>event <span class="token operator">=</span><span class="token operator">></span> event<span class="token punctuation">.</span>id <span class="token operator">===</span> <span class="token function">parseInt</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    @<span class="token function">Post</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token function">create</span><span class="token punctuation">(</span>@<span class="token function">Body</span><span class="token punctuation">(</span><span class="token punctuation">)</span> input<span class="token punctuation">:</span> CreateEventDto<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> event <span class="token operator">=</span> <span class="token punctuation">{</span>
+            <span class="token operator">...</span>input<span class="token punctuation">,</span>
+            when<span class="token punctuation">:</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>input<span class="token punctuation">.</span>when<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            id<span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">.</span>length <span class="token operator">+</span> <span class="token number">1</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> event<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    @<span class="token function">Patch</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span>
+    <span class="token function">update</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span> id<span class="token punctuation">,</span> @<span class="token function">Body</span><span class="token punctuation">(</span><span class="token punctuation">)</span> input<span class="token punctuation">:</span> UpdateEventDto<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 根据id找到要修改的</span>
+        <span class="token keyword">const</span> index <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">.</span><span class="token function">findIndex</span><span class="token punctuation">(</span>
+            event <span class="token operator">=</span><span class="token operator">></span> event<span class="token punctuation">.</span>id <span class="token operator">===</span> <span class="token function">parseInt</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span>
+        <span class="token punctuation">)</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+            <span class="token operator">...</span><span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token operator">...</span>input<span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 后面的会覆盖前面的</span>
+            when<span class="token punctuation">:</span> input<span class="token punctuation">.</span>when <span class="token operator">?</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>input<span class="token punctuation">.</span>when<span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">.</span>when
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    @<span class="token function">Delete</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span>
+    @<span class="token function">HttpCode</span><span class="token punctuation">(</span><span class="token number">204</span><span class="token punctuation">)</span>
+    <span class="token function">remove</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span> id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>events <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>events<span class="token punctuation">.</span><span class="token function">filter</span><span class="token punctuation">(</span>
+            event <span class="token operator">=</span><span class="token operator">></span> event<span class="token punctuation">.</span>id <span class="token operator">!==</span> <span class="token function">parseInt</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span>
+        <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="4-Database-Basics"><a href="#4-Database-Basics" class="headerlink" title="4. Database Basics"></a>4. Database Basics</h1><h2 id="4-1-Adding-Docker-to-the-Stack"><a href="#4-1-Adding-Docker-to-the-Stack" class="headerlink" title="4.1. Adding Docker to the Stack"></a>4.1. Adding Docker to the Stack</h2><p><img src="20230626112321.png"><br><img src="20230626112347.png"><br><img src="20230626112407.png"></p>
+<h2 id="4-2-Running-the-Database-with-Docker-Compose"><a href="#4-2-Running-the-Database-with-Docker-Compose" class="headerlink" title="4.2. Running the Database with Docker Compose"></a>4.2. Running the Database with Docker Compose</h2><pre class=" language-yml"><code class="language-yml">version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0.23
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    ports:
+      - 3306:3306
+
+  postgres:
+    image: postgres:13.1
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - 5432:5432
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+</code></pre>
+<pre class=" language-shell"><code class="language-shell"># 在有docker-compose.yml文件的目录运行
+docker-compose up
+</code></pre>
+<p><img src="20230626112906.png"><br><img src="20230626112931.png"><br><img src="20230626112943.png"><br><img src="20230626113000.png"><br><img src="20230626113043.png"></p>
+<h2 id="4-3-Introduction-to-ORMs"><a href="#4-3-Introduction-to-ORMs" class="headerlink" title="4.3. Introduction to ORMs"></a>4.3. Introduction to ORMs</h2><p><img src="20230626114202.png"></p>
+<h2 id="4-5-Connecting-to-the-Database"><a href="#4-5-Connecting-to-the-Database" class="headerlink" title="4.5. Connecting to the Database"></a>4.5. Connecting to the Database</h2><pre class=" language-shell"><code class="language-shell">npm i --save @nestjs/typeorm typeorm mysql
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// app.module.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Module <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/common'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> AppController <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./app.controller'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> AppService <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./app.service'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> EventsController <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./events/events.controller'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> TypeOrmModule <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/typeorm'</span><span class="token punctuation">;</span>
+
+@<span class="token function">Module</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// 导入orm框架,配置数据库连接</span>
+  imports<span class="token punctuation">:</span> <span class="token punctuation">[</span>TypeOrmModule<span class="token punctuation">.</span><span class="token function">forRoot</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    type<span class="token punctuation">:</span> <span class="token string">'mysql'</span><span class="token punctuation">,</span>
+    host<span class="token punctuation">:</span> <span class="token string">'127.0.0.1'</span><span class="token punctuation">,</span>
+    port<span class="token punctuation">:</span> <span class="token number">3307</span><span class="token punctuation">,</span>
+    username<span class="token punctuation">:</span> <span class="token string">'root'</span><span class="token punctuation">,</span>
+    password<span class="token punctuation">:</span> <span class="token string">'123456'</span><span class="token punctuation">,</span>
+    database<span class="token punctuation">:</span> <span class="token string">'nest-events'</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token comment" spellcheck="true">// 引入controller</span>
+  controllers<span class="token punctuation">:</span> <span class="token punctuation">[</span>AppController<span class="token punctuation">,</span> EventsController<span class="token punctuation">]</span><span class="token punctuation">,</span>
+  providers<span class="token punctuation">:</span> <span class="token punctuation">[</span>AppService<span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">AppModule</span> <span class="token punctuation">{</span> <span class="token punctuation">}</span>
+</code></pre>
+<h2 id="4-7-The-Entity-Primary-Key-amp-Columns"><a href="#4-7-The-Entity-Primary-Key-amp-Columns" class="headerlink" title="4.7. The Entity (Primary Key &amp; Columns)"></a>4.7. The Entity (Primary Key &amp; Columns)</h2><pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// event.entity.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Column<span class="token punctuation">,</span> Entity<span class="token punctuation">,</span> PrimaryGeneratedColumn <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"typeorm"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// name: 表名</span>
+<span class="token comment" spellcheck="true">// @Entity('event', { name: 'event' })</span>
+@<span class="token function">Entity</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 改变name不会删旧表,而是会创建新表</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">Event</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// @PrimaryGeneratedColumn('uuid')</span>
+    <span class="token comment" spellcheck="true">// @PrimaryGeneratedColumn('rowid')</span>
+    <span class="token comment" spellcheck="true">// @PrimaryColumn() // 如果是复合主键,就在每个主键上加</span>
+    @<span class="token function">PrimaryGeneratedColumn</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 自动生成</span>
+    id<span class="token punctuation">:</span> <span class="token keyword">number</span><span class="token punctuation">;</span>
+
+    @<span class="token function">Column</span><span class="token punctuation">(</span><span class="token punctuation">{</span> length<span class="token punctuation">:</span> <span class="token number">100</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    name<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+
+    @<span class="token function">Column</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    description<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// name指定列名</span>
+    @<span class="token function">Column</span><span class="token punctuation">(</span><span class="token punctuation">{</span> name<span class="token punctuation">:</span> <span class="token string">'when_date'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    when<span class="token punctuation">:</span> Date<span class="token punctuation">;</span>  
+
+    @<span class="token function">Column</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    address<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span> 
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// app.module.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Module <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/common'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> AppController <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./app.controller'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> AppService <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./app.service'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> EventsController <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./events/events.controller'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> TypeOrmModule <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/typeorm'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Event <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./events/event.entity'</span><span class="token punctuation">;</span>
+
+@<span class="token function">Module</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// 导入orm框架,配置数据库连接</span>
+  imports<span class="token punctuation">:</span> <span class="token punctuation">[</span>TypeOrmModule<span class="token punctuation">.</span><span class="token function">forRoot</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    type<span class="token punctuation">:</span> <span class="token string">'mysql'</span><span class="token punctuation">,</span>
+    host<span class="token punctuation">:</span> <span class="token string">'127.0.0.1'</span><span class="token punctuation">,</span>
+    port<span class="token punctuation">:</span> <span class="token number">3307</span><span class="token punctuation">,</span>
+    username<span class="token punctuation">:</span> <span class="token string">'root'</span><span class="token punctuation">,</span>
+    password<span class="token punctuation">:</span> <span class="token string">'123456'</span><span class="token punctuation">,</span>
+    database<span class="token punctuation">:</span> <span class="token string">'nest-events'</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 使用实体需要在这里引入</span>
+    entities<span class="token punctuation">:</span> <span class="token punctuation">[</span>Event<span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 自动建表，你修改 Entity 里面字段，</span>
+    <span class="token comment" spellcheck="true">// 或者 *.entity{.ts,.js } 的名字，都会自动帮你修改。</span>
+    synchronize<span class="token punctuation">:</span> <span class="token keyword">true</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token comment" spellcheck="true">// 引入controller</span>
+  controllers<span class="token punctuation">:</span> <span class="token punctuation">[</span>AppController<span class="token punctuation">,</span> EventsController<span class="token punctuation">]</span><span class="token punctuation">,</span>
+  providers<span class="token punctuation">:</span> <span class="token punctuation">[</span>AppService<span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">AppModule</span> <span class="token punctuation">{</span> <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626142440.png"></p>
+<h2 id="4-8-Repository-Pattern"><a href="#4-8-Repository-Pattern" class="headerlink" title="4.8. Repository Pattern"></a>4.8. Repository Pattern</h2><p><img src="20230626143326.png"><br><img src="20230626143349.png"><br><img src="20230626143356.png"></p>
+<h2 id="4-9-Repository-in-Practice"><a href="#4-9-Repository-in-Practice" class="headerlink" title="4.9. Repository in Practice"></a>4.9. Repository in Practice</h2><pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> Controller<span class="token punctuation">,</span> Get<span class="token punctuation">,</span> Post<span class="token punctuation">,</span> Delete<span class="token punctuation">,</span> Patch<span class="token punctuation">,</span> Param<span class="token punctuation">,</span> Body<span class="token punctuation">,</span> HttpCode <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/common'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> CreateEventDto <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./create-event.dto'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> UpdateEventDto <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./update-event.dto'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Event <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./event.entity'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> InjectRepository <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@nestjs/typeorm"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Repository <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'typeorm/repository/Repository'</span><span class="token punctuation">;</span>
+@<span class="token function">Controller</span><span class="token punctuation">(</span><span class="token string">'events'</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">EventsController</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 依赖注入</span>
+    <span class="token keyword">constructor</span><span class="token punctuation">(</span>
+        @<span class="token function">InjectRepository</span><span class="token punctuation">(</span>Event<span class="token punctuation">)</span>
+        <span class="token keyword">private</span> readonly respository<span class="token punctuation">:</span> Repository<span class="token operator">&lt;</span>Event<span class="token operator">></span>
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token punctuation">}</span>
+
+    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    async <span class="token function">findAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>respository<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// localhost:3000/events/id</span>
+    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span>
+    async <span class="token function">findOne</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span> id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>respository<span class="token punctuation">.</span><span class="token function">findOne</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    @<span class="token function">Post</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    async <span class="token function">create</span><span class="token punctuation">(</span>@<span class="token function">Body</span><span class="token punctuation">(</span><span class="token punctuation">)</span> input<span class="token punctuation">:</span> CreateEventDto<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>respository<span class="token punctuation">.</span><span class="token function">save</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token operator">...</span>input<span class="token punctuation">,</span>
+            when<span class="token punctuation">:</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>input<span class="token punctuation">.</span>when<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    @<span class="token function">Patch</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span>
+    async <span class="token function">update</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span> id<span class="token punctuation">,</span> @<span class="token function">Body</span><span class="token punctuation">(</span><span class="token punctuation">)</span> input<span class="token punctuation">:</span> UpdateEventDto<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> event <span class="token operator">=</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>respository<span class="token punctuation">.</span><span class="token function">findOne</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>respository<span class="token punctuation">.</span><span class="token function">save</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token operator">...</span>event<span class="token punctuation">,</span> <span class="token operator">...</span>input<span class="token punctuation">,</span>
+            when<span class="token punctuation">:</span> input<span class="token punctuation">.</span>when <span class="token operator">?</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>input<span class="token punctuation">.</span>when<span class="token punctuation">)</span> <span class="token punctuation">:</span> event<span class="token punctuation">.</span>when
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    @<span class="token function">Delete</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span>
+    @<span class="token function">HttpCode</span><span class="token punctuation">(</span><span class="token number">204</span><span class="token punctuation">)</span>
+    async <span class="token function">remove</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span> id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> event <span class="token operator">=</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>respository<span class="token punctuation">.</span><span class="token function">findOne</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span>
+        await <span class="token keyword">this</span><span class="token punctuation">.</span>respository<span class="token punctuation">.</span><span class="token function">remove</span><span class="token punctuation">(</span>event<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626144507.png"></p>
+<h2 id="4-10-Repository-Querying-Criteria-and-Options"><a href="#4-10-Repository-Querying-Criteria-and-Options" class="headerlink" title="4.10. Repository Querying Criteria and Options"></a>4.10. Repository Querying Criteria and Options</h2><pre class=" language-sql"><code class="language-sql"><span class="token keyword">SET</span> NAMES utf8mb4<span class="token punctuation">;</span>
+
+<span class="token keyword">INSERT</span> <span class="token keyword">INTO</span> <span class="token punctuation">`</span>event<span class="token punctuation">`</span> <span class="token punctuation">(</span><span class="token punctuation">`</span>id<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>description<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span><span class="token keyword">when</span><span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>address<span class="token punctuation">`</span><span class="token punctuation">,</span> <span class="token punctuation">`</span>name<span class="token punctuation">`</span><span class="token punctuation">)</span> <span class="token keyword">VALUES</span>
+<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span>    <span class="token string">'Let\'s meet together.'</span><span class="token punctuation">,</span>    <span class="token string">'2021-02-15 21:00:00'</span><span class="token punctuation">,</span>    <span class="token string">'Office St 120'</span><span class="token punctuation">,</span>    <span class="token string">'Team Meetup'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span>    <span class="token string">'Let\'s learn something.'</span><span class="token punctuation">,</span>    <span class="token string">'2021-02-17 21:00:00'</span><span class="token punctuation">,</span>    <span class="token string">'Workshop St 80'</span><span class="token punctuation">,</span>    <span class="token string">'Workshop'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span>    <span class="token string">'Let\'s meet with big bosses'</span><span class="token punctuation">,</span>    <span class="token string">'2021-02-17 21:00:00'</span><span class="token punctuation">,</span>    <span class="token string">'Boss St 100'</span><span class="token punctuation">,</span>    <span class="token string">'Strategy Meeting'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">,</span>    <span class="token string">'Let\'s try to sell stuff'</span><span class="token punctuation">,</span>    <span class="token string">'2021-02-11 21:00:00'</span><span class="token punctuation">,</span>    <span class="token string">'Money St 34'</span><span class="token punctuation">,</span>    <span class="token string">'Sales Pitch'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span>    <span class="token string">'People meet to talk about business ideas'</span><span class="token punctuation">,</span>    <span class="token string">'2021-02-12 21:00:00'</span><span class="token punctuation">,</span>    <span class="token string">'Invention St 123'</span><span class="token punctuation">,</span>    <span class="token string">'Founders Meeting'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>如果请求方法不对,也会报错You must provide selection conditions in order to find a single row</p>
+</blockquote>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">'/practice'</span><span class="token punctuation">)</span>
+    async <span class="token function">practice</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            where<span class="token punctuation">:</span> <span class="token punctuation">{</span> id<span class="token punctuation">:</span> <span class="token number">3</span> <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626151216.png"></p>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">'/practice'</span><span class="token punctuation">)</span>
+    async <span class="token function">practice</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            where<span class="token punctuation">:</span> <span class="token punctuation">{</span> id<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626151233.png"></p>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">'/practice'</span><span class="token punctuation">)</span>
+    async <span class="token function">practice</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            where<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                id<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                when<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token string">'2021-02-12T13:00:00'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626153333.png"></p>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">'/practice'</span><span class="token punctuation">)</span>
+    async <span class="token function">practice</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 多个where是or</span>
+            where<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">{</span>
+                    id<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    when<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token string">'2021-02-12T13:00:00'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>
+                    description<span class="token punctuation">:</span> <span class="token function">Like</span><span class="token punctuation">(</span><span class="token string">'%meet%'</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">]</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626153512.png"></p>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">'/practice'</span><span class="token punctuation">)</span>
+    async <span class="token function">practice</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 多个where是or</span>
+            where<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">{</span>
+                    id<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    when<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token string">'2021-02-12T13:00:00'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>
+                    description<span class="token punctuation">:</span> <span class="token function">Like</span><span class="token punctuation">(</span><span class="token string">'%meet%'</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token comment" spellcheck="true">// 限制取几个</span>
+            take<span class="token punctuation">:</span> <span class="token number">2</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626153700.png"></p>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">'/practice'</span><span class="token punctuation">)</span>
+    async <span class="token function">practice</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 多个where是or</span>
+            where<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">{</span>
+                    id<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    when<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token string">'2021-02-12T13:00:00'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>
+                    description<span class="token punctuation">:</span> <span class="token function">Like</span><span class="token punctuation">(</span><span class="token string">'%meet%'</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token comment" spellcheck="true">// 限制取几个</span>
+            take<span class="token punctuation">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+            order<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// 倒序</span>
+                id<span class="token punctuation">:</span> <span class="token string">'desc'</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626153801.png"></p>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">'/practice'</span><span class="token punctuation">)</span>
+    async <span class="token function">practice</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 只取其中指定列</span>
+            select<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'id'</span><span class="token punctuation">,</span> <span class="token string">'when'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token comment" spellcheck="true">// 多个where是or</span>
+            where<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">{</span>
+                    id<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                    when<span class="token punctuation">:</span> <span class="token function">MoreThan</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token string">'2021-02-12T13:00:00'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">{</span>
+                    description<span class="token punctuation">:</span> <span class="token function">Like</span><span class="token punctuation">(</span><span class="token string">'%meet%'</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token comment" spellcheck="true">// 限制取几个</span>
+            take<span class="token punctuation">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+            order<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// 倒序</span>
+                id<span class="token punctuation">:</span> <span class="token string">'desc'</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626153901.png"></p>
+<h1 id="5-Data-Validation"><a href="#5-Data-Validation" class="headerlink" title="5. Data Validation"></a>5. Data Validation</h1><h2 id="5-1-Introduction-to-Pipes"><a href="#5-1-Introduction-to-Pipes" class="headerlink" title="5.1. Introduction to Pipes"></a>5.1. Introduction to Pipes</h2><p><img src="20230626154113.png"></p>
+<pre class=" language-ts"><code class="language-ts">    <span class="token comment" spellcheck="true">// localhost:3000/events/id</span>
+    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// ParseIntPipe转为number类型</span>
+    async <span class="token function">findOne</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">,</span> ParseIntPipe<span class="token punctuation">)</span> id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token keyword">typeof</span> id<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// number</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">findOne</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>pipe最有用的是用于参数校验</p>
+</blockquote>
+<h2 id="5-2-Input-Validation"><a href="#5-2-Input-Validation" class="headerlink" title="5.2. Input Validation"></a>5.2. Input Validation</h2><pre class=" language-shell"><code class="language-shell">npm i --save class-validator class-transformer
+</code></pre>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Post</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// ValidationPipe 自动校验</span>
+    async <span class="token function">create</span><span class="token punctuation">(</span>@<span class="token function">Body</span><span class="token punctuation">(</span>ValidationPipe<span class="token punctuation">)</span> input<span class="token punctuation">:</span> CreateEventDto<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">save</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token operator">...</span>input<span class="token punctuation">,</span>
+            when<span class="token punctuation">:</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>input<span class="token punctuation">.</span>when<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> Length <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"class-validator"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">CreateEventDto</span> <span class="token punctuation">{</span>
+    @<span class="token function">Length</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">255</span><span class="token punctuation">)</span>
+    name<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    description<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    when<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    address<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626154724.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">CreateEventDto</span> <span class="token punctuation">{</span>
+    @<span class="token function">Length</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">255</span><span class="token punctuation">,</span><span class="token punctuation">{</span>message<span class="token punctuation">:</span><span class="token string">'the name length is wrong'</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    name<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    description<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    when<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    address<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626154917.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">CreateEventDto</span> <span class="token punctuation">{</span>
+    @<span class="token function">IsString</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    @<span class="token function">Length</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">255</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> message<span class="token punctuation">:</span> <span class="token string">'the name length is wrong'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    name<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    @<span class="token function">Length</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">255</span><span class="token punctuation">)</span>
+    description<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    @<span class="token function">IsDateString</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    when<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    @<span class="token function">Length</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">255</span><span class="token punctuation">)</span>
+    address<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>开启全局验证,如果有使用Dto,并且有校验装饰器(注解),则会自动校验,无需自己加ValidationPipe</p>
+</blockquote>
+<blockquote>
+<p>UpdateEventDto继承了CreateEventDto,它的属性也会带上校验注解.</p>
+</blockquote>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// main.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> NestFactory <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/core'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> AppModule <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./app.module'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> ValidationPipe <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/common'</span><span class="token punctuation">;</span>
+
+async <span class="token keyword">function</span> <span class="token function">bootstrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> app <span class="token operator">=</span> await NestFactory<span class="token punctuation">.</span><span class="token function">create</span><span class="token punctuation">(</span>AppModule<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  app<span class="token punctuation">.</span><span class="token function">useGlobalPipes</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">ValidationPipe</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+  await app<span class="token punctuation">.</span><span class="token function">listen</span><span class="token punctuation">(</span><span class="token number">3000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token function">bootstrap</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p><img src="20230626155327.png"></p>
+<h2 id="5-3-Validation-Groups-and-Options"><a href="#5-3-Validation-Groups-and-Options" class="headerlink" title="5.3. Validation Groups and Options"></a>5.3. Validation Groups and Options</h2><pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> Length<span class="token punctuation">,</span> IsString<span class="token punctuation">,</span> IsDateString <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"class-validator"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">CreateEventDto</span> <span class="token punctuation">{</span>
+    @<span class="token function">IsString</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    @<span class="token function">Length</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">255</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> message<span class="token punctuation">:</span> <span class="token string">'the name length is wrong'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    name<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    @<span class="token function">Length</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">255</span><span class="token punctuation">)</span>
+    description<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    @<span class="token function">IsDateString</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    when<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 分组</span>
+    @<span class="token function">Length</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">255</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> groups<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'create'</span><span class="token punctuation">]</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    @<span class="token function">Length</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">,</span> <span class="token punctuation">{</span> groups<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'update'</span><span class="token punctuation">]</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    address<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Post</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// ValidationPipe 自动校验</span>
+    async <span class="token function">create</span><span class="token punctuation">(</span>@<span class="token function">Body</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">ValidationPipe</span><span class="token punctuation">(</span><span class="token punctuation">{</span> groups<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'create'</span><span class="token punctuation">]</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span> input<span class="token punctuation">:</span> CreateEventDto<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">save</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token operator">...</span>input<span class="token punctuation">,</span>
+            when<span class="token punctuation">:</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>input<span class="token punctuation">.</span>when<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    @<span class="token function">Patch</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span>
+    async <span class="token function">update</span><span class="token punctuation">(</span>
+        @<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">)</span> id<span class="token punctuation">,</span>
+        @<span class="token function">Body</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">ValidationPipe</span><span class="token punctuation">(</span><span class="token punctuation">{</span> groups<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'update'</span><span class="token punctuation">]</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span> input<span class="token punctuation">:</span> UpdateEventDto
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> event <span class="token operator">=</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">findOne</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">save</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            <span class="token operator">...</span>event<span class="token punctuation">,</span> <span class="token operator">...</span>input<span class="token punctuation">,</span>
+            when<span class="token punctuation">:</span> input<span class="token punctuation">.</span>when <span class="token operator">?</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span>input<span class="token punctuation">.</span>when<span class="token punctuation">)</span> <span class="token punctuation">:</span> event<span class="token punctuation">.</span>when
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>要使用分组校验,需要禁用全局校验</p>
+</blockquote>
+<p><img src="20230626163133.png"><br><img src="20230626163202.png"><br><img src="20230626163259.png" alt="也可以使用此装饰器"></p>
+<h1 id="6-Modules-Providers-Dependency-Injection"><a href="#6-Modules-Providers-Dependency-Injection" class="headerlink" title="6. Modules, Providers, Dependency Injection"></a>6. Modules, Providers, Dependency Injection</h1><h2 id="6-1-Introduction-to-Modules-Providers-and-Dependency-Injection"><a href="#6-1-Introduction-to-Modules-Providers-and-Dependency-Injection" class="headerlink" title="6.1. Introduction to Modules, Providers and Dependency Injection"></a>6.1. Introduction to Modules, Providers and Dependency Injection</h2><p><img src="20230626163654.png"></p>
+<pre class=" language-shell"><code class="language-shell">nest generate module events
+</code></pre>
+<p><img src="20230626164541.png"><br><img src="20230626164548.png"></p>
+<h2 id="6-2-Creating-a-Custom-Module"><a href="#6-2-Creating-a-Custom-Module" class="headerlink" title="6.2. Creating a Custom Module"></a>6.2. Creating a Custom Module</h2><blockquote>
+<p>使用@Module定义的模块是静态的,提供固定功能,而动态模块提供多个可选的功能,动态模块可以按需导入</p>
+</blockquote>
+<p><img src="20230626164913.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// app.japan.service.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Injectable <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/common'</span><span class="token punctuation">;</span>
+
+@<span class="token function">Injectable</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">AppJapanService</span> <span class="token punctuation">{</span>
+    <span class="token function">getHello</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span> <span class="token keyword">string</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token string">'ハローワールド'</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626181257.png"><br><img src="20230626181234.png"><br><img src="20230626181652.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> Injectable<span class="token punctuation">,</span> Inject <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/common'</span><span class="token punctuation">;</span>
+
+@<span class="token function">Injectable</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">AppJapanService</span> <span class="token punctuation">{</span>
+    <span class="token keyword">constructor</span><span class="token punctuation">(</span>
+        @<span class="token function">Inject</span><span class="token punctuation">(</span><span class="token string">'APP_NAME'</span><span class="token punctuation">)</span>
+        <span class="token keyword">private</span> readonly name<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+    <span class="token punctuation">}</span>
+    <span class="token function">getHello</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span> <span class="token keyword">string</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token template-string"><span class="token string">`ハローワールド from </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token keyword">this</span><span class="token punctuation">.</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626181642.png"><br><img src="20230626182011.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// app.dummy.ts</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">AppDummy</span> <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> <span class="token function">dummy</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span> <span class="token keyword">string</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token string">'dummy'</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626182136.png"><br><img src="20230626182145.png"></p>
+<h1 id="7-Configuration-Logging-and-Errors"><a href="#7-Configuration-Logging-and-Errors" class="headerlink" title="7. Configuration, Logging, and Errors"></a>7. Configuration, Logging, and Errors</h1><h2 id="7-1-Application-Config-and-Environments"><a href="#7-1-Application-Config-and-Environments" class="headerlink" title="7.1. Application Config and Environments"></a>7.1. Application Config and Environments</h2><p><img src="20230626183926.png"></p>
+<pre class=" language-shell"><code class="language-shell">npm i --save @nestjs/config
+</code></pre>
+<p><img src="20230626185050.png"><br><img src="20230626185101.png"><br><img src="20230626185110.png"><br><img src="20230626185123.png"><br><img src="20230626185408.png"><br><img src="20230626185400.png"></p>
+<h2 id="7-2-Custom-Configuration-Files-and-Options"><a href="#7-2-Custom-Configuration-Files-and-Options" class="headerlink" title="7.2. Custom Configuration Files and Options"></a>7.2. Custom Configuration Files and Options</h2><blockquote>
+<p>把typeOrm的配置放在单独的配置文件</p>
+</blockquote>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// orm.config.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> TypeOrmModuleOptions <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@nestjs/typeorm"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Event <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"src/events/event.entity"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> registerAs <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/config'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">registerAs</span><span class="token punctuation">(</span><span class="token string">'org.config'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span> TypeOrmModuleOptions <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+    type<span class="token punctuation">:</span> <span class="token string">'mysql'</span><span class="token punctuation">,</span>
+    host<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_HOST<span class="token punctuation">,</span>
+    port<span class="token punctuation">:</span> <span class="token function">Number</span><span class="token punctuation">(</span>process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_PORT<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    username<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_USER<span class="token punctuation">,</span>
+    password<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_PASS<span class="token punctuation">,</span>
+    database<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_NAME<span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 使用实体需要在这里引入</span>
+    entities<span class="token punctuation">:</span> <span class="token punctuation">[</span>Event<span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 自动建表，你修改 Entity 里面字段，</span>
+    <span class="token comment" spellcheck="true">// 或者 *.entity{.ts,.js } 的名字，都会自动帮你修改。</span>
+    synchronize<span class="token punctuation">:</span> <span class="token keyword">true</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// orm.config.prod.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> TypeOrmModuleOptions <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@nestjs/typeorm"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Event <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"src/events/event.entity"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> registerAs <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/config'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">registerAs</span><span class="token punctuation">(</span><span class="token string">'org.config'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span> TypeOrmModuleOptions <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+    type<span class="token punctuation">:</span> <span class="token string">'mysql'</span><span class="token punctuation">,</span>
+    host<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_HOST<span class="token punctuation">,</span>
+    port<span class="token punctuation">:</span> <span class="token function">Number</span><span class="token punctuation">(</span>process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_PORT<span class="token punctuation">)</span><span class="token punctuation">,</span>
+    username<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_USER<span class="token punctuation">,</span>
+    password<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_PASS<span class="token punctuation">,</span>
+    database<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>DB_NAME<span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 使用实体需要在这里引入</span>
+    entities<span class="token punctuation">:</span> <span class="token punctuation">[</span>Event<span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 自动建表，你修改 Entity 里面字段，</span>
+    <span class="token comment" spellcheck="true">// 或者 *.entity{.ts,.js } 的名字，都会自动帮你修改。</span>
+    synchronize<span class="token punctuation">:</span> <span class="token keyword">false</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// app.module.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> Module <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/common'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> AppController <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./app.controller'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> AppService <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./app.service'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> TypeOrmModule <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/typeorm'</span><span class="token punctuation">;</span> 
+<span class="token keyword">import</span> <span class="token punctuation">{</span> EventsModule <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./events/events.module'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> AppJapanService <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./app.japan.service'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> AppDummy <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./app.dummy'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> ConfigModule <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@nestjs/config'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> ormConfig <span class="token keyword">from</span> <span class="token string">'./config/orm.config'</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> ormConfigProd <span class="token keyword">from</span> <span class="token string">'./config/orm.config.prod'</span><span class="token punctuation">;</span>
+@<span class="token function">Module</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// 导入orm框架,配置数据库连接</span>
+  imports<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+    <span class="token comment" spellcheck="true">// 配置这个,可以读取根目录的.env文件</span>
+    ConfigModule<span class="token punctuation">.</span><span class="token function">forRoot</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      envFilePath<span class="token punctuation">:</span> <span class="token string">'.env'</span><span class="token punctuation">,</span>
+      isGlobal<span class="token punctuation">:</span> <span class="token keyword">true</span><span class="token punctuation">,</span>
+      expandVariables<span class="token punctuation">:</span> <span class="token keyword">true</span><span class="token punctuation">,</span>
+      load<span class="token punctuation">:</span> <span class="token punctuation">[</span>ormConfig<span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    TypeOrmModule<span class="token punctuation">.</span><span class="token function">forRootAsync</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+      useFactory<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>NODE_ENV <span class="token operator">!==</span>
+        <span class="token string">'production'</span> <span class="token operator">?</span> ormConfig <span class="token punctuation">:</span> ormConfigProd
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 导入子模块</span>
+    EventsModule<span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token comment" spellcheck="true">// 引入controller</span>
+  controllers<span class="token punctuation">:</span> <span class="token punctuation">[</span>AppController<span class="token punctuation">]</span><span class="token punctuation">,</span>
+  providers<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+    <span class="token comment" spellcheck="true">// 提供类</span>
+    <span class="token punctuation">{</span>
+      provide<span class="token punctuation">:</span> AppService<span class="token punctuation">,</span>
+      useClass<span class="token punctuation">:</span> AppJapanService
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 提供变量</span>
+    <span class="token punctuation">{</span>
+      provide<span class="token punctuation">:</span> <span class="token string">'APP_NAME'</span><span class="token punctuation">,</span>
+      useValue<span class="token punctuation">:</span> <span class="token string">'Nest Events Backend!'</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// 提供函数调用结果</span>
+    <span class="token punctuation">{</span>
+      provide<span class="token punctuation">:</span> <span class="token string">'MESSAGE'</span><span class="token punctuation">,</span>
+      inject<span class="token punctuation">:</span> <span class="token punctuation">[</span>AppDummy<span class="token punctuation">]</span><span class="token punctuation">,</span>
+      useFactory<span class="token punctuation">:</span> <span class="token punctuation">(</span>app<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token template-string"><span class="token string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>app<span class="token punctuation">.</span><span class="token function">dummy</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    AppDummy
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token keyword">export</span> <span class="token keyword">class</span> <span class="token class-name">AppModule</span> <span class="token punctuation">{</span> <span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>expandVariables</p>
+</blockquote>
+<pre class=" language-properties"><code class="language-properties"><span class="token attr-name">APP_URL</span><span class="token punctuation">=</span><span class="token attr-value">mywebsite.com</span>
+<span class="token attr-name">SUPPORT_EMAIL</span><span class="token punctuation">=</span><span class="token attr-value">support@${APP_URL}</span>
+</code></pre>
+<p><img src="20230626191809.png"><br><img src="20230626191818.png"></p>
+<h2 id="7-3-Logging"><a href="#7-3-Logging" class="headerlink" title="7.3. Logging"></a>7.3. Logging</h2><pre class=" language-ts"><code class="language-ts">    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    async <span class="token function">findAll</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>logger<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`Hit the findAll route`</span></span><span class="token punctuation">)</span>
+        <span class="token keyword">const</span> events <span class="token operator">=</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>logger<span class="token punctuation">.</span><span class="token function">debug</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`Found </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>events<span class="token punctuation">.</span>length<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> events`</span></span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> events
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626193814.png"><br><img src="20230626194106.png" alt="main.ts"></p>
+<h2 id="7-4-Exception-Filters"><a href="#7-4-Exception-Filters" class="headerlink" title="7.4. Exception Filters"></a>7.4. Exception Filters</h2><p><img src="20230626194147.png"></p>
+<pre class=" language-ts"><code class="language-ts">    @<span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">':id'</span><span class="token punctuation">)</span>
+    async <span class="token function">findOne</span><span class="token punctuation">(</span>@<span class="token function">Param</span><span class="token punctuation">(</span><span class="token string">'id'</span><span class="token punctuation">,</span> ParseIntPipe<span class="token punctuation">)</span> id<span class="token punctuation">:</span> <span class="token keyword">number</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> event <span class="token operator">=</span> await <span class="token keyword">this</span><span class="token punctuation">.</span>repository<span class="token punctuation">.</span><span class="token function">findOne</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            where<span class="token punctuation">:</span> <span class="token punctuation">{</span> id <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>event<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">NotFoundException</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> event
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230626194654.png"></p>
+
             </div>
             <hr/>
 
@@ -697,58 +1366,42 @@ nest g co
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fa fa-dot-circle-o"></i>&nbsp;本篇
-            </div>
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2023/06/25/backend/node/master-nestjs-the-javascript-node.js-framework/z/">
+                <a href="/2023/06/26/backend/c-c/hei-ma-c-nian-du/z/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/21.jpg" class="responsive-img" alt="Master NestJS - The JavaScript Node.js Framework">
+                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="黑马c++视频">
                         
-                        <span class="card-title">Master NestJS - The JavaScript Node.js Framework</span>
+                        <span class="card-title">黑马c++视频</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">2. Introduction to NestJS2.1. Installing and Using Nest CLInpm i -g @nestjs/cli
-
-
-创建新项目
-
-# nest new 
-nest new nest-event</div>
+                    <div class="summary"></div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2023-06-25
-                            </span>
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2023-06-26
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/nest/" class="post-category" target="_blank">
-                                    nest
-                                </a>
-                            
-                            <a href="/categories/nest/%E5%89%8D%E7%AB%AF/" class="post-category" target="_blank">
-                                    前端
+                            <a href="/categories/c-c/" class="post-category" target="_blank">
+                                    c/c++
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/%E5%89%8D%E7%AB%AF/" target="_blank">
-                        <span class="chip bg-color">前端</span>
-                    </a>
-                    
-                    <a href="/tags/nest/" target="_blank">
-                        <span class="chip bg-color">nest</span>
+                    <a href="/tags/c-c/" target="_blank">
+                        <span class="chip bg-color">c/c++</span>
                     </a>
                     
                 </div>
@@ -920,7 +1573,7 @@ nest new nest-event</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">188.4k</span>
+                <span class="white-color">191.4k</span>
             
 
             
