@@ -431,14 +431,14 @@ analyse
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        15.8k
+                        16.1k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        88 分
+                        90 分
                     </div>
                     
                 
@@ -4504,7 +4504,114 @@ app<span class="token punctuation">.</span><span class="token function">mount</s
   <span class="token punctuation">}</span><span class="token punctuation">,</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 </code></pre>
-<h2 id="014-Initializing-Firebase-First–-koudaizy-com"><a href="#014-Initializing-Firebase-First–-koudaizy-com" class="headerlink" title="014 Initializing Firebase First–[koudaizy.com]"></a>014 Initializing Firebase First–[koudaizy.com]</h2>
+<h2 id="014-Initializing-Firebase-First–-koudaizy-com"><a href="#014-Initializing-Firebase-First–-koudaizy-com" class="headerlink" title="014 Initializing Firebase First–[koudaizy.com]"></a>014 Initializing Firebase First–[koudaizy.com]</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// main.js</span>
+<span class="token comment" spellcheck="true">// ...</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> auth <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"./includes/firebase"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">let</span> app<span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 监听登录状态改变</span>
+auth<span class="token punctuation">.</span><span class="token function">onAuthStateChanged</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>app<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    app <span class="token operator">=</span> <span class="token function">createApp</span><span class="token punctuation">(</span>App<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    app<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token function">createPinia</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    app<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span>router<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    app<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span>VeeValidatePlugin<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    app<span class="token punctuation">.</span><span class="token function">mount</span><span class="token punctuation">(</span><span class="token string">"#app"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="015-Persisting-the-User-Authentication–-koudaizy-com"><a href="#015-Persisting-the-User-Authentication–-koudaizy-com" class="headerlink" title="015 Persisting the User Authentication–[koudaizy.com]"></a>015 Persisting the User Authentication–[koudaizy.com]</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// app.vue</span>
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> AppHeader <span class="token keyword">from</span> <span class="token string">'@/components/AppHeader.vue'</span>
+<span class="token keyword">import</span> AppAuth <span class="token keyword">from</span> <span class="token string">'./components/AppAuth.vue'</span>
+<span class="token keyword">import</span> useUserStore <span class="token keyword">from</span> <span class="token string">'@/stores/user'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> mapWritableState <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'pinia'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> auth <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./includes/firebase'</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'App'</span><span class="token punctuation">,</span>
+  components<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    AppHeader<span class="token punctuation">,</span>
+    AppAuth
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  computed<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    <span class="token operator">...</span><span class="token function">mapWritableState</span><span class="token punctuation">(</span>useUserStore<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'userLoggedIn'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  created <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>auth<span class="token punctuation">.</span>currentUser<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>userLoggedIn <span class="token operator">=</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
+<p><img src="20230704054507.png"></p>
+<blockquote>
+<p>注册或登录成功后,firebase 会在 indexedDB 里存放登录密钥,表示用户已经登录</p>
+</blockquote>
+<p><img src="20230704054624.png"><br><img src="20230704054732.png" alt="清除所有缓存"></p>
+<h2 id="016-Setting-up-the-Login–-koudaizy-com"><a href="#016-Setting-up-the-Login–-koudaizy-com" class="headerlink" title="016 Setting up the Login–[koudaizy.com]"></a>016 Setting up the Login–[koudaizy.com]</h2><pre class=" language-js"><code class="language-js"><span class="token keyword">import</span> <span class="token punctuation">{</span> defineStore <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"pinia"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> auth<span class="token punctuation">,</span> usersCollection <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@/includes/firebase"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineStore</span><span class="token punctuation">(</span><span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+  state<span class="token punctuation">:</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//用户是否登录</span>
+    userLoggedIn<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  actions<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    <span class="token keyword">async</span> <span class="token function">register</span><span class="token punctuation">(</span>values<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token keyword">async</span> <span class="token function">authenticate</span><span class="token punctuation">(</span>values<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">await</span> auth<span class="token punctuation">.</span><span class="token function">signInWithEmailAndPassword</span><span class="token punctuation">(</span>values<span class="token punctuation">.</span>email<span class="token punctuation">,</span> values<span class="token punctuation">.</span>password<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">this</span><span class="token punctuation">.</span>userLoggedIn <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// loginForm.vue</span>
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> ErrorMessage <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'vee-validate'</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> mapActions <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'pinia'</span>
+<span class="token keyword">import</span> useUserStore <span class="token keyword">from</span> <span class="token string">'@/stores/user'</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  components<span class="token punctuation">:</span> <span class="token punctuation">{</span> ErrorMessage <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  data <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    <span class="token operator">...</span><span class="token function">mapActions</span><span class="token punctuation">(</span>useUserStore<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'authenticate'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token keyword">async</span> login <span class="token punctuation">(</span>values<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>login_in_submission <span class="token operator">=</span> <span class="token boolean">true</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>login_show_alert <span class="token operator">=</span> <span class="token boolean">true</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>login_alert_variant <span class="token operator">=</span> <span class="token string">'bg-blue-500'</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>login_alert_msg <span class="token operator">=</span> <span class="token string">'Please wait! We are logging you in'</span>
+
+      <span class="token keyword">try</span> <span class="token punctuation">{</span>
+        <span class="token keyword">await</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">authenticate</span><span class="token punctuation">(</span>values<span class="token punctuation">)</span>
+      <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>login_in_submission <span class="token operator">=</span> <span class="token boolean">false</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>login_alert_variant <span class="token operator">=</span> <span class="token string">'bg-red-500'</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>login_alert_msg <span class="token operator">=</span> <span class="token string">'Invalid login details'</span>
+        <span class="token keyword">return</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token keyword">this</span><span class="token punctuation">.</span>login_alert_variant <span class="token operator">=</span> <span class="token string">'bg-green-500'</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>login_alert_msg <span class="token operator">=</span> <span class="token string">'Success! You are now logged in'</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
+<p><img src="20230704062345.png"></p>
+<h2 id="017-Signing-Out–-koudaizy-com"><a href="#017-Signing-Out–-koudaizy-com" class="headerlink" title="017 Signing Out–[koudaizy.com]"></a>017 Signing Out–[koudaizy.com]</h2><p><img src="20230704063855.png"><br><img src="20230704064011.png"><br><img src="20230704064226.png"><br><img src="20230704064608.png"><br><img src="20230704064454.png"></p>
+<h2 id="018-Sidebar-JSON-Web-Tokens–-koudaizy-com"><a href="#018-Sidebar-JSON-Web-Tokens–-koudaizy-com" class="headerlink" title="018 Sidebar JSON Web Tokens–[koudaizy.com]"></a>018 Sidebar JSON Web Tokens–[koudaizy.com]</h2><p><img src="20230704064721.png"><br><img src="20230704064748.png" alt="任何在服务器和客户端之间交互的东西都可能被窃取,有人会监听公共网络,从中窃取信息,而ssl等技术就是给传输的信息加密的"><br><img src="20230704064902.png" alt="firebase提供了stsTokenManager"></p>
+<h1 id="12-Master-Project-Routing"><a href="#12-Master-Project-Routing" class="headerlink" title="12 - Master Project Routing"></a>12 - Master Project Routing</h1>
             </div>
             <hr/>
 
@@ -4863,7 +4970,7 @@ p</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">208.6k</span>
+                <span class="white-color">208.9k</span>
             
 
             
