@@ -428,14 +428,14 @@ les">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        780
+                        1.5k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        4 分
+                        8 分
                     </div>
                     
                 
@@ -762,7 +762,304 @@ service CalculatorService <span class="token punctuation">{</span>
 </ul>
 <p><img src="20230704162624.png"><br><img src="20230704162659.png"></p>
 <h2 id="lesson21"><a href="#lesson21" class="headerlink" title="lesson21"></a>lesson21</h2><p><img src="20230704162725.png"></p>
+<pre class=" language-protobuf"><code class="language-protobuf">syntax <span class="token operator">=</span> <span class="token string">"proto3"</span><span class="token punctuation">;</span>
 
+<span class="token keyword">package</span> greet<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 指定输出目录,是相对于运行protoc编译命令的目录</span>
+option go_package<span class="token operator">=</span><span class="token string">"./greet/greetpb"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// api间交换的数据结构</span>
+<span class="token comment" spellcheck="true">// 1,2等数字是数据的填充顺序</span>
+<span class="token keyword">message</span> Greeting <span class="token punctuation">{</span>
+    <span class="token primitive symbol">string</span> first_name <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token primitive symbol">string</span> last_name <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+
+<span class="token keyword">message</span> GreetManyTimesRequest <span class="token punctuation">{</span>
+    Greeting greeting <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> GreetManyTimesResponse <span class="token punctuation">{</span>
+    <span class="token primitive symbol">string</span> result <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+service GreetService<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// Unary</span>
+    rpc <span class="token function">Greet</span><span class="token punctuation">(</span>GreetRequest<span class="token punctuation">)</span> <span class="token function">returns</span> <span class="token punctuation">(</span>GreetResponse<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// Server Streaming</span>
+    rpc <span class="token function">GreetManyTimes</span><span class="token punctuation">(</span>GreetManyTimesRequest<span class="token punctuation">)</span> <span class="token function">returns</span> <span class="token punctuation">(</span>stream GreetManyTimesResponse<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="lesson22"><a href="#lesson22" class="headerlink" title="lesson22"></a>lesson22</h2><pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"log"</span>
+    <span class="token string">"net"</span>
+    <span class="token string">"rpc-learn/greet/greetpb"</span>
+    <span class="token string">"strconv"</span>
+    <span class="token string">"time"</span>
+
+    <span class="token string">"google.golang.org/grpc"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> server <span class="token keyword">struct</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span><span class="token operator">*</span>server<span class="token punctuation">)</span> <span class="token function">Greet</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> req <span class="token operator">*</span>greetpb<span class="token punctuation">.</span>GreetRequest<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>greetpb<span class="token punctuation">.</span>GreetResponse<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span><span class="token operator">*</span>server<span class="token punctuation">)</span> <span class="token function">GreetManyTimes</span><span class="token punctuation">(</span>req <span class="token operator">*</span>greetpb<span class="token punctuation">.</span>GreetManyTimesRequest<span class="token punctuation">,</span> stream greetpb<span class="token punctuation">.</span>GreetService_GreetManyTimesServer<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    log<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"GreetManyTimes function was invoked with %v\n"</span><span class="token punctuation">,</span> req<span class="token punctuation">)</span>
+    firstName <span class="token operator">:=</span> req<span class="token punctuation">.</span><span class="token function">GetGreeting</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">GetFirstName</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">10</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+        result <span class="token operator">:=</span> <span class="token string">"Hello"</span> <span class="token operator">+</span> firstName <span class="token operator">+</span> <span class="token string">" number"</span> <span class="token operator">+</span> strconv<span class="token punctuation">.</span><span class="token function">Itoa</span><span class="token punctuation">(</span>i<span class="token punctuation">)</span>
+        res <span class="token operator">:=</span> <span class="token operator">&amp;</span>greetpb<span class="token punctuation">.</span>GreetManyTimesResponse<span class="token punctuation">{</span>
+            Result<span class="token punctuation">:</span> result<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+        stream<span class="token punctuation">.</span><span class="token function">Send</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+        time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span><span class="token number">1000</span> <span class="token operator">*</span> time<span class="token punctuation">.</span>Millisecond<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="lesson23"><a href="#lesson23" class="headerlink" title="lesson23"></a>lesson23</h2><p><img src="20230704193136.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"io"</span>
+    <span class="token string">"log"</span>
+    <span class="token string">"rpc-learn/greet/greetpb"</span>
+
+    <span class="token string">"google.golang.org/grpc"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"client"</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// WithInsecure: 不安全连接</span>
+    conn<span class="token punctuation">,</span> err <span class="token operator">:=</span> grpc<span class="token punctuation">.</span><span class="token function">Dial</span><span class="token punctuation">(</span><span class="token string">"localhost:50051"</span><span class="token punctuation">,</span> grpc<span class="token punctuation">.</span><span class="token function">WithInsecure</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        log<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"could not connect: %v"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">defer</span> conn<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    c <span class="token operator">:=</span> greetpb<span class="token punctuation">.</span><span class="token function">NewGreetServiceClient</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// doUnary(c)</span>
+
+    <span class="token function">doServerStreaming</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">doUnary</span><span class="token punctuation">(</span>c greetpb<span class="token punctuation">.</span>GreetServiceClient<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">doServerStreaming</span><span class="token punctuation">(</span>c greetpb<span class="token punctuation">.</span>GreetServiceClient<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    log<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"Starting to do a Server Streaming RPC..."</span><span class="token punctuation">)</span>
+
+    req <span class="token operator">:=</span> <span class="token operator">&amp;</span>greetpb<span class="token punctuation">.</span>GreetManyTimesRequest<span class="token punctuation">{</span>
+        Greeting<span class="token punctuation">:</span> <span class="token operator">&amp;</span>greetpb<span class="token punctuation">.</span>Greeting<span class="token punctuation">{</span>
+            FirstName<span class="token punctuation">:</span> <span class="token string">"Stephane"</span><span class="token punctuation">,</span>
+            LastName<span class="token punctuation">:</span>  <span class="token string">"Maarek"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    resStream<span class="token punctuation">,</span> err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">GreetManyTimes</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> req<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        log<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"error while calling GreetManyTimes RPC: %v"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">for</span> <span class="token punctuation">{</span>
+        msg<span class="token punctuation">,</span> err <span class="token operator">:=</span> resStream<span class="token punctuation">.</span><span class="token function">Recv</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">==</span> io<span class="token punctuation">.</span>EOF <span class="token punctuation">{</span>
+            <span class="token keyword">break</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            log<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"error while reading stream: %v"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        log<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"Response from GreetManyTimes: %v"</span><span class="token punctuation">,</span> msg<span class="token punctuation">.</span><span class="token function">GetResult</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230704193724.png"></p>
+<h2 id="lesson24"><a href="#lesson24" class="headerlink" title="lesson24"></a>lesson24</h2><blockquote>
+<p>因式分解</p>
+</blockquote>
+<pre class=" language-protobuf"><code class="language-protobuf">syntax <span class="token operator">=</span> <span class="token string">"proto3"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">package</span> calculator<span class="token punctuation">;</span>
+option go_package <span class="token operator">=</span> <span class="token string">"./calculator/calculatorpb"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">//...</span>
+
+<span class="token keyword">message</span> PrimeNumberDecompositionRequest <span class="token punctuation">{</span>
+    <span class="token primitive symbol">int64</span> number <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> PrimeNumberDecompositionResponse <span class="token punctuation">{</span>
+    <span class="token primitive symbol">int64</span> prime_factor <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+service CalculatorService <span class="token punctuation">{</span>
+    rpc <span class="token function">Sum</span><span class="token punctuation">(</span>SumRequest<span class="token punctuation">)</span> <span class="token function">returns</span> <span class="token punctuation">(</span>SumResponse<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    rpc <span class="token function">PrimeNumberDecomposition</span><span class="token punctuation">(</span>PrimeNumberDecompositionRequest<span class="token punctuation">)</span>
+        <span class="token function">returns</span> <span class="token punctuation">(</span>stream PrimeNumberDecompositionResponse<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"log"</span>
+    <span class="token string">"net"</span>
+    <span class="token string">"rpc-learn/calculator/calculatorpb"</span>
+
+    <span class="token string">"google.golang.org/grpc"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> server <span class="token keyword">struct</span><span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span><span class="token operator">*</span>server<span class="token punctuation">)</span> <span class="token function">Sum</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> req <span class="token operator">*</span>calculatorpb<span class="token punctuation">.</span>SumRequest<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>calculatorpb<span class="token punctuation">.</span>SumResponse<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span><span class="token operator">*</span>server<span class="token punctuation">)</span> <span class="token function">PrimeNumberDecomposition</span><span class="token punctuation">(</span>
+    req <span class="token operator">*</span>calculatorpb<span class="token punctuation">.</span>PrimeNumberDecompositionRequest<span class="token punctuation">,</span>
+    stream calculatorpb<span class="token punctuation">.</span>CalculatorService_PrimeNumberDecompositionServer<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    log<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"Received PrimeNumberDecomposition RPC: %v"</span><span class="token punctuation">,</span> req<span class="token punctuation">)</span>
+
+    number <span class="token operator">:=</span> req<span class="token punctuation">.</span><span class="token function">GetNumber</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    divisor <span class="token operator">:=</span> <span class="token function">int64</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> number <span class="token operator">></span> <span class="token number">1</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> number<span class="token operator">%</span>divisor <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            stream<span class="token punctuation">.</span><span class="token function">Send</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>calculatorpb<span class="token punctuation">.</span>PrimeNumberDecompositionResponse<span class="token punctuation">{</span>
+                PrimeFactor<span class="token punctuation">:</span> divisor<span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span>
+            number <span class="token operator">=</span> number <span class="token operator">/</span> divisor
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            divisor<span class="token operator">++</span>
+            log<span class="token punctuation">.</span><span class="token function">Printf</span><span class="token punctuation">(</span><span class="token string">"Divisor has increased to %v"</span><span class="token punctuation">,</span> divisor<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"io"</span>
+    <span class="token string">"log"</span>
+    <span class="token string">"rpc-learn/calculator/calculatorpb"</span>
+
+    <span class="token string">"google.golang.org/grpc"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"Calculator Client"</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// WithInsecure: 不安全连接</span>
+    conn<span class="token punctuation">,</span> err <span class="token operator">:=</span> grpc<span class="token punctuation">.</span><span class="token function">Dial</span><span class="token punctuation">(</span><span class="token string">"localhost:50051"</span><span class="token punctuation">,</span> grpc<span class="token punctuation">.</span><span class="token function">WithInsecure</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        log<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"could not connect: %v"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">defer</span> conn<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    c <span class="token operator">:=</span> calculatorpb<span class="token punctuation">.</span><span class="token function">NewCalculatorServiceClient</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// fmt.Printf("Created client: %f", c)</span>
+
+    <span class="token comment" spellcheck="true">// doUnary(c)</span>
+
+    <span class="token function">doServerStreaming</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">doUnary</span><span class="token punctuation">(</span>c calculatorpb<span class="token punctuation">.</span>CalculatorServiceClient<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">doServerStreaming</span><span class="token punctuation">(</span>c calculatorpb<span class="token punctuation">.</span>CalculatorServiceClient<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    log<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"Starting to do a PrimeNumberDecomposition RPC..."</span><span class="token punctuation">)</span>
+    req <span class="token operator">:=</span> <span class="token operator">&amp;</span>calculatorpb<span class="token punctuation">.</span>PrimeNumberDecompositionRequest<span class="token punctuation">{</span>
+        Number<span class="token punctuation">:</span> <span class="token number">12</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    stream<span class="token punctuation">,</span> err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">PrimeNumberDecomposition</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> req<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        log<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"error while calling PrimeNumberDecomposition RPC: %v"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">for</span> <span class="token punctuation">{</span>
+        res<span class="token punctuation">,</span> err <span class="token operator">:=</span> stream<span class="token punctuation">.</span><span class="token function">Recv</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">==</span> io<span class="token punctuation">.</span>EOF <span class="token punctuation">{</span>
+            <span class="token keyword">break</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            log<span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"error while reading stream: %v"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        log<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>res<span class="token punctuation">.</span><span class="token function">GetPrimeFactor</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230704200902.png"><br><img src="20230704200922.png"></p>
+<h2 id="lesson25"><a href="#lesson25" class="headerlink" title="lesson25"></a>lesson25</h2><blockquote>
+<p>客户端流 api</p>
+</blockquote>
+<ul>
+<li>上传文件</li>
+<li>同时处理多个数据</li>
+<li>客户端向服务端推送</li>
+</ul>
+<p><img src="20230704201200.png"><br><img src="20230704201212.png"></p>
+<h2 id="lesson26"><a href="#lesson26" class="headerlink" title="lesson26"></a>lesson26</h2><p><img src="20230704201243.png"></p>
+<pre class=" language-protobuf"><code class="language-protobuf">syntax <span class="token operator">=</span> <span class="token string">"proto3"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">package</span> greet<span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// 指定输出目录,是相对于运行protoc编译命令的目录</span>
+option go_package<span class="token operator">=</span><span class="token string">"./greet/greetpb"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// api间交换的数据结构</span>
+<span class="token comment" spellcheck="true">// 1,2等数字是数据的填充顺序</span>
+<span class="token keyword">message</span> Greeting <span class="token punctuation">{</span>
+    <span class="token primitive symbol">string</span> first_name <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token primitive symbol">string</span> last_name <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+
+<span class="token keyword">message</span> LongGreetRequest <span class="token punctuation">{</span>
+    Greeting greeting <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">message</span> LongGreetResponse <span class="token punctuation">{</span>
+    <span class="token primitive symbol">string</span> result <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+service GreetService<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// Unary</span>
+    rpc <span class="token function">Greet</span><span class="token punctuation">(</span>GreetRequest<span class="token punctuation">)</span> <span class="token function">returns</span> <span class="token punctuation">(</span>GreetResponse<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// Server Streaming</span>
+    rpc <span class="token function">GreetManyTimes</span><span class="token punctuation">(</span>GreetManyTimesRequest<span class="token punctuation">)</span> <span class="token function">returns</span> <span class="token punctuation">(</span>stream GreetManyTimesResponse<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// Client Streaming</span>
+    rpc <span class="token function">LongGreet</span><span class="token punctuation">(</span>stream LongGreetRequest<span class="token punctuation">)</span> <span class="token function">returns</span> <span class="token punctuation">(</span>LongGreetResponse<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="lesson27"><a href="#lesson27" class="headerlink" title="lesson27"></a>lesson27</h2>
             </div>
             <hr/>
 
@@ -923,59 +1220,45 @@ service CalculatorService <span class="token punctuation">{</span>
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fa fa-dot-circle-o"></i>&nbsp;本篇
-            </div>
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2023/07/04/backend/golang/grpcgolangmasterclassbuildmodernapimicroservices/z/">
+                <a href="/2023/07/04/backend/rust/rust-bian-cheng-wan-zheng-de-kai-fa-zhe-zhi-nan/z/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/15.jpg" class="responsive-img" alt="gRPC Golang Master Class Build Modern API & Microservicesz">
+                        <img src="/medias/featureimages/1.jpg" class="responsive-img" alt="Rust 编程：完整的开发者指南">
                         
-                        <span class="card-title">gRPC Golang Master Class Build Modern API & Microservicesz</span>
+                        <span class="card-title">Rust 编程：完整的开发者指南</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">gRPC Golang Master Class Build Modern API &amp; Microserviceslesson1
-lesson2
-lesson4
-lesson5
-lesson6
-lesson7
-lesson8
-les</div>
+                    <div class="summary">视频链接哔哩哔哩
+11-1 intro
+1-2 data types
+1-3 variables</div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2023-07-04
-                            </span>
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2023-07-04
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/golang/" class="post-category" target="_blank">
-                                    golang
-                                </a>
-                            
-                            <a href="/categories/golang/grpc/" class="post-category" target="_blank">
-                                    grpc
+                            <a href="/categories/rust/" class="post-category" target="_blank">
+                                    rust
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/golang/" target="_blank">
-                        <span class="chip bg-color">golang</span>
-                    </a>
-                    
-                    <a href="/tags/grpc/" target="_blank">
-                        <span class="chip bg-color">grpc</span>
+                    <a href="/tags/rust/" target="_blank">
+                        <span class="chip bg-color">rust</span>
                     </a>
                     
                 </div>
@@ -1134,7 +1417,7 @@ les</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">211.9k</span>
+                <span class="white-color">212.6k</span>
             
 
             
