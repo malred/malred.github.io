@@ -431,14 +431,14 @@ analyse
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        18.8k
+                        19.5k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        107 分
+                        111 分
                     </div>
                     
                 
@@ -5175,7 +5175,260 @@ router<span class="token punctuation">.</span><span class="token function">befor
   <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2 id="004-Enabling-Firebase’s-Storage-Service"><a href="#004-Enabling-Firebase’s-Storage-Service" class="headerlink" title="004 Enabling Firebase’s Storage Service"></a>004 Enabling Firebase’s Storage Service</h2>
+<h2 id="004-Enabling-Firebase’s-Storage-Service"><a href="#004-Enabling-Firebase’s-Storage-Service" class="headerlink" title="004 Enabling Firebase’s Storage Service"></a>004 Enabling Firebase’s Storage Service</h2><p><img src="20230706162355.png"><br><img src="20230706162448.png"></p>
+<h2 id="005-Uploading-Files-with-Firebase"><a href="#005-Uploading-Files-with-Firebase" class="headerlink" title="005 Uploading Files with Firebase"></a>005 Uploading Files with Firebase</h2><p><img src="20230706162640.png"><br><img src="20230706163330.png"></p>
+<pre class=" language-js"><code class="language-js">  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    upload <span class="token punctuation">(</span>$event<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>is_dragover <span class="token operator">=</span> <span class="token boolean">false</span>
+
+      <span class="token keyword">const</span> files <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token operator">...</span>$event<span class="token punctuation">.</span>dataTransfer<span class="token punctuation">.</span>files<span class="token punctuation">]</span>
+      files<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>file <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>file<span class="token punctuation">.</span>type <span class="token operator">!=</span> <span class="token string">'audio/mpeg'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">const</span> storageRef <span class="token operator">=</span> storage<span class="token punctuation">.</span><span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">'songs'</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// music-be97f.appspot.com/songs</span>
+        <span class="token keyword">const</span> songsRef <span class="token operator">=</span> storageRef<span class="token punctuation">.</span><span class="token function">child</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`songs/</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>file<span class="token punctuation">.</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// music-be97f.appspot.com/songs/example.mp3</span>
+        <span class="token comment" spellcheck="true">// 上次</span>
+        songsRef<span class="token punctuation">.</span><span class="token function">put</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>files<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230706163900.png"></p>
+<h2 id="006-Firebase-Rules-and-Validation"><a href="#006-Firebase-Rules-and-Validation" class="headerlink" title="006 Firebase Rules and Validation"></a>006 Firebase Rules and Validation</h2><p><img src="20230706170530.png"></p>
+<h2 id="007-Adding-the-Progress-Bar"><a href="#007-Adding-the-Progress-Bar" class="headerlink" title="007 Adding the Progress Bar"></a>007 Adding the Progress Bar</h2><p><img src="20230706181807.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> storage <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@/includes/firebase'</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'Upload'</span><span class="token punctuation">,</span>
+  data <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      is_dragover<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+      uploads<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    upload <span class="token punctuation">(</span>$event<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>is_dragover <span class="token operator">=</span> <span class="token boolean">false</span>
+
+      <span class="token keyword">const</span> files <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token operator">...</span>$event<span class="token punctuation">.</span>dataTransfer<span class="token punctuation">.</span>files<span class="token punctuation">]</span>
+      files<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>file <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>file<span class="token punctuation">.</span>type <span class="token operator">!=</span> <span class="token string">'audio/mpeg'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">const</span> storageRef <span class="token operator">=</span> storage<span class="token punctuation">.</span><span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">'songs'</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// music-be97f.appspot.com/songs</span>
+        <span class="token keyword">const</span> songsRef <span class="token operator">=</span> storageRef<span class="token punctuation">.</span><span class="token function">child</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`songs/</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>file<span class="token punctuation">.</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// music-be97f.appspot.com/songs/example.mp3</span>
+        <span class="token comment" spellcheck="true">// 上次</span>
+        <span class="token keyword">const</span> task <span class="token operator">=</span> songsRef<span class="token punctuation">.</span><span class="token function">put</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+
+        <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          task<span class="token punctuation">,</span>
+          current_progress<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+          name<span class="token punctuation">:</span> file<span class="token punctuation">.</span>name
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// 监听事件</span>
+        task<span class="token punctuation">.</span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string">'state_changed'</span><span class="token punctuation">,</span> snapshot <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+          <span class="token keyword">const</span> progresss <span class="token operator">=</span> <span class="token punctuation">(</span>snapshot<span class="token punctuation">.</span>bytesTransferred <span class="token operator">/</span> snapshot<span class="token punctuation">.</span>totalBytes<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">100</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>files<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
+<h2 id="008-Making-the-Progress-Bar-Dynamic"><a href="#008-Making-the-Progress-Bar-Dynamic" class="headerlink" title="008 Making the Progress Bar Dynamic"></a>008 Making the Progress Bar Dynamic</h2><pre class=" language-js"><code class="language-js">  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    upload <span class="token punctuation">(</span>$event<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>is_dragover <span class="token operator">=</span> <span class="token boolean">false</span>
+
+      <span class="token keyword">const</span> files <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token operator">...</span>$event<span class="token punctuation">.</span>dataTransfer<span class="token punctuation">.</span>files<span class="token punctuation">]</span>
+      files<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>file <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>file<span class="token punctuation">.</span>type <span class="token operator">!=</span> <span class="token string">'audio/mpeg'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">const</span> storageRef <span class="token operator">=</span> storage<span class="token punctuation">.</span><span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">'songs'</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// music-be97f.appspot.com/songs</span>
+        <span class="token keyword">const</span> songsRef <span class="token operator">=</span> storageRef<span class="token punctuation">.</span><span class="token function">child</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`songs/</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>file<span class="token punctuation">.</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// music-be97f.appspot.com/songs/example.mp3</span>
+        <span class="token comment" spellcheck="true">// 上次</span>
+        <span class="token keyword">const</span> task <span class="token operator">=</span> songsRef<span class="token punctuation">.</span><span class="token function">put</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+
+        <span class="token keyword">const</span> uploadIndex <span class="token operator">=</span>
+          <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            task<span class="token punctuation">,</span>
+            current_progress<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            name<span class="token punctuation">:</span> file<span class="token punctuation">.</span>name
+          <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span>
+
+        <span class="token comment" spellcheck="true">// 监听事件</span>
+        task<span class="token punctuation">.</span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string">'state_changed'</span><span class="token punctuation">,</span> snapshot <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+          <span class="token keyword">const</span> progresss <span class="token operator">=</span> <span class="token punctuation">(</span>snapshot<span class="token punctuation">.</span>bytesTransferred <span class="token operator">/</span> snapshot<span class="token punctuation">.</span>totalBytes<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">100</span>
+          <span class="token comment" spellcheck="true">// 更新进度条</span>
+          <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>current_progress <span class="token operator">=</span> progresss
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>files<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230706182436.png"></p>
+<h2 id="009-Improving-the-Progress-Bar"><a href="#009-Improving-the-Progress-Bar" class="headerlink" title="009 Improving the Progress Bar"></a>009 Improving the Progress Bar</h2><p><img src="20230706183601.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span><span class="token operator">--</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span> Progess Bars <span class="token operator">--</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mb-4"</span> v<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">=</span><span class="token string">"upload in uploads"</span> <span class="token punctuation">:</span>key<span class="token operator">=</span><span class="token string">"upload.name"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span> File Name <span class="token operator">--</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"font-bold text-sm"</span> <span class="token punctuation">:</span><span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"upload.text_class"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>i <span class="token punctuation">:</span><span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"upload.icon"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>i<span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> upload<span class="token punctuation">.</span>name <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"flex h-4 overflow-hidden bg-gray-200 rounded"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span> Inner Progress Bar <span class="token operator">--</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>div
+            <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"transition-all progress-bar"</span>
+            <span class="token punctuation">:</span><span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"upload.variant"</span>
+            <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"{ width: upload.current_progress + '%' }"</span>
+          <span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> storage <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@/includes/firebase'</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'Upload'</span><span class="token punctuation">,</span>
+  data <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    upload <span class="token punctuation">(</span>$event<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token comment" spellcheck="true">// ...</span>
+
+        <span class="token keyword">const</span> uploadIndex <span class="token operator">=</span>
+          <span class="token comment" spellcheck="true">// 一个元素表示一个进度条数据</span>
+          <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            task<span class="token punctuation">,</span>
+            current_progress<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            name<span class="token punctuation">:</span> file<span class="token punctuation">.</span>name<span class="token punctuation">,</span>
+            variant<span class="token punctuation">:</span> <span class="token string">'bg-blue-400'</span><span class="token punctuation">,</span>
+            icon<span class="token punctuation">:</span> <span class="token string">'fas fa-spinner fa-spin'</span><span class="token punctuation">,</span>
+            text_class<span class="token punctuation">:</span> <span class="token string">''</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span>
+
+        <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+
+
+<span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">(</span><span class="token number">20230706184406</span><span class="token punctuation">.</span>png<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="010-Handling-Errors-and-Successful-Uploads"><a href="#010-Handling-Errors-and-Successful-Uploads" class="headerlink" title="010 Handling Errors and Successful Uploads"></a>010 Handling Errors and Successful Uploads</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// 监听事件</span>
+task<span class="token punctuation">.</span><span class="token function">on</span><span class="token punctuation">(</span>
+  <span class="token string">"state_changed"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">(</span>snapshot<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> progresss <span class="token operator">=</span> <span class="token punctuation">(</span>snapshot<span class="token punctuation">.</span>bytesTransferred <span class="token operator">/</span> snapshot<span class="token punctuation">.</span>totalBytes<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">100</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 更新进度条</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>current_progress <span class="token operator">=</span> progresss<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>variant <span class="token operator">=</span> <span class="token string">"bg-red-400"</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>icon <span class="token operator">=</span> <span class="token string">"fas fa-times"</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>text_class <span class="token operator">=</span> <span class="token string">"text-red-400"</span><span class="token punctuation">;</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 上传成功</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>variant <span class="token operator">=</span> <span class="token string">"bg-green-400"</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>icon <span class="token operator">=</span> <span class="token string">"fas fa-check"</span><span class="token punctuation">;</span>
+    <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>text_class <span class="token operator">=</span> <span class="token string">"text-green-400"</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p><img src="20230706185446.png"></p>
+<h2 id="011-Storing-the-File-Data-in-the-Database"><a href="#011-Storing-the-File-Data-in-the-Database" class="headerlink" title="011 Storing the File Data in the Database"></a>011 Storing the File Data in the Database</h2><p><img src="20230706195204.png"><br><img src="20230706195324.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> storage<span class="token punctuation">,</span> auth<span class="token punctuation">,</span> songsCollection <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@/includes/firebase'</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'Upload'</span><span class="token punctuation">,</span>
+  data <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      is_dragover<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+      uploads<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    upload <span class="token punctuation">(</span>$event<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span>is_dragover <span class="token operator">=</span> <span class="token boolean">false</span>
+
+      <span class="token keyword">const</span> files <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token operator">...</span>$event<span class="token punctuation">.</span>dataTransfer<span class="token punctuation">.</span>files<span class="token punctuation">]</span>
+      files<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>file <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>file<span class="token punctuation">.</span>type <span class="token operator">!=</span> <span class="token string">'audio/mpeg'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">const</span> storageRef <span class="token operator">=</span> storage<span class="token punctuation">.</span><span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">'songs'</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// music-be97f.appspot.com/songs</span>
+        <span class="token keyword">const</span> songsRef <span class="token operator">=</span> storageRef<span class="token punctuation">.</span><span class="token function">child</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`songs/</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>file<span class="token punctuation">.</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// music-be97f.appspot.com/songs/example.mp3</span>
+        <span class="token comment" spellcheck="true">// 上次</span>
+        <span class="token keyword">const</span> task <span class="token operator">=</span> songsRef<span class="token punctuation">.</span><span class="token function">put</span><span class="token punctuation">(</span>file<span class="token punctuation">)</span>
+
+        <span class="token keyword">const</span> uploadIndex <span class="token operator">=</span>
+          <span class="token comment" spellcheck="true">// 一个元素表示一个进度条数据</span>
+          <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            task<span class="token punctuation">,</span>
+            current_progress<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+            name<span class="token punctuation">:</span> file<span class="token punctuation">.</span>name<span class="token punctuation">,</span>
+            variant<span class="token punctuation">:</span> <span class="token string">'bg-blue-400'</span><span class="token punctuation">,</span>
+            icon<span class="token punctuation">:</span> <span class="token string">'fas fa-spinner fa-spin'</span><span class="token punctuation">,</span>
+            text_class<span class="token punctuation">:</span> <span class="token string">''</span>
+          <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span>
+
+        <span class="token comment" spellcheck="true">// 监听事件</span>
+        task<span class="token punctuation">.</span><span class="token function">on</span><span class="token punctuation">(</span>
+          <span class="token string">'state_changed'</span><span class="token punctuation">,</span>
+          snapshot <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> progresss <span class="token operator">=</span> <span class="token punctuation">(</span>snapshot<span class="token punctuation">.</span>bytesTransferred <span class="token operator">/</span> snapshot<span class="token punctuation">.</span>totalBytes<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">100</span>
+            <span class="token comment" spellcheck="true">// 更新进度条</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>current_progress <span class="token operator">=</span> progresss
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+          error <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>variant <span class="token operator">=</span> <span class="token string">'bg-red-400'</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>icon <span class="token operator">=</span> <span class="token string">'fas fa-times'</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>text_class <span class="token operator">=</span> <span class="token string">'text-red-400'</span>
+            console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+          <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 上传成功</span>
+            <span class="token keyword">const</span> song <span class="token operator">=</span> <span class="token punctuation">{</span>
+              uid<span class="token punctuation">:</span> auth<span class="token punctuation">.</span>currentUser<span class="token punctuation">.</span>uid<span class="token punctuation">,</span>
+              display_name<span class="token punctuation">:</span> auth<span class="token punctuation">.</span>currentUser<span class="token punctuation">.</span>displayName<span class="token punctuation">,</span>
+              original_name<span class="token punctuation">:</span> task<span class="token punctuation">.</span>snapshot<span class="token punctuation">.</span>ref<span class="token punctuation">.</span>name<span class="token punctuation">,</span>
+              modified_name<span class="token punctuation">:</span> task<span class="token punctuation">.</span>snapshot<span class="token punctuation">.</span>ref<span class="token punctuation">.</span>name<span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 修改后的值</span>
+              genre<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 元数据</span>
+              comment_count<span class="token punctuation">:</span> <span class="token number">0</span>
+            <span class="token punctuation">}</span>
+            song<span class="token punctuation">.</span>url <span class="token operator">=</span> <span class="token keyword">await</span> task<span class="token punctuation">.</span>snapshot<span class="token punctuation">.</span>ref<span class="token punctuation">.</span><span class="token function">getDownloadURL</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">await</span> songsCollection<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>song<span class="token punctuation">)</span>
+
+            <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>variant <span class="token operator">=</span> <span class="token string">'bg-green-400'</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>icon <span class="token operator">=</span> <span class="token string">'fas fa-check'</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>uploads<span class="token punctuation">[</span>uploadIndex<span class="token punctuation">]</span><span class="token punctuation">.</span>text_class <span class="token operator">=</span> <span class="token string">'text-green-400'</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">)</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>files<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
+<p><img src="20230706195531.png"></p>
+<h2 id="012-Firebase-References-and-Snapshots"><a href="#012-Firebase-References-and-Snapshots" class="headerlink" title="012 Firebase References and Snapshots"></a>012 Firebase References and Snapshots</h2>
             </div>
             <hr/>
 
@@ -5534,7 +5787,7 @@ p</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">217.9k</span>
+                <span class="white-color">218.7k</span>
             
 
             
