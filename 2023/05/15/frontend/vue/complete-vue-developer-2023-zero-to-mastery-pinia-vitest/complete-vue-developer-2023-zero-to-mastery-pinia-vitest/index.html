@@ -431,14 +431,14 @@ analyse
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        27.2k
+                        28.8k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        156 分
+                        165 分
                     </div>
                     
                 
@@ -7960,6 +7960,524 @@ vi<span class="token punctuation">.</span><span class="token function">mock</spa
 <span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
 </code></pre>
 <h1 id="22-Component-Design-Patterns"><a href="#22-Component-Design-Patterns" class="headerlink" title="22 - Component Design Patterns"></a>22 - Component Design Patterns</h1><h2 id="001-Section-Overview"><a href="#001-Section-Overview" class="headerlink" title="001 Section Overview"></a>001 Section Overview</h2><p><img src="20230711205428.png"><br><img src="20230711205439.png"></p>
+<h2 id="002-Controlled-Components"><a href="#002-Controlled-Components" class="headerlink" title="002 Controlled Components"></a>002 Controlled Components</h2><blockquote>
+<p>受控组件就是自己没有状态,而是由父组件提供,并且更新值是触发父类的值的更新</p>
+</blockquote>
+<p><img src="20230712055406.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// components/EmailInput.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>input
+    type<span class="token operator">=</span><span class="token string">"email"</span>
+    <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"form-control"</span>
+    placeholder<span class="token operator">=</span><span class="token string">"E-mail"</span>
+    <span class="token punctuation">:</span>value<span class="token operator">=</span><span class="token string">"modelValue"</span>
+    @input<span class="token operator">=</span><span class="token string">"update($event)"</span>
+    <span class="token punctuation">:</span><span class="token keyword">class</span><span class="token operator">=</span>"<span class="token punctuation">{</span>
+      <span class="token string">'is-valid'</span><span class="token punctuation">:</span> modelValue<span class="token punctuation">.</span>length <span class="token operator">>=</span> <span class="token number">4</span> <span class="token operator">&amp;&amp;</span> modelValue<span class="token punctuation">.</span>length <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">,</span>
+      <span class="token string">'is-invalid'</span><span class="token punctuation">:</span> modelValue<span class="token punctuation">.</span>length <span class="token operator">&lt;</span> <span class="token number">4</span> <span class="token operator">&amp;&amp;</span> modelValue<span class="token punctuation">.</span>length <span class="token operator">></span> <span class="token number">0</span>
+    <span class="token punctuation">}</span>"
+  <span class="token operator">/</span><span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'EmailInput'</span><span class="token punctuation">,</span>
+  props<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'modelValue'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    update <span class="token punctuation">(</span>$event<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$emit</span><span class="token punctuation">(</span><span class="token string">'update:modelValue'</span><span class="token punctuation">,</span> $event<span class="token punctuation">.</span>target<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// app.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div id<span class="token operator">=</span><span class="token string">"app"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"row d-flex justify-content-center"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"col-md-6 mt-3"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card-header"</span><span class="token operator">></span>Newsletter<span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card-body"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>form @submit<span class="token punctuation">.</span>prevent<span class="token operator">=</span><span class="token string">"submit"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mb-2"</span><span class="token operator">></span>
+              <span class="token operator">&lt;</span>input
+                type<span class="token operator">=</span><span class="token string">"text"</span>
+                <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"form-control"</span>
+                placeholder<span class="token operator">=</span><span class="token string">"Name"</span>
+                <span class="token punctuation">:</span>value<span class="token operator">=</span><span class="token string">"newsletterName"</span>
+                @input<span class="token operator">=</span><span class="token string">"newsletterName = $event.target.value"</span>
+              <span class="token operator">/</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+            <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mb-2"</span><span class="token operator">></span>
+              <span class="token operator">&lt;</span>email<span class="token operator">-</span>input v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"newsletterEmail"</span> <span class="token operator">/</span><span class="token operator">></span>
+              <span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span> <span class="token operator">&lt;</span>email<span class="token operator">-</span>input
+                <span class="token punctuation">:</span>modelValue<span class="token operator">=</span><span class="token string">"newsletterEmail"</span>
+                @update<span class="token punctuation">:</span>modelValue<span class="token operator">=</span><span class="token string">"newsletterEmail = $event"</span>
+              <span class="token operator">/</span><span class="token operator">></span> <span class="token operator">--</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+            <span class="token operator">&lt;</span>button type<span class="token operator">=</span><span class="token string">"submit"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"btn btn-primary"</span><span class="token operator">></span>Submit<span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>form<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> EmailInput <span class="token keyword">from</span> <span class="token string">'@/components/EmailInput.vue'</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'App'</span><span class="token punctuation">,</span>
+  components<span class="token punctuation">:</span> <span class="token punctuation">{</span> EmailInput <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  data <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      newsletterName<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+      newsletterEmail<span class="token punctuation">:</span> <span class="token string">''</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    submit <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Newletter Submitted'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        name<span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>newsletterName<span class="token punctuation">,</span>
+        email<span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span>newsletterEmail
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style src<span class="token operator">=</span><span class="token string">"bootstrap/dist/css/bootstrap.css"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<blockquote>
+<p>v-model 手动指定传递的变量名</p>
+</blockquote>
+<p><img src="20230712063513.png"><br><img src="20230712063535.png"></p>
+<h2 id="003-Separation-of-Concerns"><a href="#003-Separation-of-Concerns" class="headerlink" title="003 Separation of Concerns"></a>003 Separation of Concerns</h2><p><img src="20230712063609.png"><br><img src="20230712063647.png"></p>
+<blockquote>
+<p>解耦 ui 和业务逻辑,这样重写 ui 或逻辑时不会大改</p>
+</blockquote>
+<p><img src="20230712064242.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// validate-email.js</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token keyword">function</span> <span class="token function">validateEmail</span><span class="token punctuation">(</span>email<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> email<span class="token punctuation">.</span>length <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> email<span class="token punctuation">.</span>length <span class="token operator">>=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="004-Third-Party-Libraries-as-Controlled-Components"><a href="#004-Third-Party-Libraries-as-Controlled-Components" class="headerlink" title="004 Third-Party Libraries as Controlled Components"></a>004 Third-Party Libraries as Controlled Components</h2><blockquote>
+<p>将不支持 vue 的第三方库(可能是原生 js 写的),转为 vue 受控组件,然后整合进项目</p>
+</blockquote>
+<p><img src="20230712064323.png"></p>
+<pre class=" language-shell"><code class="language-shell">npm i @joeattardi/emoji-button
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// app.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div id<span class="token operator">=</span><span class="token string">"app"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"row d-flex justify-content-center"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"col-md-5 mt-3"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card-header"</span><span class="token operator">></span>Emoji Selector<span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card-body"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>form @submit<span class="token punctuation">.</span>prevent<span class="token operator">=</span><span class="token string">"submit"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mb-2"</span><span class="token operator">></span>
+              <span class="token operator">&lt;</span>emoji<span class="token operator">-</span>input v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"emoji"</span> <span class="token punctuation">:</span>options<span class="token operator">=</span><span class="token string">"{ position: 'bottom' }"</span> <span class="token operator">/</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+            <span class="token operator">&lt;</span>button type<span class="token operator">=</span><span class="token string">"submit"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"btn btn-primary"</span><span class="token operator">></span>Submit<span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>form<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> EmojiInput <span class="token keyword">from</span> <span class="token string">'./components/EmojiInput.vue'</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'App'</span><span class="token punctuation">,</span>
+  components<span class="token punctuation">:</span> <span class="token punctuation">{</span> EmojiInput <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  data <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      emoji<span class="token punctuation">:</span> <span class="token string">''</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    submit <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'Emoji: '</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>emoji<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style src<span class="token operator">=</span><span class="token string">"bootstrap/dist/css/bootstrap.css"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"input-group"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>input
+      type<span class="token operator">=</span><span class="token string">"text"</span>
+      <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"form-control"</span>
+      readonly
+      <span class="token punctuation">:</span>value<span class="token operator">=</span><span class="token string">"modelValue.emoji"</span>
+    <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>button <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"btn btn-outline-secondary"</span> type<span class="token operator">=</span><span class="token string">"button"</span> ref<span class="token operator">=</span><span class="token string">"emojiBtn"</span><span class="token operator">></span>
+      <span class="token punctuation">{</span><span class="token punctuation">{</span> modelValue <span class="token operator">?</span> modelValue<span class="token punctuation">.</span>emoji <span class="token punctuation">:</span> <span class="token string">'Select'</span> <span class="token punctuation">}</span><span class="token punctuation">}</span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> EmojiButton <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@joeattardi/emoji-button'</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'EmojiInput'</span><span class="token punctuation">,</span>
+  props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    modelValue<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      required<span class="token punctuation">:</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    options<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword">default</span><span class="token punctuation">:</span> <span class="token keyword">function</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  mounted <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> picker <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">EmojiButton</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>options<span class="token punctuation">)</span>
+    <span class="token keyword">const</span> btn <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>$refs<span class="token punctuation">.</span>emojiBtn
+
+    picker<span class="token punctuation">.</span><span class="token function">on</span><span class="token punctuation">(</span><span class="token string">'emoji'</span><span class="token punctuation">,</span> emoji <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$emit</span><span class="token punctuation">(</span><span class="token string">'update:modelValue'</span><span class="token punctuation">,</span> emoji<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    btn<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'click'</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+      picker<span class="token punctuation">.</span><span class="token function">togglePicker</span><span class="token punctuation">(</span>btn<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
+<h2 id="005-Moving-Beyond-Vue’s-Event-System"><a href="#005-Moving-Beyond-Vue’s-Event-System" class="headerlink" title="005 Moving Beyond Vue’s Event System"></a>005 Moving Beyond Vue’s Event System</h2><blockquote>
+<p>不使用 vue 提供的 api 来开发</p>
+</blockquote>
+<p><img src="20230712065623.png"></p>
+<blockquote>
+<p>用 vue 的方式获取 dom 并自动聚焦</p>
+</blockquote>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// components/modal.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal"</span> <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"{ display: show ? 'block' : 'none' }"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div
+      <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-dialog"</span>
+      style<span class="token operator">=</span><span class="token string">"z-index: 2000"</span>
+      @keydown<span class="token punctuation">.</span>esc<span class="token operator">=</span><span class="token string">"close"</span>
+      tabindex<span class="token operator">=</span><span class="token string">"0"</span>
+      ref<span class="token operator">=</span><span class="token string">"modal"</span>
+    <span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-content"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-header"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>h5 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-title"</span><span class="token operator">></span>Awesome Title<span class="token operator">&lt;</span><span class="token operator">/</span>h5<span class="token operator">></span>
+          <span class="token operator">&lt;</span>button type<span class="token operator">=</span><span class="token string">"button"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"close"</span> @click<span class="token operator">=</span><span class="token string">"close"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>span<span class="token operator">></span><span class="token operator">&amp;</span>times<span class="token punctuation">;</span><span class="token operator">&lt;</span><span class="token operator">/</span>span<span class="token operator">></span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-body"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>p<span class="token operator">></span>Awesome content<span class="token punctuation">.</span><span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-backdrop show"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'AppModal'</span><span class="token punctuation">,</span>
+  props<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'show'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    close <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$emit</span><span class="token punctuation">(</span><span class="token string">'hide'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  watch<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// show值改变触发</span>
+    show <span class="token punctuation">(</span>newVal<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>newVal<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// dom更新完成后使用</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$nextTick</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+          <span class="token comment" spellcheck="true">// 聚集</span>
+          <span class="token keyword">this</span><span class="token punctuation">.</span>$refs<span class="token punctuation">.</span>modal<span class="token punctuation">.</span><span class="token function">focus</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>modal<span class="token operator">-</span>dialog <span class="token punctuation">{</span>
+  outline<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<blockquote>
+<p>原生 js</p>
+</blockquote>
+<pre class=" language-js"><code class="language-js"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal"</span> <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"{ display: show ? 'block' : 'none' }"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-dialog"</span> style<span class="token operator">=</span><span class="token string">"z-index: 2000"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-content"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-header"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>h5 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-title"</span><span class="token operator">></span>Awesome Title<span class="token operator">&lt;</span><span class="token operator">/</span>h5<span class="token operator">></span>
+          <span class="token operator">&lt;</span>button type<span class="token operator">=</span><span class="token string">"button"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"close"</span> @click<span class="token operator">=</span><span class="token string">"close"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>span<span class="token operator">></span><span class="token operator">&amp;</span>times<span class="token punctuation">;</span><span class="token operator">&lt;</span><span class="token operator">/</span>span<span class="token operator">></span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-body"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>p<span class="token operator">></span>Awesome content<span class="token punctuation">.</span><span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-backdrop show"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'AppModal'</span><span class="token punctuation">,</span>
+  props<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'show'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    close <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$emit</span><span class="token punctuation">(</span><span class="token string">'hide'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    handler <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>e<span class="token punctuation">.</span>code <span class="token operator">===</span> <span class="token string">'Escape'</span> <span class="token operator">&amp;&amp;</span> <span class="token keyword">this</span><span class="token punctuation">.</span>show<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  created <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    document<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">'keydown'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>handler<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  unmounted <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    document<span class="token punctuation">.</span><span class="token function">removeEventListener</span><span class="token punctuation">(</span><span class="token string">'keydown'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>handler<span class="token punctuation">)</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>modal<span class="token operator">-</span>dialog <span class="token punctuation">{</span>
+  outline<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="006-Encapsulating-Scrolling"><a href="#006-Encapsulating-Scrolling" class="headerlink" title="006 Encapsulating Scrolling"></a>006 Encapsulating Scrolling</h2><blockquote>
+<p>在有上层元素显示时禁止背景的滚动</p>
+</blockquote>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// modal.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal"</span> <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"{ display: show ? 'block' : 'none' }"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-dialog"</span> style<span class="token operator">=</span><span class="token string">"z-index: 2000"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-content"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-header"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>h5 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-title"</span><span class="token operator">></span>Awesome Title<span class="token operator">&lt;</span><span class="token operator">/</span>h5<span class="token operator">></span>
+          <span class="token operator">&lt;</span>button type<span class="token operator">=</span><span class="token string">"button"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"close"</span> @click<span class="token operator">=</span><span class="token string">"close"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>span<span class="token operator">></span><span class="token operator">&amp;</span>times<span class="token punctuation">;</span><span class="token operator">&lt;</span><span class="token operator">/</span>span<span class="token operator">></span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-body"</span><span class="token operator">></span>
+          <span class="token operator">&lt;</span>p<span class="token operator">></span>Awesome content<span class="token punctuation">.</span><span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"modal-backdrop show"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'AppModal'</span><span class="token punctuation">,</span>
+  props<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    show<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      required<span class="token punctuation">:</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    scrollable<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      <span class="token keyword">default</span><span class="token punctuation">:</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  watch<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    show<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      <span class="token comment" spellcheck="true">// immediate:true; 立即执行,当刷新页面时会立即执行一次handler函数</span>
+      immediate<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      handler <span class="token punctuation">(</span>newVal<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>newVal <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>scrollable<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+          document<span class="token punctuation">.</span>body<span class="token punctuation">.</span>style<span class="token punctuation">.</span><span class="token function">setProperty</span><span class="token punctuation">(</span><span class="token string">'overflow'</span><span class="token punctuation">,</span> <span class="token string">'hidden'</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+          document<span class="token punctuation">.</span>body<span class="token punctuation">.</span>style<span class="token punctuation">.</span><span class="token function">removeProperty</span><span class="token punctuation">(</span><span class="token string">'overflow'</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// app.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div id<span class="token operator">=</span><span class="token string">"app"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>p v<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">=</span><span class="token string">"i in [1, 2, 3, 4, 5, 6, 7, 8, 9]"</span> <span class="token punctuation">:</span>key<span class="token operator">=</span><span class="token string">"i"</span><span class="token operator">></span>
+      Lorem ipsum dolor sit<span class="token punctuation">,</span> amet consectetur adipisicing elit<span class="token punctuation">.</span> Minus<span class="token punctuation">,</span> similique
+      perspiciatis<span class="token punctuation">.</span> Laudantium eligendi illum<span class="token punctuation">,</span> quidem rem voluptas sapiente
+      tempore accusamus pariatur sint eaque nesciunt quasi unde consectetur
+      atque porro eius<span class="token punctuation">.</span> Lorem ipsum dolor sit amet consectetur adipisicing elit<span class="token punctuation">.</span>
+      Eligendi vel quasi<span class="token punctuation">,</span> doloremque error accusantium adipisci enim possimus
+      magni vitae non sunt ullam<span class="token punctuation">,</span> quam laborum eveniet aliquam perspiciatis<span class="token operator">!</span>
+      Velit<span class="token punctuation">,</span> sapiente veniam<span class="token operator">?</span> Lorem ipsum dolor sit amet consectetur adipisicing
+      elit<span class="token punctuation">.</span> A sapiente adipisci impedit<span class="token punctuation">,</span> possimus excepturi est voluptatem
+      fugiat placeat<span class="token punctuation">,</span> recusandae doloremque porro<span class="token punctuation">.</span> Asperiores quas dignissimos
+      eligendi<span class="token punctuation">,</span> perferendis laudantium necessitatibus porro beatae<span class="token operator">!</span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-2 ml-2"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>button type<span class="token operator">=</span><span class="token string">"button"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"btn btn-primary"</span> @click<span class="token operator">=</span><span class="token string">"open = true"</span><span class="token operator">></span>
+        Open
+      <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+
+    <span class="token operator">&lt;</span>app<span class="token operator">-</span>modal <span class="token punctuation">:</span>show<span class="token operator">=</span><span class="token string">"open"</span> @hide<span class="token operator">=</span><span class="token string">"open = false"</span> <span class="token punctuation">:</span>scrollable<span class="token operator">=</span><span class="token string">"true"</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> AppModal <span class="token keyword">from</span> <span class="token string">'@/components/Modal.vue'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style src<span class="token operator">=</span><span class="token string">"bootstrap/dist/css/bootstrap.css"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="007-The-Teleport-Component"><a href="#007-The-Teleport-Component" class="headerlink" title="007 The Teleport Component"></a>007 The Teleport Component</h2><p><img src="20230712083522.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// action.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-2 ml-2"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>button type<span class="token operator">=</span><span class="token string">"button"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"btn btn-primary"</span> @click<span class="token operator">=</span><span class="token string">"openModal"</span><span class="token operator">></span>
+      Open
+    <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'AppAction'</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    openModal <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$emit</span><span class="token punctuation">(</span><span class="token string">'open'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// app.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div id<span class="token operator">=</span><span class="token string">"app"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>app<span class="token operator">-</span>action @open<span class="token operator">=</span><span class="token string">"open = true"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>app<span class="token operator">-</span>modal <span class="token punctuation">:</span>show<span class="token operator">=</span><span class="token string">"open"</span> @hide<span class="token operator">=</span><span class="token string">"open = false"</span> <span class="token punctuation">:</span>scrollable<span class="token operator">=</span><span class="token string">"true"</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> AppModal <span class="token keyword">from</span> <span class="token string">'@/components/Modal.vue'</span>
+<span class="token keyword">import</span> AppAction <span class="token keyword">from</span> <span class="token string">'@/components/Action.vue'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'App'</span><span class="token punctuation">,</span>
+  components<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    AppModal<span class="token punctuation">,</span>
+    AppAction
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  data <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      open<span class="token punctuation">:</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style src<span class="token operator">=</span><span class="token string">"bootstrap/dist/css/bootstrap.css"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<blockquote>
+<p>这种方式不易拓展</p>
+</blockquote>
+<p><img src="20230712083828.png"></p>
+<blockquote>
+<p>如果子组件还有子组件,最底层的子组件要更新顶层的 app 的状态,需要传递多次 emit</p>
+</blockquote>
+<p><img src="20230712083939.png"><br><img src="20230712084028.png"></p>
+<blockquote>
+<p>使用 action 组件</p>
+</blockquote>
+<p><img src="20230712084049.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// app.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div id<span class="token operator">=</span><span class="token string">"app"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>app<span class="token operator">-</span>action <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> AppAction <span class="token keyword">from</span> <span class="token string">'@/components/Action.vue'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'App'</span><span class="token punctuation">,</span>
+  components<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    AppModal<span class="token punctuation">,</span>
+    AppAction
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style src<span class="token operator">=</span><span class="token string">"bootstrap/dist/css/bootstrap.css"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-2 ml-2"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>button type<span class="token operator">=</span><span class="token string">"button"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"btn btn-primary"</span> @click<span class="token operator">=</span><span class="token string">"openModal"</span><span class="token operator">></span>
+      Open
+    <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&lt;</span>app<span class="token operator">-</span>modal <span class="token punctuation">:</span>show<span class="token operator">=</span><span class="token string">"open"</span> @hide<span class="token operator">=</span><span class="token string">"open = false"</span> <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> AppModal <span class="token keyword">from</span> <span class="token string">'@/components/Modal.vue'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  name<span class="token punctuation">:</span> <span class="token string">'AppAction'</span><span class="token punctuation">,</span>
+  components<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    AppModal
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  methods<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    openModal <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">$emit</span><span class="token punctuation">(</span><span class="token string">'open'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  data <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      open<span class="token punctuation">:</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<blockquote>
+<p>解决可能出现的 action 样式污染</p>
+</blockquote>
+<p><img src="20230712084305.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-2 ml-2"</span> style<span class="token operator">=</span><span class="token string">"opacity: 0.5"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>button type<span class="token operator">=</span><span class="token string">"button"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"btn btn-primary"</span> @click<span class="token operator">=</span><span class="token string">"openModal"</span><span class="token operator">></span>
+      Open
+    <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span> 挂载到body标签<span class="token punctuation">,</span>所以样式不会加上opacity <span class="token operator">--</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>teleport to<span class="token operator">=</span><span class="token string">"body"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>app<span class="token operator">-</span>modal <span class="token punctuation">:</span>show<span class="token operator">=</span><span class="token string">"open"</span> @hide<span class="token operator">=</span><span class="token string">"open = false"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>teleport<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script<span class="token operator">></span>
+<span class="token keyword">import</span> AppModal <span class="token keyword">from</span> <span class="token string">'@/components/Modal.vue'</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
 
             </div>
             <hr/>
@@ -8158,28 +8676,59 @@ vi<span class="token punctuation">.</span><span class="token function">mock</spa
                 下一篇&nbsp;<i class="fa fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2023/05/15/security/the-complete-cyber/the-complete-cyber-security-course-network-security-2/the-complete-cyber-security-course-network-security-2/">
+                <a href="/2023/05/15/bigdata/pyspark/sparkandpythonforbigdatawithpyspark/1/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/23.jpg" class="responsive-img" alt="The Complete Cyber Security Course  Network Security!2">
+                        <img src="/medias/featureimages/7.jpg" class="responsive-img" alt="Spark and Python for Big Data with PySpark">
                         
-                        <span class="card-title">The Complete Cyber Security Course  Network Security!2</span>
+                        <span class="card-title">Spark and Python for Big Data with PySpark</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary"></div>
+                    <div class="summary">1 - Introduction to Course
+2 - Setting up Python with Spark4 - Local VirtualBox Setup
+sudo apt-get install python3-pip
+p</div>
                     <div class="publish-info">
                             <span class="publish-date">
                                 <i class="fa fa-clock-o fa-fw icon-date"></i>2023-05-15
                             </span>
                         <span class="publish-author">
                             
-                            <i class="fa fa-user fa-fw"></i>
-                            malred
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/bigdata/" class="post-category" target="_blank">
+                                    bigdata
+                                </a>
+                            
+                            <a href="/categories/bigdata/spark/" class="post-category" target="_blank">
+                                    spark
+                                </a>
+                            
+                            <a href="/categories/bigdata/spark/python/" class="post-category" target="_blank">
+                                    python
+                                </a>
+                            
                             
                         </span>
                     </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/bigdata/" target="_blank">
+                        <span class="chip bg-color">bigdata</span>
+                    </a>
+                    
+                    <a href="/tags/spark/" target="_blank">
+                        <span class="chip bg-color">spark</span>
+                    </a>
+                    
+                    <a href="/tags/python/" target="_blank">
+                        <span class="chip bg-color">python</span>
+                    </a>
+                    
                 </div>
                 
             </div>
@@ -8288,7 +8837,7 @@ vi<span class="token punctuation">.</span><span class="token function">mock</spa
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">230.4k</span>
+                <span class="white-color">231.9k</span>
             
 
             
