@@ -424,14 +424,14 @@ UR(通用渲染) ">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        3.8k
+                        7.8k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        23 分
+                        47 分
                     </div>
                     
                 
@@ -1764,7 +1764,1160 @@ npm i
 <p>没用</p>
 </blockquote>
 <p><img src="20230710112322.png"></p>
-<h1 id="6-Global-State-and-Composables"><a href="#6-Global-State-and-Composables" class="headerlink" title="6. Global State and Composables"></a>6. Global State and Composables</h1><h2 id="1-App-Overview-2"><a href="#1-App-Overview-2" class="headerlink" title="1. App Overview"></a>1. App Overview</h2>
+<h1 id="6-Global-State-and-Composables"><a href="#6-Global-State-and-Composables" class="headerlink" title="6. Global State and Composables"></a>6. Global State and Composables</h1><h2 id="1-App-Overview-2"><a href="#1-App-Overview-2" class="headerlink" title="1. App Overview"></a>1. App Overview</h2><p><img src="20230715184515.png"><br><img src="20230715184610.png"></p>
+<h2 id="2-Approaches-to-State-Management"><a href="#2-Approaches-to-State-Management" class="headerlink" title="2. Approaches to State Management"></a>2. Approaches to State Management</h2><blockquote>
+<p>这种方式，传递属性给很多组件，并且这个属性和组件本身并不是高度相关</p>
+</blockquote>
+<p><img src="20230715185314.png"></p>
+<blockquote>
+<p>使用统一的状态管理</p>
+</blockquote>
+<p><img src="20230715185508.png"></p>
+<h2 id="3-Creating-Our-First-Composable"><a href="#3-Creating-Our-First-Composable" class="headerlink" title="3. Creating Our First Composable"></a>3. Creating Our First Composable</h2><blockquote>
+<p>根目录下的 composables 是存放全局状态的文件夹</p>
+</blockquote>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// composables/useDarkMode.ts</span>
+<span class="token keyword">const</span> useDarkMode <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// ref可能导致内存泄漏</span>
+  <span class="token comment" spellcheck="true">// const isDarkMode = ref(false);</span>
+
+  <span class="token keyword">const</span> isDarkMode <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">"darkMode"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token keyword">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">return</span> <span class="token punctuation">{</span>
+    isDarkMode<span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> useDarkMode<span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> isDarkMode <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useDarkMode</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span>Nav <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>Heading <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>Cards <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style<span class="token operator">></span>
+<span class="token operator">*</span> <span class="token punctuation">{</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  padding<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  font<span class="token operator">-</span>family<span class="token punctuation">:</span> Georgia<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="4-Using-the-Compasable-State"><a href="#4-Using-the-Compasable-State" class="headerlink" title="4. Using the Compasable State"></a>4. Using the Compasable State</h2><pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> isDarkMode <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useDarkMode</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"isDarkMode ? { backgroundColor: 'black' } : null"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>Nav <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>Heading <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>Cards <span class="token operator">/</span><span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style<span class="token operator">></span>
+<span class="token operator">*</span> <span class="token punctuation">{</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  padding<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  font<span class="token operator">-</span>family<span class="token punctuation">:</span> Georgia<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// nav.vue</span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> isDarkMode<span class="token punctuation">,</span> toggleDarkMode <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useDarkMode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>nav <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"isDarkMode ? { backgroundColor: 'rgb(73,72,72)' } : null"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"isDarkMode ? { color: 'white' } : null"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>h1<span class="token operator">></span>Artikle<span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&lt;</span>label <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"switch"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input type<span class="token operator">=</span><span class="token string">"checkbox"</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>span <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"slider round"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>span<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>label<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>nav<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+nav <span class="token punctuation">{</span>
+  border<span class="token operator">-</span>bottom<span class="token punctuation">:</span> 1px solid <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">73</span><span class="token punctuation">,</span> <span class="token number">72</span><span class="token punctuation">,</span> <span class="token number">72</span><span class="token punctuation">,</span> <span class="token number">0.274</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  padding<span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+  box<span class="token operator">-</span>shadow<span class="token punctuation">:</span> 1px 1px 5px <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.253</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+nav div <span class="token punctuation">{</span>
+  width<span class="token punctuation">:</span> <span class="token number">50</span><span class="token operator">%</span><span class="token punctuation">;</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span> auto<span class="token punctuation">;</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  justify<span class="token operator">-</span>content<span class="token punctuation">:</span> space<span class="token operator">-</span>between<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+h1 <span class="token punctuation">{</span>
+  font<span class="token operator">-</span>size<span class="token punctuation">:</span> 30px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/* The switch - the box around the slider */</span>
+<span class="token punctuation">.</span><span class="token keyword">switch</span> <span class="token punctuation">{</span>
+  position<span class="token punctuation">:</span> relative<span class="token punctuation">;</span>
+  display<span class="token punctuation">:</span> inline<span class="token operator">-</span>block<span class="token punctuation">;</span>
+  width<span class="token punctuation">:</span> 60px<span class="token punctuation">;</span>
+  height<span class="token punctuation">:</span> 34px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/* Hide default HTML checkbox */</span>
+<span class="token punctuation">.</span><span class="token keyword">switch</span> input <span class="token punctuation">{</span>
+  opacity<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  width<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  height<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/* The slider */</span>
+<span class="token punctuation">.</span>slider <span class="token punctuation">{</span>
+  position<span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+  cursor<span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+  top<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  left<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  right<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  bottom<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> #ccc<span class="token punctuation">;</span>
+  <span class="token operator">-</span>webkit<span class="token operator">-</span>transition<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>4s<span class="token punctuation">;</span>
+  transition<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>4s<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>slider<span class="token punctuation">:</span>before <span class="token punctuation">{</span>
+  position<span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+  content<span class="token punctuation">:</span> <span class="token string">""</span><span class="token punctuation">;</span>
+  height<span class="token punctuation">:</span> 26px<span class="token punctuation">;</span>
+  width<span class="token punctuation">:</span> 26px<span class="token punctuation">;</span>
+  left<span class="token punctuation">:</span> 4px<span class="token punctuation">;</span>
+  bottom<span class="token punctuation">:</span> 4px<span class="token punctuation">;</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> white<span class="token punctuation">;</span>
+  <span class="token operator">-</span>webkit<span class="token operator">-</span>transition<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>4s<span class="token punctuation">;</span>
+  transition<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>4s<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+input<span class="token punctuation">:</span>checked <span class="token operator">+</span> <span class="token punctuation">.</span>slider <span class="token punctuation">{</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> #2196f3<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+input<span class="token punctuation">:</span>focus <span class="token operator">+</span> <span class="token punctuation">.</span>slider <span class="token punctuation">{</span>
+  box<span class="token operator">-</span>shadow<span class="token punctuation">:</span> <span class="token number">0</span> <span class="token number">0</span> 1px #2196f3<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+input<span class="token punctuation">:</span>checked <span class="token operator">+</span> <span class="token punctuation">.</span>slider<span class="token punctuation">:</span>before <span class="token punctuation">{</span>
+  <span class="token operator">-</span>webkit<span class="token operator">-</span>transform<span class="token punctuation">:</span> <span class="token function">translateX</span><span class="token punctuation">(</span>26px<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token operator">-</span>ms<span class="token operator">-</span>transform<span class="token punctuation">:</span> <span class="token function">translateX</span><span class="token punctuation">(</span>26px<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  transform<span class="token punctuation">:</span> <span class="token function">translateX</span><span class="token punctuation">(</span>26px<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/* Rounded sliders */</span>
+<span class="token punctuation">.</span>slider<span class="token punctuation">.</span>round <span class="token punctuation">{</span>
+  border<span class="token operator">-</span>radius<span class="token punctuation">:</span> 34px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>slider<span class="token punctuation">.</span>round<span class="token punctuation">:</span>before <span class="token punctuation">{</span>
+  border<span class="token operator">-</span>radius<span class="token punctuation">:</span> <span class="token number">50</span><span class="token operator">%</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// header.vue</span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> isDarkMode <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useDarkMode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"container"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"content-container"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-container"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>h4<span class="token operator">></span>Based on your reading history<span class="token operator">&lt;</span><span class="token operator">/</span>h4<span class="token operator">></span>
+        <span class="token operator">&lt;</span>h2 <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"isDarkMode ? { color: 'white' } : null"</span><span class="token operator">></span>
+          Designing search <span class="token keyword">for</span> mobile apps
+        <span class="token operator">&lt;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+        <span class="token operator">&lt;</span>p <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"isDarkMode ? { color: 'white' } : null"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"date"</span><span class="token operator">></span>
+          Aug 26th<span class="token punctuation">,</span> <span class="token number">2021</span><span class="token punctuation">,</span> 4pm
+        <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span>p <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"isDarkMode ? { color: 'white' } : null"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"snippet"</span><span class="token operator">></span>
+          Lorem ipsum dolor sit amet consectetur adipisicing elit<span class="token punctuation">.</span> Dolorum<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">.</span>
+          Obcaecati <span class="token keyword">in</span> iusto minima impedit assumenda perferendis natus tempore
+          modi ducimus<span class="token punctuation">.</span> Blanditiis<span class="token punctuation">,</span> quis<span class="token punctuation">.</span> Maxime delectus ducimus assumenda vel
+          accusantium<span class="token punctuation">,</span> eligendi nobis accusamus fuga<span class="token punctuation">,</span> hic<span class="token punctuation">,</span> natus ab odit<span class="token punctuation">.</span> Earum<span class="token punctuation">,</span>
+          eveniet magnam perspiciatis similique odit cupiditate optio aut fugit<span class="token punctuation">,</span>
+          inventore<span class="token punctuation">,</span> dolorem id<span class="token operator">?</span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>img
+        src<span class="token operator">=</span><span class="token string">"https://media.istockphoto.com/photos/mobile-responsive-website-development-wireframe-design-preview-on-picture-id844419966?b=1&amp;k=20&amp;m=844419966&amp;s=170667a&amp;w=0&amp;h=Dfps34xqMI2CaLkKMznJnESU4G_XY5evvlC9ui9XEJk="</span>
+        alt<span class="token operator">=</span><span class="token string">""</span>
+      <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+h4 <span class="token punctuation">{</span>
+  text<span class="token operator">-</span>transform<span class="token punctuation">:</span> uppercase<span class="token punctuation">;</span>
+  font<span class="token operator">-</span>size<span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+  color<span class="token punctuation">:</span> grey<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+h2 <span class="token punctuation">{</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> 15px<span class="token punctuation">;</span>
+  font<span class="token operator">-</span>size<span class="token punctuation">:</span> 40px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>date <span class="token punctuation">{</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> 15px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>content<span class="token operator">-</span>container <span class="token punctuation">{</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>text<span class="token operator">-</span>container <span class="token punctuation">{</span>
+  padding<span class="token operator">-</span>right<span class="token punctuation">:</span> 50px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>snippet <span class="token punctuation">{</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> 30px<span class="token punctuation">;</span>
+  font<span class="token operator">-</span>size<span class="token punctuation">:</span> 20px<span class="token punctuation">;</span>
+  line<span class="token operator">-</span>height<span class="token punctuation">:</span> 30px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>container <span class="token punctuation">{</span>
+  width<span class="token punctuation">:</span> <span class="token number">50</span><span class="token operator">%</span><span class="token punctuation">;</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span> auto<span class="token punctuation">;</span>
+  padding<span class="token punctuation">:</span> 50px <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// cards.vue</span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> isDarkMode <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useDarkMode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> cards <span class="token operator">=</span> <span class="token punctuation">[</span>
+  <span class="token punctuation">{</span>
+    img<span class="token punctuation">:</span> <span class="token string">"https://images.unsplash.com/photo-1511919884226-fd3cad34687c?ixid=MnwxMjA3fDB8MHxzZWFyY2h8OHx8Y2FyfGVufDB8fDB8fA%3D%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=60"</span><span class="token punctuation">,</span>
+    title<span class="token punctuation">:</span> <span class="token string">"Sports Cars are Just Not Worth it"</span><span class="token punctuation">,</span>
+    author<span class="token punctuation">:</span> <span class="token string">"Laith Harb"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    img<span class="token punctuation">:</span> <span class="token string">"https://images.unsplash.com/photo-1509316785289-025f5b846b35?ixlib=rb-1.2.1&amp;ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8ZGVzZXJ0fGVufDB8fDB8fA%3D%3D&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=60"</span><span class="token punctuation">,</span>
+    title<span class="token punctuation">:</span> <span class="token string">"How to Survive in the Desert"</span><span class="token punctuation">,</span>
+    author<span class="token punctuation">:</span> <span class="token string">"Joe Doe"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    img<span class="token punctuation">:</span> <span class="token string">"https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixid=MnwxMjA3fDB8MHxzZWFyY2h8M3x8c2hvZXxlbnwwfHwwfHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=60"</span><span class="token punctuation">,</span>
+    title<span class="token punctuation">:</span> <span class="token string">"Why Shoes are Turning More Red"</span><span class="token punctuation">,</span>
+    author<span class="token punctuation">:</span> <span class="token string">"Donald Brown"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    img<span class="token punctuation">:</span> <span class="token string">"https://images.unsplash.com/photo-1520763185298-1b434c919102?ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTR8fGZsb3dlcnxlbnwwfHwwfHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=60"</span><span class="token punctuation">,</span>
+    title<span class="token punctuation">:</span> <span class="token string">"People are Eating this Deadly Flower"</span><span class="token punctuation">,</span>
+    author<span class="token punctuation">:</span> <span class="token string">"Mike Anderson"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    img<span class="token punctuation">:</span> <span class="token string">"https://images.unsplash.com/photo-1559480671-12ceff3e511d?ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8a29iZXxlbnwwfHwwfHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=800&amp;q=60"</span><span class="token punctuation">,</span>
+    title<span class="token punctuation">:</span> <span class="token string">"How to get the Mamba Mentality"</span><span class="token punctuation">,</span>
+    author<span class="token punctuation">:</span> <span class="token string">"Kobe Bean Bryant"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    img<span class="token punctuation">:</span> <span class="token string">"https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=3570&amp;q=80"</span><span class="token punctuation">,</span>
+    title<span class="token punctuation">:</span> <span class="token string">"Worst Concert Ever"</span><span class="token punctuation">,</span>
+    author<span class="token punctuation">:</span> <span class="token string">"Gavin Scott"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div
+    <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"container"</span>
+    <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"isDarkMode ? { backgroundColor: 'rgb(73,72,72)' } : null"</span>
+  <span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"content-container"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>h3 <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"isDarkMode ? { color: 'white' } : null"</span><span class="token operator">></span>Reading List<span class="token operator">&lt;</span><span class="token operator">/</span>h3<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"cards-container"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>Card v<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">=</span><span class="token string">"(card, index) in cards"</span> <span class="token punctuation">:</span>key<span class="token operator">=</span><span class="token string">"index"</span> <span class="token punctuation">:</span>card<span class="token operator">=</span><span class="token string">"card"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>container <span class="token punctuation">{</span>
+  margin<span class="token punctuation">:</span> 30px <span class="token number">0</span><span class="token punctuation">;</span>
+  background<span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">250</span><span class="token punctuation">,</span> <span class="token number">250</span><span class="token punctuation">,</span> <span class="token number">194</span><span class="token punctuation">,</span> <span class="token number">0.637</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>content<span class="token operator">-</span>container <span class="token punctuation">{</span>
+  width<span class="token punctuation">:</span> <span class="token number">50</span><span class="token operator">%</span><span class="token punctuation">;</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span> auto<span class="token punctuation">;</span>
+  padding<span class="token punctuation">:</span> 40px <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>cards<span class="token operator">-</span>container <span class="token punctuation">{</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> 30px<span class="token punctuation">;</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  justify<span class="token operator">-</span>content<span class="token punctuation">:</span> space<span class="token operator">-</span>between<span class="token punctuation">;</span>
+  flex<span class="token operator">-</span>wrap<span class="token punctuation">:</span> wrap<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+h3 <span class="token punctuation">{</span>
+  font<span class="token operator">-</span>size<span class="token punctuation">:</span> 25px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// cart.vue</span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">interface</span> <span class="token class-name">CardProps</span> <span class="token punctuation">{</span>
+  card<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    img<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    title<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+    author<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> isDarkMode <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useDarkMode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> props <span class="token operator">=</span> defineProps<span class="token operator">&lt;</span>CardProps<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div
+    <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card"</span>
+    <span class="token punctuation">:</span>style<span class="token operator">=</span><span class="token string">"isDarkMode ? { backgroundColor: 'black', color: 'white' } : null"</span>
+  <span class="token operator">></span>
+    <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"card.img"</span> alt<span class="token operator">=</span><span class="token string">""</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"content"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>h3<span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> card<span class="token punctuation">.</span>title <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h3<span class="token operator">></span>
+      <span class="token operator">&lt;</span>p<span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> card<span class="token punctuation">.</span>author <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>card <span class="token punctuation">{</span>
+  box<span class="token operator">-</span>shadow<span class="token punctuation">:</span> 1px 1px 5px black<span class="token punctuation">;</span>
+  background<span class="token punctuation">:</span> white<span class="token punctuation">;</span>
+  width<span class="token punctuation">:</span> <span class="token number">30</span><span class="token operator">%</span><span class="token punctuation">;</span>
+  margin<span class="token operator">-</span>bottom<span class="token punctuation">:</span> 30px<span class="token punctuation">;</span>
+  border<span class="token operator">-</span>radius<span class="token punctuation">:</span> 5px<span class="token punctuation">;</span>
+  overflow<span class="token punctuation">:</span> hidden<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+img <span class="token punctuation">{</span>
+  width<span class="token punctuation">:</span> <span class="token number">100</span><span class="token operator">%</span><span class="token punctuation">;</span>
+  height<span class="token punctuation">:</span> 200px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>content <span class="token punctuation">{</span>
+  padding<span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+p <span class="token punctuation">{</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> 10px<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="5-Mutating-Our-Global-State"><a href="#5-Mutating-Our-Global-State" class="headerlink" title="5. Mutating Our Global State"></a>5. Mutating Our Global State</h2><pre class=" language-ts"><code class="language-ts"><span class="token keyword">const</span> useDarkMode <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// ref可能导致内存泄漏</span>
+  <span class="token comment" spellcheck="true">// const isDarkMode = ref(false);</span>
+
+  <span class="token keyword">const</span> isDarkMode <span class="token operator">=</span> <span class="token function">useState</span><span class="token punctuation">(</span><span class="token string">"darkMode"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token keyword">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> toggleDarkMode <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    isDarkMode<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token operator">!</span>isDarkMode<span class="token punctuation">.</span>value<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">return</span> <span class="token punctuation">{</span>
+    isDarkMode<span class="token punctuation">,</span>
+    toggleDarkMode<span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> useDarkMode<span class="token punctuation">;</span>
+</code></pre>
+<p><img src="20230716062751.png"></p>
+<h1 id="7-Fetching-Data-and-HTTP-Requests"><a href="#7-Fetching-Data-and-HTTP-Requests" class="headerlink" title="7. Fetching Data and HTTP Requests"></a>7. Fetching Data and HTTP Requests</h1><h2 id="1-App-Overview-3"><a href="#1-App-Overview-3" class="headerlink" title="1. App Overview"></a>1. App Overview</h2><p><img src="20230716062946.png"><br><img src="20230716063009.png"></p>
+<h2 id="2-Integrating-Tailwind"><a href="#2-Integrating-Tailwind" class="headerlink" title="2. Integrating Tailwind"></a>2. Integrating Tailwind</h2><pre class=" language-shell"><code class="language-shell">npm i tailwindcss @tailwindcss/aspect-ratio @tailwindcss/forms @tailwindcss/line-clamp @tailwindcss/typography
+</code></pre>
+<pre class=" language-css"><code class="language-css">// assets/css/tailwind<span class="token number">.</span>css
+<span class="token atrule"><span class="token rule">@import</span> <span class="token string">"tailwindcss/base"</span><span class="token punctuation">;</span></span>
+<span class="token atrule"><span class="token rule">@import</span> <span class="token string">"tailwindcss/components"</span><span class="token punctuation">;</span></span>
+<span class="token atrule"><span class="token rule">@import</span> <span class="token string">"tailwindcss/utilities"</span><span class="token punctuation">;</span></span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// nuxt.config.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> defineNuxtConfig <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"nuxt3"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// https://v3.nuxtjs.org/docs/directory-structure/nuxt.config</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineNuxtConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  publicRuntimeConfig<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    WEATHER_APP_SECRET<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>WEATHER_APP_SECRET<span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  privateRuntimeConfig<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    HELLO<span class="token punctuation">:</span> <span class="token string">"world in the server not the client"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  css<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"~/assets/css/tailwind.css"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  build<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    postcss<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      postcssOptions<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        plugins<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+          tailwindcss<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+          autoprefixer<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// tailwind.config.js</span>
+<span class="token keyword">const</span> defaultTheme <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"tailwindcss/defaultTheme"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+  mode<span class="token punctuation">:</span> <span class="token string">"jit"</span><span class="token punctuation">,</span>
+  content<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    files<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+      <span class="token string">"./components/**/*.{vue,js}"</span><span class="token punctuation">,</span>
+      <span class="token string">"./layouts/**/*.vue"</span><span class="token punctuation">,</span>
+      <span class="token string">"./pages/**/*.vue"</span><span class="token punctuation">,</span>
+      <span class="token string">"./app.vue"</span><span class="token punctuation">,</span>
+      <span class="token string">"./plugins/**/*.{js,ts}"</span><span class="token punctuation">,</span>
+      <span class="token string">"./nuxt.config.{js,ts}"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  theme<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    extend<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      fontFamily<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        sans<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">'"Inter var"'</span><span class="token punctuation">,</span> <span class="token operator">...</span>defaultTheme<span class="token punctuation">.</span>fontFamily<span class="token punctuation">.</span>sans<span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  variants<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    extend<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  plugins<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+    <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"@tailwindcss/forms"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"@tailwindcss/typography"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"@tailwindcss/line-clamp"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"@tailwindcss/aspect-ratio"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="3-Writing-the-HTML-Structure"><a href="#3-Writing-the-HTML-Structure" class="headerlink" title="3. Writing the HTML Structure"></a>3. Writing the HTML Structure</h2><pre class=" language-js"><code class="language-js"><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"h-screen relative overflow-hidden"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>img <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 overlay"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 p-48"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"flex justify-between"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-7xl text-white"</span><span class="token operator">></span><span class="token number">111</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"font-extralight text-2xl mt-2 text-white"</span><span class="token operator">></span><span class="token number">111</span><span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+          <span class="token operator">&lt;</span>img <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-9xl text-white font-extralight"</span><span class="token operator">></span><span class="token number">21</span>°<span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-20"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input type<span class="token operator">=</span><span class="token string">"text"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-1/2 h-10"</span> placeholder<span class="token operator">=</span><span class="token string">"Search a city..."</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>button <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"bg-sky-400 w-20 text-white h-10"</span><span class="token operator">></span>Search<span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>overlay <span class="token punctuation">{</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>icon <span class="token punctuation">{</span>
+  margin<span class="token operator">-</span>left<span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<p><img src="20230716065010.png"></p>
+<h2 id="4-The-Basics-of-HTTP-Requests"><a href="#4-The-Basics-of-HTTP-Requests" class="headerlink" title="4. The Basics of HTTP Requests"></a>4. The Basics of HTTP Requests</h2><p><img src="20230716065043.png"><br><img src="20230716065103.png"></p>
+<pre class=" language-json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"city"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"id"</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+      <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"shanghai"</span><span class="token punctuation">,</span>
+      <span class="token property">"temp"</span><span class="token operator">:</span> <span class="token number">37</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"id"</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"beijing"</span><span class="token punctuation">,</span>
+      <span class="token property">"temp"</span><span class="token operator">:</span> <span class="token number">21</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// app.vue</span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> data<span class="token punctuation">:</span> city<span class="token punctuation">,</span> error <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useFetch</span><span class="token punctuation">(</span><span class="token string">'http://localhost:4000/city/1'</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"h-screen relative overflow-hidden"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>img <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 overlay"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 p-48"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"flex justify-between"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-7xl text-white"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>name <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"font-extralight text-2xl mt-2 text-white"</span><span class="token operator">></span><span class="token number">111</span><span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+          <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"`http://localhost:4000/大雪.png`"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-56"</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-9xl text-white font-extralight"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>temp <span class="token punctuation">}</span><span class="token punctuation">}</span>°<span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-20"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input type<span class="token operator">=</span><span class="token string">"text"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-1/2 h-10"</span> placeholder<span class="token operator">=</span><span class="token string">"Search a city..."</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>button <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"bg-sky-400 w-20 text-white h-10"</span><span class="token operator">></span>Search<span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>overlay <span class="token punctuation">{</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="5-The-useFetch-Composable"><a href="#5-The-useFetch-Composable" class="headerlink" title="5. The useFetch Composable"></a>5. The useFetch Composable</h2><h2 id="6-Refetching-Data-with-useFetch"><a href="#6-Refetching-Data-with-useFetch" class="headerlink" title="6. Refetching Data with useFetch"></a>6. Refetching Data with useFetch</h2><pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> search <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">'beijing'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span> data<span class="token punctuation">:</span> city<span class="token punctuation">,</span> error <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useFetch</span><span class="token punctuation">(</span>
+  <span class="token comment" spellcheck="true">// url变化会动态请求</span>
+  <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token template-string"><span class="token string">`http://localhost:4000/city?name=</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>search<span class="token punctuation">.</span>value<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> handleClick <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> formatedSearch <span class="token operator">=</span> input<span class="token punctuation">.</span>value<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+  search<span class="token punctuation">.</span>value <span class="token operator">=</span> formatedSearch
+  input<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">''</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"h-screen relative overflow-hidden"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>img <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 overlay"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 p-48"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"flex justify-between"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-7xl text-white"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>name <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"font-extralight text-2xl mt-2 text-white"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+          <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"`http://localhost:4000/大雪.png`"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-56"</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-9xl text-white font-extralight"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>temp <span class="token punctuation">}</span><span class="token punctuation">}</span>°<span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-20"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input
+          type<span class="token operator">=</span><span class="token string">"text"</span>
+          <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-1/2 h-10"</span>
+          placeholder<span class="token operator">=</span><span class="token string">"Search a city..."</span>
+          v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"input"</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>button <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"bg-sky-400 w-20 text-white h-10"</span> @click<span class="token operator">=</span><span class="token string">"handleClick"</span><span class="token operator">></span>
+          Search
+        <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>overlay <span class="token punctuation">{</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>icon <span class="token punctuation">{</span>
+  margin<span class="token operator">-</span>left<span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="7-The-useAsyncData-Composable"><a href="#7-The-useAsyncData-Composable" class="headerlink" title="7. The useAsyncData Composable"></a>7. The useAsyncData Composable</h2><pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> search <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">'beijing'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> background <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// const { data: city, error } = useFetch(</span>
+<span class="token comment" spellcheck="true">//   () => `http://localhost:4000/city?name=${search.value}`</span>
+<span class="token comment" spellcheck="true">// )</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span> data<span class="token punctuation">:</span> city<span class="token punctuation">,</span> error <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useAsyncData</span><span class="token punctuation">(</span><span class="token string">'city'</span><span class="token punctuation">,</span> async <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> response <span class="token operator">=</span> await <span class="token function">$fetch</span><span class="token punctuation">(</span>
+    <span class="token template-string"><span class="token string">`http://localhost:4000/city?name=</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>search<span class="token punctuation">.</span>value<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+  <span class="token punctuation">)</span>
+  <span class="token comment" spellcheck="true">// return {</span>
+  <span class="token comment" spellcheck="true">//   name:''</span>
+  <span class="token comment" spellcheck="true">// }</span>
+  <span class="token keyword">const</span> temp <span class="token operator">=</span> response<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>temp
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">&lt;=</span> <span class="token operator">-</span><span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+      <span class="token string">'https://bpic.588ku.com/back_list_pic/21/07/09/3821a250db9129c2e38061e849701efa.jpg!/fw/640/quality/90/unsharp/true/compress/true'</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token operator">-</span><span class="token number">10</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+      <span class="token string">'https://img.tukuppt.com/ad_preview/00/08/01/5d19ea0aa424b.jpg!/fw/980'</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+      <span class="token string">'https://file.51pptmoban.com/d/file/2019/03/10/b18e181988ea2afe4e0c67701c743ab7.jpg'</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+      <span class="token string">'https://img.51miz.com/preview/element/00/01/16/69/E-1166981-2B217F5C.jpg'</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> response
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> handleClick <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> formatedSearch <span class="token operator">=</span> input<span class="token punctuation">.</span>value<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+  search<span class="token punctuation">.</span>value <span class="token operator">=</span> formatedSearch
+  input<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">''</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"h-screen relative overflow-hidden"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"background"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-full h-full"</span><span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 overlay"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 p-48"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"flex justify-between"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-7xl text-white"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>name <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"font-extralight text-2xl mt-2 text-white"</span><span class="token operator">></span>
+            <span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+          <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"`http://localhost:4000/大雪.png`"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-56"</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-9xl text-white font-extralight"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>temp <span class="token punctuation">}</span><span class="token punctuation">}</span>°<span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-20"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input
+          type<span class="token operator">=</span><span class="token string">"text"</span>
+          <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-1/2 h-10"</span>
+          placeholder<span class="token operator">=</span><span class="token string">"Search a city..."</span>
+          v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"input"</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>button <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"bg-sky-400 w-20 text-white h-10"</span> @click<span class="token operator">=</span><span class="token string">"handleClick"</span><span class="token operator">></span>
+          Search
+        <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>overlay <span class="token punctuation">{</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>icon <span class="token punctuation">{</span>
+  margin<span class="token operator">-</span>left<span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="8-Refetching-Data-with-useAsyncData"><a href="#8-Refetching-Data-with-useAsyncData" class="headerlink" title="8. Refetching Data with useAsyncData"></a>8. Refetching Data with useAsyncData</h2><pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> search <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">'beijing'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> background <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// const { data: city, error } = useFetch(</span>
+<span class="token comment" spellcheck="true">//   () => `http://localhost:4000/city?name=${search.value}`</span>
+<span class="token comment" spellcheck="true">// )</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span>
+  data<span class="token punctuation">:</span> city<span class="token punctuation">,</span>
+  error<span class="token punctuation">,</span>
+  refresh
+<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useAsyncData</span><span class="token punctuation">(</span>
+  <span class="token string">'city'</span><span class="token punctuation">,</span>
+  async <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> response <span class="token operator">=</span> await <span class="token function">$fetch</span><span class="token punctuation">(</span>
+      <span class="token template-string"><span class="token string">`http://localhost:4000/city?name=</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>search<span class="token punctuation">.</span>value<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// return {</span>
+    <span class="token comment" spellcheck="true">//   name:''</span>
+    <span class="token comment" spellcheck="true">// }</span>
+    <span class="token keyword">const</span> temp <span class="token operator">=</span> response<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>temp
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">&lt;=</span> <span class="token operator">-</span><span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+        <span class="token string">'https://bpic.588ku.com/back_list_pic/21/07/09/3821a250db9129c2e38061e849701efa.jpg!/fw/640/quality/90/unsharp/true/compress/true'</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token operator">-</span><span class="token number">10</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+        <span class="token string">'https://img.tukuppt.com/ad_preview/00/08/01/5d19ea0aa424b.jpg!/fw/980'</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+        <span class="token string">'https://file.51pptmoban.com/d/file/2019/03/10/b18e181988ea2afe4e0c67701c743ab7.jpg'</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+      background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+        <span class="token string">'https://img.51miz.com/preview/element/00/01/16/69/E-1166981-2B217F5C.jpg'</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> response
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 监听数据变化,变化了就重新获取数据</span>
+    watch<span class="token punctuation">:</span> <span class="token punctuation">[</span>search<span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> handleClick <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> formatedSearch <span class="token operator">=</span> input<span class="token punctuation">.</span>value<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+  search<span class="token punctuation">.</span>value <span class="token operator">=</span> formatedSearch
+  input<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">''</span>
+  <span class="token comment" spellcheck="true">// 重新获取数据</span>
+  <span class="token comment" spellcheck="true">// refresh()</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"h-screen relative overflow-hidden"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"background"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-full h-full"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 overlay"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 p-48"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"flex justify-between"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-7xl text-white"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>name <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"font-extralight text-2xl my-2 text-white"</span><span class="token operator">></span>
+            <span class="token punctuation">{</span><span class="token punctuation">{</span> <span class="token keyword">new</span> <span class="token class-name">Date</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+          <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"`http://localhost:4000/大雪.png`"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-56"</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-9xl text-white font-extralight"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>temp <span class="token punctuation">}</span><span class="token punctuation">}</span>°<span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-20"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input
+          type<span class="token operator">=</span><span class="token string">"text"</span>
+          <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-1/2 h-10"</span>
+          placeholder<span class="token operator">=</span><span class="token string">"Search a city..."</span>
+          v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"input"</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>button <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"bg-sky-400 w-20 text-white h-10"</span> @click<span class="token operator">=</span><span class="token string">"handleClick"</span><span class="token operator">></span>
+          Search
+        <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>overlay <span class="token punctuation">{</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token punctuation">.</span>icon <span class="token punctuation">{</span>
+  margin<span class="token operator">-</span>left<span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h1 id="8-Cookies-and-Runtime-Config"><a href="#8-Cookies-and-Runtime-Config" class="headerlink" title="8. Cookies and Runtime Config"></a>8. Cookies and Runtime Config</h1><h2 id="2-The-useCookie-Composable"><a href="#2-The-useCookie-Composable" class="headerlink" title="2. The useCookie Composable"></a>2. The useCookie Composable</h2><pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> cookie <span class="token operator">=</span> <span class="token function">useCookie</span><span class="token punctuation">(</span><span class="token string">'city'</span><span class="token punctuation">)</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>cookie<span class="token punctuation">.</span>value<span class="token punctuation">)</span> cookie<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'北京'</span>
+
+<span class="token keyword">const</span> search <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span>cookie<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+<span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> background <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span>
+  data<span class="token punctuation">:</span> city<span class="token punctuation">,</span>
+  error<span class="token punctuation">,</span>
+  refresh
+<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useAsyncData</span><span class="token punctuation">(</span>
+  <span class="token string">'city'</span><span class="token punctuation">,</span>
+  async <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> response
+
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+      response <span class="token operator">=</span> await <span class="token function">$fetch</span><span class="token punctuation">(</span>
+        <span class="token template-string"><span class="token string">`https://www.tianqiapi.com/api?version=v61&amp;appid=23224653&amp;appsecret=VnZ9foZ7&amp;city=</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>search<span class="token punctuation">.</span>value<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+      <span class="token punctuation">)</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>response<span class="token punctuation">.</span>city<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        cookie<span class="token punctuation">.</span>value <span class="token operator">=</span> search<span class="token punctuation">.</span>value
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        cookie<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'北京'</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token keyword">const</span> temp <span class="token operator">=</span> response<span class="token punctuation">.</span>tem
+
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">&lt;=</span> <span class="token operator">-</span><span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://bpic.588ku.com/back_list_pic/21/07/09/3821a250db9129c2e38061e849701efa.jpg!/fw/640/quality/90/unsharp/true/compress/true'</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token operator">-</span><span class="token number">10</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://img.tukuppt.com/ad_preview/00/08/01/5d19ea0aa424b.jpg!/fw/980'</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://file.51pptmoban.com/d/file/2019/03/10/b18e181988ea2afe4e0c67701c743ab7.jpg'</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://img.51miz.com/preview/element/00/01/16/69/E-1166981-2B217F5C.jpg'</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> response
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 监听数据变化,变化了就重新获取数据</span>
+    watch<span class="token punctuation">:</span> <span class="token punctuation">[</span>search<span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> handleClick <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> formatedSearch <span class="token operator">=</span> input<span class="token punctuation">.</span>value<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+  search<span class="token punctuation">.</span>value <span class="token operator">=</span> formatedSearch
+  input<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">''</span>
+  <span class="token comment" spellcheck="true">// 重新获取数据</span>
+  <span class="token comment" spellcheck="true">// refresh()</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"h-screen relative overflow-hidden"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"background"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-full h-full"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 overlay"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 md:p-48 py-24 px-4"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"flex md:justify-between"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"md:text-7xl text-3xl text-white"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>city <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"font-extralight md:text-2xl text-md my-2 text-white"</span><span class="token operator">></span>
+            <span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>date <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">-</span> <span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>wea <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+          <span class="token operator">&lt;</span>img
+            <span class="token punctuation">:</span>title<span class="token operator">=</span><span class="token string">"`${city.wea}`"</span>
+            <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"`/${city.wea}.png`"</span>
+            <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-24 md:w-56"</span>
+          <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-4xl md:text-9xl text-white font-extralight"</span><span class="token operator">></span>
+            <span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>tem <span class="token punctuation">}</span><span class="token punctuation">}</span>°C
+          <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-20"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input
+          type<span class="token operator">=</span><span class="token string">"text"</span>
+          <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-1/2 h-10"</span>
+          placeholder<span class="token operator">=</span><span class="token string">"输入想查看的城市..."</span>
+          v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"input"</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>button
+          <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"bg-sky-400 md:w-20 w-12 text-white h-10"</span>
+          @click<span class="token operator">=</span><span class="token string">"handleClick"</span>
+        <span class="token operator">></span>
+          搜索
+        <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>overlay <span class="token punctuation">{</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="3-Storing-Runtime-Configs"><a href="#3-Storing-Runtime-Configs" class="headerlink" title="3. Storing Runtime Configs"></a>3. Storing Runtime Configs</h2><pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> defineNuxtConfig <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"nuxt3"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// https://v3.nuxtjs.org/docs/directory-structure/nuxt.config</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineNuxtConfig</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  publicRuntimeConfig<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    WEATHER_APP_SECRET<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>WEATHER_APP_SECRET<span class="token punctuation">,</span>
+    WEATHER_APP_ID<span class="token punctuation">:</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>WEATHER_APP_ID<span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment" spellcheck="true">// 服务器可以访问,但是客户端不行</span>
+  privateRuntimeConfig<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    HELLO<span class="token punctuation">:</span> <span class="token string">"world in the server not the client"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  css<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"~/assets/css/tailwind.css"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  build<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+    postcss<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      postcssOptions<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+        plugins<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+          tailwindcss<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+          autoprefixer<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> cookie <span class="token operator">=</span> <span class="token function">useCookie</span><span class="token punctuation">(</span><span class="token string">'city'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> config <span class="token operator">=</span> <span class="token function">useRuntimeConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>cookie<span class="token punctuation">.</span>value<span class="token punctuation">)</span> cookie<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'北京'</span>
+
+<span class="token keyword">const</span> search <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span>cookie<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+<span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> background <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span>
+  data<span class="token punctuation">:</span> city<span class="token punctuation">,</span>
+  error<span class="token punctuation">,</span>
+  refresh
+<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useAsyncData</span><span class="token punctuation">(</span>
+  <span class="token string">'city'</span><span class="token punctuation">,</span>
+  async <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> response
+
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+      response <span class="token operator">=</span> await <span class="token function">$fetch</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`https://www.tianqiapi.com/api`</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        params<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+          appsecret<span class="token punctuation">:</span> config<span class="token punctuation">.</span>WEATHER_APP_SECRET<span class="token punctuation">,</span>
+          appid<span class="token punctuation">:</span> config<span class="token punctuation">.</span>WEATHER_APP_ID<span class="token punctuation">,</span>
+          city<span class="token punctuation">:</span> search<span class="token punctuation">.</span>value<span class="token punctuation">,</span>
+          version<span class="token punctuation">:</span> <span class="token string">'v61'</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>response<span class="token punctuation">.</span>city<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        cookie<span class="token punctuation">.</span>value <span class="token operator">=</span> search<span class="token punctuation">.</span>value
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        cookie<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'北京'</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token keyword">const</span> temp <span class="token operator">=</span> response<span class="token punctuation">.</span>tem
+
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">&lt;=</span> <span class="token operator">-</span><span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://bpic.588ku.com/back_list_pic/21/07/09/3821a250db9129c2e38061e849701efa.jpg!/fw/640/quality/90/unsharp/true/compress/true'</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token operator">-</span><span class="token number">10</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://img.tukuppt.com/ad_preview/00/08/01/5d19ea0aa424b.jpg!/fw/980'</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://file.51pptmoban.com/d/file/2019/03/10/b18e181988ea2afe4e0c67701c743ab7.jpg'</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://img.51miz.com/preview/element/00/01/16/69/E-1166981-2B217F5C.jpg'</span>
+      <span class="token punctuation">}</span>
+      <span class="token keyword">return</span> response
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 监听数据变化,变化了就重新获取数据</span>
+    watch<span class="token punctuation">:</span> <span class="token punctuation">[</span>search<span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> handleClick <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> formatedSearch <span class="token operator">=</span> input<span class="token punctuation">.</span>value<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+  search<span class="token punctuation">.</span>value <span class="token operator">=</span> formatedSearch
+  input<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">''</span>
+  <span class="token comment" spellcheck="true">// 重新获取数据</span>
+  <span class="token comment" spellcheck="true">// refresh()</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"h-screen relative overflow-hidden"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"background"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-full h-full"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 overlay"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 md:p-48 py-24 px-4"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"flex md:justify-between"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"md:text-7xl text-3xl text-white"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>city <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"font-extralight md:text-2xl text-md my-2 text-white"</span><span class="token operator">></span>
+            <span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>date <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">-</span> <span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>wea <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+          <span class="token operator">&lt;</span>img
+            <span class="token punctuation">:</span>title<span class="token operator">=</span><span class="token string">"`${city.wea}`"</span>
+            <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"`/${city.wea}.png`"</span>
+            <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-24 md:w-56"</span>
+          <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-4xl md:text-9xl text-white font-extralight"</span><span class="token operator">></span>
+            <span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>tem <span class="token punctuation">}</span><span class="token punctuation">}</span>°C
+          <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-20"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input
+          type<span class="token operator">=</span><span class="token string">"text"</span>
+          <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-1/2 h-10"</span>
+          placeholder<span class="token operator">=</span><span class="token string">"输入想查看的城市..."</span>
+          v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"input"</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>button
+          <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"bg-sky-400 md:w-20 w-12 text-white h-10"</span>
+          @click<span class="token operator">=</span><span class="token string">"handleClick"</span>
+        <span class="token operator">></span>
+          搜索
+        <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>overlay <span class="token punctuation">{</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="4-Error-Handling"><a href="#4-Error-Handling" class="headerlink" title="4. Error Handling"></a>4. Error Handling</h2><pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> cookie <span class="token operator">=</span> <span class="token function">useCookie</span><span class="token punctuation">(</span><span class="token string">'city'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> config <span class="token operator">=</span> <span class="token function">useRuntimeConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>cookie<span class="token punctuation">.</span>value<span class="token punctuation">)</span> cookie<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'北京'</span>
+
+<span class="token keyword">const</span> search <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span>cookie<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+<span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> background <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> <span class="token punctuation">{</span>
+  data<span class="token punctuation">:</span> city<span class="token punctuation">,</span>
+  error<span class="token punctuation">,</span>
+  refresh
+<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useAsyncData</span><span class="token punctuation">(</span>
+  <span class="token string">'city'</span><span class="token punctuation">,</span>
+  async <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> response
+
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+      response <span class="token operator">=</span> await <span class="token function">$fetch</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`https://www.tianqiapi.com/api`</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        params<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+          appsecret<span class="token punctuation">:</span> config<span class="token punctuation">.</span>WEATHER_APP_SECRET<span class="token punctuation">,</span>
+          appid<span class="token punctuation">:</span> config<span class="token punctuation">.</span>WEATHER_APP_ID<span class="token punctuation">,</span>
+          city<span class="token punctuation">:</span> search<span class="token punctuation">.</span>value<span class="token punctuation">,</span>
+          version<span class="token punctuation">:</span> <span class="token string">'v61'</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>response<span class="token punctuation">.</span>city<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        cookie<span class="token punctuation">.</span>value <span class="token operator">=</span> search<span class="token punctuation">.</span>value
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'no find'</span><span class="token punctuation">)</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token keyword">const</span> temp <span class="token operator">=</span> response<span class="token punctuation">.</span>tem
+
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">&lt;=</span> <span class="token operator">-</span><span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://bpic.588ku.com/back_list_pic/21/07/09/3821a250db9129c2e38061e849701efa.jpg!/fw/640/quality/90/unsharp/true/compress/true'</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token operator">-</span><span class="token number">10</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://img.tukuppt.com/ad_preview/00/08/01/5d19ea0aa424b.jpg!/fw/980'</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>temp <span class="token operator">></span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> temp <span class="token operator">&lt;=</span> <span class="token number">10</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://file.51pptmoban.com/d/file/2019/03/10/b18e181988ea2afe4e0c67701c743ab7.jpg'</span>
+      <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        background<span class="token punctuation">.</span>value <span class="token operator">=</span>
+          <span class="token string">'https://img.51miz.com/preview/element/00/01/16/69/E-1166981-2B217F5C.jpg'</span>
+      <span class="token punctuation">}</span>
+      <span class="token keyword">return</span> response
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 监听数据变化,变化了就重新获取数据</span>
+    watch<span class="token punctuation">:</span> <span class="token punctuation">[</span>search<span class="token punctuation">]</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// let today = new Date()</span>
+<span class="token comment" spellcheck="true">// today = today.toLocaleDateString('en-US', {</span>
+<span class="token comment" spellcheck="true">//   weekday: 'long',</span>
+<span class="token comment" spellcheck="true">//   year: 'numeric',</span>
+<span class="token comment" spellcheck="true">//   month: 'long',</span>
+<span class="token comment" spellcheck="true">//   day: 'numeric'</span>
+<span class="token comment" spellcheck="true">// })</span>
+
+<span class="token keyword">const</span> handleClick <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> formatedSearch <span class="token operator">=</span> input<span class="token punctuation">.</span>value<span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+  search<span class="token punctuation">.</span>value <span class="token operator">=</span> formatedSearch
+  input<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">''</span>
+  <span class="token comment" spellcheck="true">// 重新获取数据</span>
+  <span class="token comment" spellcheck="true">// refresh()</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> goBack <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  search<span class="token punctuation">.</span>value <span class="token operator">=</span> cookie<span class="token punctuation">.</span>value
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div v<span class="token operator">-</span><span class="token keyword">if</span><span class="token operator">=</span><span class="token string">"city"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"h-screen relative overflow-hidden"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>img <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"background"</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-full h-full"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 overlay"</span> <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"absolute w-full h-full top-0 md:p-48 py-24 px-4"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"flex md:justify-between"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"md:text-7xl text-3xl text-white"</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>city <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"font-extralight md:text-2xl text-md my-2 text-white"</span><span class="token operator">></span>
+            <span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>date <span class="token punctuation">}</span><span class="token punctuation">}</span> <span class="token operator">-</span> <span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>wea <span class="token punctuation">}</span><span class="token punctuation">}</span>
+          <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+          <span class="token operator">&lt;</span>img
+            <span class="token punctuation">:</span>title<span class="token operator">=</span><span class="token string">"`${city.wea}`"</span>
+            <span class="token punctuation">:</span>src<span class="token operator">=</span><span class="token string">"`/${city.wea}.png`"</span>
+            <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-24 md:w-56"</span>
+          <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span>div<span class="token operator">></span>
+          <span class="token operator">&lt;</span>p <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-4xl md:text-9xl text-white font-extralight"</span><span class="token operator">></span>
+            <span class="token punctuation">{</span><span class="token punctuation">{</span> city<span class="token punctuation">.</span>tem <span class="token punctuation">}</span><span class="token punctuation">}</span>°C
+          <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-20"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input
+          type<span class="token operator">=</span><span class="token string">"text"</span>
+          <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"w-1/2 h-10"</span>
+          placeholder<span class="token operator">=</span><span class="token string">"输入想查看的城市..."</span>
+          v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"input"</span>
+        <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>button
+          <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"bg-sky-400 md:w-20 w-12 text-white h-10"</span>
+          @click<span class="token operator">=</span><span class="token string">"handleClick"</span>
+        <span class="token operator">></span>
+          搜索
+        <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div v<span class="token operator">-</span><span class="token keyword">else</span> <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"p-10"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>h1 <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text-7xl"</span><span class="token operator">></span>No<span class="token operator">!</span> 找不到该地区的数据<span class="token operator">!</span><span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+    <span class="token operator">&lt;</span>button <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"mt-5 bg-sky-400 px-10 w-50 text-white h-10"</span> @click<span class="token operator">=</span><span class="token string">"goBack"</span><span class="token operator">></span>
+      Go Back
+    <span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>overlay <span class="token punctuation">{</span>
+  background<span class="token operator">-</span>color<span class="token punctuation">:</span> <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="9-Building-a-REST-API"><a href="#9-Building-a-REST-API" class="headerlink" title="9. Building a REST API"></a>9. Building a REST API</h1><h2 id="1-App-Overview-4"><a href="#1-App-Overview-4" class="headerlink" title="1. App Overview"></a>1. App Overview</h2><h2 id="2-Our-Endpoints"><a href="#2-Our-Endpoints" class="headerlink" title="2. Our Endpoints"></a>2. Our Endpoints</h2><p><img src="20230716160227.png"></p>
+<h2 id="3-Creating-Our-Server"><a href="#3-Creating-Our-Server" class="headerlink" title="3. Creating Our Server"></a>3. Creating Our Server</h2>
             </div>
             <hr/>
 
@@ -2135,7 +3288,7 @@ npm i
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">233.1k</span>
+                <span class="white-color">254.8k</span>
             
 
             

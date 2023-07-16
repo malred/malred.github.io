@@ -1,0 +1,1558 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN">
+
+
+<head>
+    <meta charset="utf-8">
+    <meta name="keywords" content="build your own redis, HTML,CSS,React,Vue,Java,Go,微服务,linux">
+    <meta name="description" content="开始02. Introduction to Socket
+Redis 是服务器/客户端系统的一个例子。多个客户端连接到单个服务器，服务器接收来自 TCP 连接的请求并发回响应。在开始套接字编程之前，我们需要学习几个 Linux 系统调用。
+">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="renderer" content="webkit|ie-stand|ie-comp">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>build your own redis | malred-blog</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" type="text/css" href="/libs/awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/materialize/css/materialize.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/aos/aos.css">
+    <link rel="stylesheet" type="text/css" href="/libs/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/libs/lightGallery/css/lightgallery.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/matery.css">
+    <link rel="stylesheet" type="text/css" href="/css/my.css">
+    <style type="text/css">
+        
+    </style>
+
+    <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
+<meta name="generator" content="Hexo 5.4.2">
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+<link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
+
+
+<body>
+
+<header class="navbar-fixed">
+    <nav id="headNav" class="bg-color nav-transparent">
+        <div id="navContainer" class="container">
+            <div class="nav-wrapper">
+                <div class="brand-logo">
+                    <a href="/" class="waves-effect waves-light">
+                        
+                        <img src="/medias/logo.png" class="logo-img hide-on-small-only">
+                        
+                        <span class="logo-span">malred-blog</span>
+                    </a>
+                </div>
+                
+
+<a href="#" data-activates="mobile-nav" class="button-collapse"><i class="fa fa-navicon"></i></a>
+<ul class="right">
+    
+    <li class="hide-on-med-and-down">
+        <a href="/" class="waves-effect waves-light">
+            
+            <i class="fa fa-home"></i>
+            
+            <span>首页</span>
+        </a>
+    </li>
+    
+    <li class="hide-on-med-and-down">
+        <a href="/tags" class="waves-effect waves-light">
+            
+            <i class="fa fa-tags"></i>
+            
+            <span>标签</span>
+        </a>
+    </li>
+    
+    <li class="hide-on-med-and-down">
+        <a href="/categories" class="waves-effect waves-light">
+            
+            <i class="fa fa-bookmark"></i>
+            
+            <span>分类</span>
+        </a>
+    </li>
+    
+    <li class="hide-on-med-and-down">
+        <a href="/archives" class="waves-effect waves-light">
+            
+            <i class="fa fa-archive"></i>
+            
+            <span>归档</span>
+        </a>
+    </li>
+    
+    <li class="hide-on-med-and-down">
+        <a href="/about" class="waves-effect waves-light">
+            
+            <i class="fa fa-user-circle-o"></i>
+            
+            <span>关于</span>
+        </a>
+    </li>
+    
+    <li class="hide-on-med-and-down">
+        <a href="/friends" class="waves-effect waves-light">
+            
+            <i class="fa fa-address-book"></i>
+            
+            <span>友情链接</span>
+        </a>
+    </li>
+    
+    <li>
+        <a id="toggleSearch" class="waves-effect waves-light">
+            <i id="searchIcon" class="mdi-action-search" title="搜索"></i>
+        </a>
+    </li>
+
+</ul>
+
+<div class="side-nav" id="mobile-nav">
+
+    <div class="mobile-head bg-color">
+        
+        <img src="/medias/logo.png" class="logo-img circle responsive-img">
+        
+        <div class="logo-name">malred-blog</div>
+        <div class="logo-desc">
+            
+            前后端学习者,存放知识笔记
+            
+        </div>
+    </div>
+
+    
+
+    <ul class="menu-list mobile-menu-list">
+        
+        <li>
+            <a href="/" class="waves-effect waves-light">
+                
+                <i class="fa fa-fw fa-home"></i>
+                
+                首页
+            </a>
+        </li>
+        
+        <li>
+            <a href="/tags" class="waves-effect waves-light">
+                
+                <i class="fa fa-fw fa-tags"></i>
+                
+                标签
+            </a>
+        </li>
+        
+        <li>
+            <a href="/categories" class="waves-effect waves-light">
+                
+                <i class="fa fa-fw fa-bookmark"></i>
+                
+                分类
+            </a>
+        </li>
+        
+        <li>
+            <a href="/archives" class="waves-effect waves-light">
+                
+                <i class="fa fa-fw fa-archive"></i>
+                
+                归档
+            </a>
+        </li>
+        
+        <li>
+            <a href="/about" class="waves-effect waves-light">
+                
+                <i class="fa fa-fw fa-user-circle-o"></i>
+                
+                关于
+            </a>
+        </li>
+        
+        <li>
+            <a href="/friends" class="waves-effect waves-light">
+                
+                <i class="fa fa-fw fa-address-book"></i>
+                
+                友情链接
+            </a>
+        </li>
+        
+        
+        <li><div class="divider"></div></li>
+        <li>
+            <a href="https://github.com/blinkfox/hexo-theme-matery" class="waves-effect waves-light" target="_blank">
+                <i class="fa fa-github-square fa-fw"></i>Fork Me
+            </a>
+        </li>
+        
+    </ul>
+
+    <div class="social-link">
+    <a href="https://github.com/malred" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:malguy2022@163.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fa fa-envelope-open"></i>
+    </a>
+
+
+
+    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=2725953379" class="tooltipped" data-tooltip="QQ联系我: 2725953379" data-position="top" data-delay="50">
+        <i class="fa fa-qq"></i>
+    </a>
+
+
+</div>
+</div>
+
+            </div>
+        </div>
+
+        
+        <style>
+    .nav-transparent .github-corner {
+        display: none !important;
+    }
+
+    .github-corner {
+        position: absolute;
+        z-index: 10;
+        top: 0;
+        right: 0;
+        border: 0;
+        transform: scale(1.1);
+    }
+
+    .github-corner svg {
+        color: #0f9d58;
+        fill: #fff;
+        height: 64px;
+        width: 64px;
+    }
+
+    .github-corner:hover .octo-arm {
+        animation: a 0.56s ease-in-out;
+    }
+
+    .github-corner .octo-arm {
+        animation: none;
+    }
+
+    @keyframes a {
+        0%,
+        to {
+            transform: rotate(0);
+        }
+        20%,
+        60% {
+            transform: rotate(-25deg);
+        }
+        40%,
+        80% {
+            transform: rotate(10deg);
+        }
+    }
+</style>
+
+<a href="https://github.com/blinkfox/hexo-theme-matery" class="github-corner tooltipped hide-on-med-and-down" target="_blank"
+   data-tooltip="Fork Me" data-position="left" data-delay="50">
+    <svg viewBox="0 0 250 250" aria-hidden="true">
+        <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+        <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2"
+              fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path>
+        <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z"
+              fill="currentColor" class="octo-body"></path>
+    </svg>
+</a>
+        
+    </nav>
+</header>
+
+
+
+
+
+<div class="bg-cover post-cover" style="background-image: url('/medias/featureimages/2.jpg')">
+    <div class="container">
+        <div class="row">
+            <div class="col s12 m12 l12">
+                <div class="brand">
+                    <div class="description center-align post-title">
+                        build your own redis
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<main class="post-container content">
+
+    
+    <link rel="stylesheet" href="/libs/tocbot/tocbot.css">
+<style>
+    #articleContent h1::before,
+    #articleContent h2::before,
+    #articleContent h3::before,
+    #articleContent h4::before,
+    #articleContent h5::before,
+    #articleContent h6::before {
+        display: block;
+        content: " ";
+        height: 100px;
+        margin-top: -100px;
+        visibility: hidden;
+    }
+
+    #articleContent :focus {
+        outline: none;
+    }
+
+    .toc-fixed {
+        position: fixed;
+        top: 64px;
+    }
+
+    .toc-widget {
+        padding-left: 20px;
+    }
+
+    .toc-widget .toc-title {
+        margin: 35px 0 15px 0;
+        padding-left: 17px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    .toc-widget ol {
+        padding: 0;
+        list-style: none;
+    }
+
+    #toc-content ol {
+        padding-left: 10px;
+    }
+
+    #toc-content ol li {
+        padding-left: 10px;
+    }
+
+    #toc-content .toc-link:hover {
+        color: #42b983;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    #toc-content .toc-link::before {
+        background-color: transparent;
+        max-height: 25px;
+    }
+
+    #toc-content .is-active-link {
+        color: #42b983;
+    }
+
+    #toc-content .is-active-link::before {
+        background-color: #42b983;
+    }
+</style>
+<div class="row">
+    <div class="col s12 m12 l9">
+        <!-- 文章内容详情 -->
+<div id="artDetail">
+    <div class="card">
+        <div class="card-content article-info">
+            <div class="row tag-cate">
+                <div class="col s7">
+                    
+                    <div class="article-tag">
+                        
+                            <a href="/tags/c-c/" target="_blank">
+                                <span class="chip bg-color">c/c++</span>
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+                <div class="col s5 right-align">
+                    
+                    <div class="post-cate">
+                        <i class="fa fa-bookmark fa-fw icon-category"></i>
+                        
+                            <a href="/categories/c-c/" class="post-category" target="_blank">
+                                c/c++
+                            </a>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+
+            <div class="post-info">
+                <div class="post-date info-break-policy">
+                    <i class="fa fa-calendar-minus-o fa-fw"></i>发布日期:&nbsp;&nbsp;
+                    2023-07-15
+                </div>
+
+                
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
+                        3.6k
+                    </div>
+                    
+
+                    
+                    <div class="info-break-policy">
+                        <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
+                        17 分
+                    </div>
+                    
+                
+				
+				
+            </div>
+        </div>
+        <hr class="clearfix">
+        <div class="card-content article-card-content">
+            <div id="articleContent">
+                <h1 id="开始"><a href="#开始" class="headerlink" title="开始"></a>开始</h1><h2 id="02-Introduction-to-Socket"><a href="#02-Introduction-to-Socket" class="headerlink" title="02. Introduction to Socket"></a>02. Introduction to Socket</h2><blockquote>
+<p>Redis 是服务器/客户端系统的一个例子。多个客户端连接到单个服务器，服务器接收来自 TCP 连接的请求并发回响应。在开始套接字编程之前，我们需要学习几个 Linux 系统调用。</p>
+</blockquote>
+<p>bind（） 和 listen（） 系统调用：bind（） 将地址与套接字 fd 相关联，而</p>
+<p>listen（） 使我们能够接受与该地址的连接。</p>
+<p>accept（） 采用侦听 fd，当客户端与侦听地址建立连接时，accept（） 返回一个表示连接套接字的 fd。以下是解释服务器典型工作流程的伪代码:</p>
+<pre class=" language-c"><code class="language-c">fd <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token function">bind</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> address<span class="token punctuation">)</span>
+<span class="token function">listen</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span>
+<span class="token keyword">while</span> True<span class="token punctuation">:</span>
+    conn_fd <span class="token operator">=</span> <span class="token function">accept</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span>
+    <span class="token function">do_something_with</span><span class="token punctuation">(</span>conn_fd<span class="token punctuation">)</span>
+    <span class="token function">close</span><span class="token punctuation">(</span>conn_fd<span class="token punctuation">)</span>
+</code></pre>
+<p>read（） 系统调用从 TCP 连接接收数据。write（） 系统调用发送数据。close（） 系统调用销毁 fd 引用的资源并回收 fd 编号。</p>
+<p>我们引入了服务器端网络编程所需的系统调用。对于客户端，connect（） 系统调用采用套接字 fd 和地址，并与该地址建立 TCP 连接。下面是客户端的伪代码：</p>
+<pre class=" language-c"><code class="language-c">fd <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token function">connect</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> address<span class="token punctuation">)</span>
+<span class="token function">do_something_with</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span>
+<span class="token function">close</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="03-Hello-Server-Client"><a href="#03-Hello-Server-Client" class="headerlink" title="03. Hello Server/Client"></a>03. Hello Server/Client</h2><blockquote>
+<p>本章继续介绍套接字编程。我们将编写 2 个简单（不完整和损坏）的程序来演示上一章中的系统调用。第一个程序是服务器，它接受来自客户端的连接，读取一条消息，并写入一条回复。第二个程序是客户端，它连接到服务器，写入一条消息，并读取一条回复。让我们先从服务器开始。</p>
+</blockquote>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token comment" spellcheck="true">// client.cpp</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdint.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;errno.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/socket.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;netinet/ip.h></span></span>
+
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">die</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>msg<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> err <span class="token operator">=</span> errno<span class="token punctuation">;</span>
+    <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"[%d] %s\n"</span><span class="token punctuation">,</span> err<span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">abort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span>AF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"socket()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">struct</span> sockaddr_in addr <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_family <span class="token operator">=</span> AF_INET<span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_port <span class="token operator">=</span> <span class="token function">ntohs</span><span class="token punctuation">(</span><span class="token number">1234</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_addr<span class="token punctuation">.</span>s_addr <span class="token operator">=</span> <span class="token function">ntohl</span><span class="token punctuation">(</span>INADDR_LOOPBACK<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 127.0.0.1</span>
+    <span class="token keyword">int</span> rv <span class="token operator">=</span> <span class="token function">connect</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">struct</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>addr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>addr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rv<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"connect"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">char</span> msg<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"hello"</span><span class="token punctuation">;</span>
+    <span class="token function">write</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> msg<span class="token punctuation">,</span> <span class="token function">strlen</span><span class="token punctuation">(</span>msg<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">char</span> rbuf<span class="token punctuation">[</span><span class="token number">64</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    ssize_t n <span class="token operator">=</span> <span class="token function">read</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> rbuf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>rbuf<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"read"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"server says: %s\n"</span><span class="token punctuation">,</span> rbuf<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">close</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token comment" spellcheck="true">// server.cpp</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdint.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;errno.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/socket.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;netinet/ip.h></span></span>
+
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">msg</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>msg<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"%s\n"</span><span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">die</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>msg<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> err <span class="token operator">=</span> errno<span class="token punctuation">;</span>
+    <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"[%d] %s\n"</span><span class="token punctuation">,</span> err<span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">abort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">do_something</span><span class="token punctuation">(</span><span class="token keyword">int</span> connfd<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">char</span> rbuf<span class="token punctuation">[</span><span class="token number">64</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    ssize_t n <span class="token operator">=</span> <span class="token function">read</span><span class="token punctuation">(</span>connfd<span class="token punctuation">,</span> rbuf<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>rbuf<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>n <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"read() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"client says: %s\n"</span><span class="token punctuation">,</span> rbuf<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">char</span> wbuf<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"world"</span><span class="token punctuation">;</span>
+    <span class="token function">write</span><span class="token punctuation">(</span>connfd<span class="token punctuation">,</span> wbuf<span class="token punctuation">,</span> <span class="token function">strlen</span><span class="token punctuation">(</span>wbuf<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span>AF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"socket()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// this is needed for most server applications</span>
+    <span class="token keyword">int</span> val <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token function">setsockopt</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> SOL_SOCKET<span class="token punctuation">,</span> SO_REUSEADDR<span class="token punctuation">,</span> <span class="token operator">&amp;</span>val<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// bind</span>
+    <span class="token keyword">struct</span> sockaddr_in addr <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_family <span class="token operator">=</span> AF_INET<span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_port <span class="token operator">=</span> <span class="token function">ntohs</span><span class="token punctuation">(</span><span class="token number">1234</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_addr<span class="token punctuation">.</span>s_addr <span class="token operator">=</span> <span class="token function">ntohl</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// wildcard address 0.0.0.0</span>
+    <span class="token keyword">int</span> rv <span class="token operator">=</span> <span class="token function">bind</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">const</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>addr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>addr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rv<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"bind()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// listen</span>
+    rv <span class="token operator">=</span> <span class="token function">listen</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> SOMAXCONN<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rv<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"listen()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// accept</span>
+        <span class="token keyword">struct</span> sockaddr_in client_addr <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+        socklen_t socklen <span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>client_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> connfd <span class="token operator">=</span> <span class="token function">accept</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>client_addr<span class="token punctuation">,</span> <span class="token operator">&amp;</span>socklen<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>connfd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token keyword">continue</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// error</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token function">do_something</span><span class="token punctuation">(</span>connfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">close</span><span class="token punctuation">(</span>connfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-shell"><code class="language-shell">g++ -Wall -Wextra -O2 -g server.cpp -o server
+g++ -Wall -Wextra -O2 -g client.cpp -o client
+</code></pre>
+<h2 id="04-Protocol-Parsing"><a href="#04-Protocol-Parsing" class="headerlink" title="04. Protocol Parsing"></a>04. Protocol Parsing</h2><blockquote>
+<p>我们的服务器将能够处理来自客户端的多个请求，为此我们需要实现某种“协议”，至少将请求与 TCP 字节流分开。拆分请求的最简单方法是在请求开始时声明请求的长度。让我们使用以下方案。</p>
+</blockquote>
+<p><img src="20230716051733.png"></p>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// accept</span>
+    <span class="token keyword">struct</span> sockaddr_in client_addr <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    socklen_t socklen <span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>client_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> connfd <span class="token operator">=</span> <span class="token function">accept</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>client_addr<span class="token punctuation">,</span> <span class="token operator">&amp;</span>socklen<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>connfd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">continue</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// error</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// only serves one client connection at once</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        int32_t err <span class="token operator">=</span> <span class="token function">one_request</span><span class="token punctuation">(</span>connfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token function">close</span><span class="token punctuation">(</span>connfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>one_request 函数仅分析一个请求并回复，直到发生不良情况或客户端连接消失。我们的服务器一次只能处理一个连接，直到我们在后面的章节中介绍事件循环。</p>
+</blockquote>
+<ol>
+<li>read（） 系统调用只返回内核中可用的任何数据，或者如果没有。它是负责处理不足数据的应用程序。read_full（） 函数从内核读取，直到它正好得到 n 个字节</li>
+<li>同样，如果内核缓冲区已满，write（） 系统调用可以成功返回部分写入的数据，当 write（） 返回的字节数少于我们需要的字节时，我们需要继续尝试。</li>
+</ol>
+<blockquote>
+<p>为方便起见，我们添加了对最大请求大小的限制，并使用足够大的缓冲区来保存请求。字节序曾经是解析协议时的一个考虑因素，但今天它不太相关，所以我们只是 memcpy-ing 整数。</p>
+</blockquote>
+<p><img src="20230716053055.png"></p>
+<blockquote>
+<p>协议解析代码每个请求至少需要 2 个 read（） 系统调用。可以使用“缓冲 IO”来减少系统调用的数量。也就是说：一次尽可能多地读取缓冲区，然后尝试解析来自该缓冲区的多个请求。鼓励读者尝试将其作为一种练习，因为它可能有助于理解后面的章节。</p>
+</blockquote>
+<blockquote>
+<p>协议说明：本章中使用的协议是最简单的实用协议。大多数现实世界的协议都比这更复杂。有些使用文本而不是二进制数据。虽然文本协议具有人类可读的优点，但文本协议确实比二进制协议需要更多的解析，后者更易于编码和出错。使协议解析复杂化的另一件事是，某些协议没有直接的方法来拆分消息，这些协议可能使用分隔符，或者需要进一步解析来拆分消息。在协议中使用分隔符可能会增加另一个复杂性，当协议携带任意数据，因为数据中的分隔符需要“转义”。我们将在后面的章节中坚持使用简单的二进制协议。</p>
+</blockquote>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token comment" spellcheck="true">// server</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;assert.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdint.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;errno.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/socket.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;netinet/ip.h></span></span>
+
+
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">msg</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"%s\n"</span><span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">die</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> err <span class="token operator">=</span> errno<span class="token punctuation">;</span>
+    <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"[%d] %s\n"</span><span class="token punctuation">,</span> err<span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">abort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> size_t k_max_msg <span class="token operator">=</span> <span class="token number">4096</span><span class="token punctuation">;</span>
+
+<span class="token keyword">static</span> int32_t <span class="token function">read_full</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> size_t n<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>n <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ssize_t rv <span class="token operator">=</span> <span class="token function">read</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> buf<span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rv <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// error, or unexpected EOF</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">assert</span><span class="token punctuation">(</span><span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>rv <span class="token operator">&lt;=</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        n <span class="token operator">-</span><span class="token operator">=</span> <span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>rv<span class="token punctuation">;</span>
+        buf <span class="token operator">+</span><span class="token operator">=</span> rv<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> int32_t <span class="token function">write_all</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> size_t n<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>n <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ssize_t rv <span class="token operator">=</span> <span class="token function">write</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> buf<span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rv <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// error</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">assert</span><span class="token punctuation">(</span><span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>rv <span class="token operator">&lt;=</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        n <span class="token operator">-</span><span class="token operator">=</span> <span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>rv<span class="token punctuation">;</span>
+        buf <span class="token operator">+</span><span class="token operator">=</span> rv<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> int32_t <span class="token function">one_request</span><span class="token punctuation">(</span><span class="token keyword">int</span> connfd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 4 bytes header</span>
+    <span class="token keyword">char</span> rbuf<span class="token punctuation">[</span><span class="token number">4</span> <span class="token operator">+</span> k_max_msg <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    errno <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    int32_t err <span class="token operator">=</span> <span class="token function">read_full</span><span class="token punctuation">(</span>connfd<span class="token punctuation">,</span> rbuf<span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>errno <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"EOF"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"read() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> err<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    uint32_t len <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token function">memcpy</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>len<span class="token punctuation">,</span> rbuf<span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// assume little endian</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>len <span class="token operator">></span> k_max_msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"too long"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// request body</span>
+    err <span class="token operator">=</span> <span class="token function">read_full</span><span class="token punctuation">(</span>connfd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>rbuf<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"read() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> err<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// do something</span>
+    rbuf<span class="token punctuation">[</span><span class="token number">4</span> <span class="token operator">+</span> len<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">'\0'</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"client says: %s\n"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>rbuf<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// reply using the same protocol</span>
+    <span class="token keyword">const</span> <span class="token keyword">char</span> reply<span class="token punctuation">[</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"world"</span><span class="token punctuation">;</span>
+    <span class="token keyword">char</span> wbuf<span class="token punctuation">[</span><span class="token number">4</span> <span class="token operator">+</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>reply<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    len <span class="token operator">=</span> <span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token function">strlen</span><span class="token punctuation">(</span>reply<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">memcpy</span><span class="token punctuation">(</span>wbuf<span class="token punctuation">,</span> <span class="token operator">&amp;</span>len<span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">memcpy</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>wbuf<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> reply<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">write_all</span><span class="token punctuation">(</span>connfd<span class="token punctuation">,</span> wbuf<span class="token punctuation">,</span> <span class="token number">4</span> <span class="token operator">+</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span>AF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"socket()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// this is needed for most server applications</span>
+    <span class="token keyword">int</span> val <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token function">setsockopt</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> SOL_SOCKET<span class="token punctuation">,</span> SO_REUSEADDR<span class="token punctuation">,</span> <span class="token operator">&amp;</span>val<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// bind</span>
+    <span class="token keyword">struct</span> sockaddr_in addr <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_family <span class="token operator">=</span> AF_INET<span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_port <span class="token operator">=</span> <span class="token function">ntohs</span><span class="token punctuation">(</span><span class="token number">1234</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_addr<span class="token punctuation">.</span>s_addr <span class="token operator">=</span> <span class="token function">ntohl</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>    <span class="token comment" spellcheck="true">// wildcard address 0.0.0.0</span>
+    <span class="token keyword">int</span> rv <span class="token operator">=</span> <span class="token function">bind</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">const</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>addr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>addr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rv<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"bind()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// listen</span>
+    rv <span class="token operator">=</span> <span class="token function">listen</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> SOMAXCONN<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rv<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"listen()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// accept</span>
+        <span class="token keyword">struct</span> sockaddr_in client_addr <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+        socklen_t socklen <span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>client_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">int</span> connfd <span class="token operator">=</span> <span class="token function">accept</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>client_addr<span class="token punctuation">,</span> <span class="token operator">&amp;</span>socklen<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>connfd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">continue</span><span class="token punctuation">;</span>   <span class="token comment" spellcheck="true">// error</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// here the server only serves one client connection at once</span>
+            int32_t err <span class="token operator">=</span> <span class="token function">one_request</span><span class="token punctuation">(</span>connfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">close</span><span class="token punctuation">(</span>connfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token comment" spellcheck="true">// client</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;assert.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdint.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;errno.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;unistd.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;sys/socket.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;netinet/ip.h></span></span>
+
+
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">msg</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"%s\n"</span><span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">die</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> err <span class="token operator">=</span> errno<span class="token punctuation">;</span>
+    <span class="token function">fprintf</span><span class="token punctuation">(</span><span class="token constant">stderr</span><span class="token punctuation">,</span> <span class="token string">"[%d] %s\n"</span><span class="token punctuation">,</span> err<span class="token punctuation">,</span> msg<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">abort</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> int32_t <span class="token function">read_full</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> size_t n<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>n <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ssize_t rv <span class="token operator">=</span> <span class="token function">read</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> buf<span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rv <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// error, or unexpected EOF</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">assert</span><span class="token punctuation">(</span><span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>rv <span class="token operator">&lt;=</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        n <span class="token operator">-</span><span class="token operator">=</span> <span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>rv<span class="token punctuation">;</span>
+        buf <span class="token operator">+</span><span class="token operator">=</span> rv<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">static</span> int32_t <span class="token function">write_all</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>buf<span class="token punctuation">,</span> size_t n<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span>n <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ssize_t rv <span class="token operator">=</span> <span class="token function">write</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> buf<span class="token punctuation">,</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rv <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// error</span>
+        <span class="token punctuation">}</span>
+        <span class="token function">assert</span><span class="token punctuation">(</span><span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>rv <span class="token operator">&lt;=</span> n<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        n <span class="token operator">-</span><span class="token operator">=</span> <span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>rv<span class="token punctuation">;</span>
+        buf <span class="token operator">+</span><span class="token operator">=</span> rv<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> size_t k_max_msg <span class="token operator">=</span> <span class="token number">4096</span><span class="token punctuation">;</span>
+
+<span class="token keyword">static</span> int32_t <span class="token function">query</span><span class="token punctuation">(</span><span class="token keyword">int</span> fd<span class="token punctuation">,</span> <span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span>text<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    uint32_t len <span class="token operator">=</span> <span class="token punctuation">(</span>uint32_t<span class="token punctuation">)</span><span class="token function">strlen</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>len <span class="token operator">></span> k_max_msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">char</span> wbuf<span class="token punctuation">[</span><span class="token number">4</span> <span class="token operator">+</span> k_max_msg<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token function">memcpy</span><span class="token punctuation">(</span>wbuf<span class="token punctuation">,</span> <span class="token operator">&amp;</span>len<span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// assume little endian</span>
+    <span class="token function">memcpy</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>wbuf<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> text<span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>int32_t err <span class="token operator">=</span> <span class="token function">write_all</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> wbuf<span class="token punctuation">,</span> <span class="token number">4</span> <span class="token operator">+</span> len<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> err<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 4 bytes header</span>
+    <span class="token keyword">char</span> rbuf<span class="token punctuation">[</span><span class="token number">4</span> <span class="token operator">+</span> k_max_msg <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    errno <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    int32_t err <span class="token operator">=</span> <span class="token function">read_full</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> rbuf<span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>errno <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"EOF"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"read() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> err<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">memcpy</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>len<span class="token punctuation">,</span> rbuf<span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// assume little endian</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>len <span class="token operator">></span> k_max_msg<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"too long"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// reply body</span>
+    err <span class="token operator">=</span> <span class="token function">read_full</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>rbuf<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> len<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"read() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> err<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// do something</span>
+    rbuf<span class="token punctuation">[</span><span class="token number">4</span> <span class="token operator">+</span> len<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">'\0'</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"server says: %s\n"</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>rbuf<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span>AF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"socket()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">struct</span> sockaddr_in addr <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_family <span class="token operator">=</span> AF_INET<span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_port <span class="token operator">=</span> <span class="token function">ntohs</span><span class="token punctuation">(</span><span class="token number">1234</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    addr<span class="token punctuation">.</span>sin_addr<span class="token punctuation">.</span>s_addr <span class="token operator">=</span> <span class="token function">ntohl</span><span class="token punctuation">(</span>INADDR_LOOPBACK<span class="token punctuation">)</span><span class="token punctuation">;</span>  <span class="token comment" spellcheck="true">// 127.0.0.1</span>
+    <span class="token keyword">int</span> rv <span class="token operator">=</span> <span class="token function">connect</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">struct</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>addr<span class="token punctuation">,</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>addr<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rv<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"connect"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// multiple requests</span>
+    int32_t err <span class="token operator">=</span> <span class="token function">query</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token string">"hello1"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">goto</span> L_DONE<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    err <span class="token operator">=</span> <span class="token function">query</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token string">"hello2"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">goto</span> L_DONE<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    err <span class="token operator">=</span> <span class="token function">query</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token string">"hello3"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>err<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">goto</span> L_DONE<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+L_DONE<span class="token operator">:</span>
+    <span class="token function">close</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="05-The-Event-Loop-and-Nonblocking-IO"><a href="#05-The-Event-Loop-and-Nonblocking-IO" class="headerlink" title="05. The Event Loop and Nonblocking IO"></a>05. The Event Loop and Nonblocking IO</h2><blockquote>
+<p>在服务器端网络编程中，有 3 种方法可以处理并发连接。它们是：分叉、多线程和事件循环。分叉为每个客户端连接创建新进程以实现并发。多线程使用线程而不是进程。事件循环使用轮询和非阻塞 IO，通常在单个线程上运行。由于进程和线程的开销，大多数现代生产级软件都使用事件循环进行联网。</p>
+</blockquote>
+<blockquote>
+<p>我们不只是使用 fds 做一些事情（读取、写入或接受），而是使用轮询操作来告诉我们哪个 fd 可以立即操作而不会阻塞。当我们在 fd 上执行 IO 操作时，该操作应在非阻塞模式下执行。</p>
+</blockquote>
+<blockquote>
+<p>在阻塞模式下，当内核中没有数据时，读取会阻塞调用方，在写缓冲区已满时写入块，当内核队列中没有新连接时接受块。在非阻塞模式下，这些操作要么成功而不阻塞，要么失败并显示 errno EAGAIN，这意味着“未就绪”。在轮询通知就绪情况后，必须重试因 EAGAIN 而失败的非阻塞操作。</p>
+</blockquote>
+<blockquote>
+<p>轮询是事件循环中唯一的阻塞操作，其他所有内容都必须是非阻塞的;因此，单个线程可以处理多个并发连接。所有阻塞网络 IO API（如读取、写入和接受）都具有非阻塞模式。没有非阻塞模式的 API（例如 gethostbyname 和磁盘 IO）应在线程池中执行，这将在后面的章节中介绍。此外，计时器必须在事件循环中实现，因为我们不能在事件循环中等待睡眠。</p>
+</blockquote>
+<blockquote>
+<p>将 fd 设置为非阻塞模式的系统调用是 fcntl：</p>
+</blockquote>
+<blockquote>
+<p>在 Linux 上，除了轮询系统调用之外，还有 select 和 epoll。古代 select syscall 与轮询基本相同，只是最大 fd 数限制为少量，这使得它在现代应用程序中已经过时。epoll API 由 3 个系统调用组成：epoll_create、epoll_wait 和 epoll_ctl。epoll API 是有状态的，而不是提供一组 fds 作为系统调用参数，epoll_ctl 用于操作由 epoll_create 创建的 fd 集，epoll_wait 正在操作该 fd 集。</p>
+</blockquote>
+<h2 id="06-The-Event-Loop-Implementation"><a href="#06-The-Event-Loop-Implementation" class="headerlink" title="06. The Event Loop Implementation"></a>06. The Event Loop Implementation</h2><pre class=" language-cpp"><code class="language-cpp"><span class="token keyword">enum</span> <span class="token punctuation">{</span>
+    STATE_REQ <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
+    STATE_RES <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    STATE_END <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// mark the connection for deletion</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">struct</span> Conn <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    uint32_t state <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// either STATE_REQ or STATE_RES</span>
+    <span class="token comment" spellcheck="true">// buffer for reading</span>
+    size_t rbuf_size <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    uint8_t rbuf<span class="token punctuation">[</span><span class="token number">4</span> <span class="token operator">+</span> k_max_msg<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// buffer for writing</span>
+    size_t wbuf_size <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    size_t wbuf_sent <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    uint8_t wbuf<span class="token punctuation">[</span><span class="token number">4</span> <span class="token operator">+</span> k_max_msg<span class="token punctuation">]</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>我们需要缓冲区进行读取/写入，因为在非阻塞模式下，IO 操作通常会延迟。<br>state 用于决定如何处理连接。正在进行的连接有 2 种状态。STATE_REQ 用于读取请求，STATE_RES 用于发送响应。</p>
+</blockquote>
+<blockquote>
+<p>事件循环的代码</p>
+</blockquote>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">int</span> fd <span class="token operator">=</span> <span class="token function">socket</span><span class="token punctuation">(</span>AF_INET<span class="token punctuation">,</span> SOCK_STREAM<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"socket()"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// bind, listen and etc</span>
+    <span class="token comment" spellcheck="true">// code omitted...</span>
+    <span class="token comment" spellcheck="true">// a map of all client connections, keyed by fd</span>
+    std<span class="token operator">::</span>vector<span class="token operator">&lt;</span>Conn <span class="token operator">*</span><span class="token operator">></span> fd2conn<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// set the listen fd to nonblocking mode</span>
+    <span class="token function">fd_set_nb</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// the event loop</span>
+    std<span class="token operator">::</span>vector<span class="token operator">&lt;</span><span class="token keyword">struct</span> pollfd<span class="token operator">></span> poll_args<span class="token punctuation">;</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// prepare the arguments of the poll()</span>
+        poll_args<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// for convenience, the listening fd is put in the first position</span>
+        <span class="token keyword">struct</span> pollfd pfd <span class="token operator">=</span> <span class="token punctuation">{</span>fd<span class="token punctuation">,</span> POLLIN<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+        poll_args<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>pfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// connection fds</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>Conn <span class="token operator">*</span>conn <span class="token operator">:</span> fd2conn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>conn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">continue</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">struct</span> pollfd pfd <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+            pfd<span class="token punctuation">.</span>fd <span class="token operator">=</span> conn<span class="token operator">-</span><span class="token operator">></span>fd<span class="token punctuation">;</span>
+            pfd<span class="token punctuation">.</span>events <span class="token operator">=</span> <span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>state <span class="token operator">==</span> STATE_REQ<span class="token punctuation">)</span> <span class="token operator">?</span> POLLIN <span class="token operator">:</span> POLLOUT<span class="token punctuation">;</span>
+            pfd<span class="token punctuation">.</span>events <span class="token operator">=</span> pfd<span class="token punctuation">.</span>events <span class="token operator">|</span> POLLERR<span class="token punctuation">;</span>
+            poll_args<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span>pfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// poll for active fds</span>
+        <span class="token comment" spellcheck="true">// the timeout argument doesn't matter here</span>
+        <span class="token keyword">int</span> rv <span class="token operator">=</span> <span class="token function">poll</span><span class="token punctuation">(</span>poll_args<span class="token punctuation">.</span><span class="token function">data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>nfds_t<span class="token punctuation">)</span>poll_args<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rv <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">die</span><span class="token punctuation">(</span><span class="token string">"poll"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// process active connections</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>size_t i <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> poll_args<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token operator">++</span>i<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>poll_args<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>revents<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            Conn <span class="token operator">*</span>conn <span class="token operator">=</span> fd2conn<span class="token punctuation">[</span>poll_args<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>fd<span class="token punctuation">]</span><span class="token punctuation">;</span>
+            <span class="token function">connection_io</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>state <span class="token operator">==</span> STATE_END<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">// client closed normally, or something bad happened.</span>
+                    <span class="token comment" spellcheck="true">// destroy this connection</span>
+                    fd2conn<span class="token punctuation">[</span>conn<span class="token operator">-</span><span class="token operator">></span>fd<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token constant">NULL</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span><span class="token function">close</span><span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token function">free</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// try to accept a new connection if the listening fd is active</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>poll_args<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>revents<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span><span class="token function">accept_new_conn</span><span class="token punctuation">(</span>fd2conn<span class="token punctuation">,</span> fd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>事件循环中的第一件事是设置 poll。侦听 fd 使用 POLLIN 标志进行轮询。对于连接 fd，结构 Conn 的状态决定了轮询标志。在这种特殊情况下，轮询标志要么是读取（POLLIN），要么是写入（POLLOUT），而不是两者兼而有之。如果使用 epoll，事件循环中的第一件事通常是使用 epoll_ctl 更新 fd 集。</p>
+</blockquote>
+<blockquote>
+<p>轮询还采用可用于实现计时器的超时参数，在我们的例子中，这个参数无关紧要，只需将其设置为一个大数字即可。在 poll 返回后，我们会收到通知哪个 fd 准备好阅读/写入并采取相应行动。</p>
+</blockquote>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">conn_put</span><span class="token punctuation">(</span>std<span class="token operator">::</span>vector<span class="token operator">&lt;</span>Conn <span class="token operator">*</span><span class="token operator">></span> <span class="token operator">&amp;</span>fd2conn<span class="token punctuation">,</span> <span class="token keyword">struct</span> Conn <span class="token operator">*</span>conn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>fd2conn<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;=</span> <span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>conn<span class="token operator">-</span><span class="token operator">></span>fd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        fd2conn<span class="token punctuation">.</span><span class="token function">resize</span><span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>fd <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    fd2conn<span class="token punctuation">[</span>conn<span class="token operator">-</span><span class="token operator">></span>fd<span class="token punctuation">]</span> <span class="token operator">=</span> conn<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">static</span> int32_t <span class="token function">accept_new_conn</span><span class="token punctuation">(</span>std<span class="token operator">::</span>vector<span class="token operator">&lt;</span>Conn <span class="token operator">*</span><span class="token operator">></span> <span class="token operator">&amp;</span>fd2conn<span class="token punctuation">,</span> <span class="token keyword">int</span> fd<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// accept</span>
+    <span class="token keyword">struct</span> sockaddr_in client_addr <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    socklen_t socklen <span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>client_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">int</span> connfd <span class="token operator">=</span> <span class="token function">accept</span><span class="token punctuation">(</span>fd<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> sockaddr <span class="token operator">*</span><span class="token punctuation">)</span><span class="token operator">&amp;</span>client_addr<span class="token punctuation">,</span> <span class="token operator">&amp;</span>socklen<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>connfd <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"accept() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// error</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// set the new connection fd to nonblocking mode</span>
+    <span class="token function">fd_set_nb</span><span class="token punctuation">(</span>connfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// creating the struct Conn</span>
+    <span class="token keyword">struct</span> Conn <span class="token operator">*</span>conn <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">struct</span> Conn <span class="token operator">*</span><span class="token punctuation">)</span><span class="token function">malloc</span><span class="token punctuation">(</span><span class="token keyword">sizeof</span><span class="token punctuation">(</span><span class="token keyword">struct</span> Conn<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>conn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">close</span><span class="token punctuation">(</span>connfd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    conn<span class="token operator">-</span><span class="token operator">></span>fd <span class="token operator">=</span> connfd<span class="token punctuation">;</span>
+    conn<span class="token operator">-</span><span class="token operator">></span>state <span class="token operator">=</span> STATE_REQ<span class="token punctuation">;</span>
+    conn<span class="token operator">-</span><span class="token operator">></span>rbuf_size <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    conn<span class="token operator">-</span><span class="token operator">></span>wbuf_size <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    conn<span class="token operator">-</span><span class="token operator">></span>wbuf_sent <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token function">conn_put</span><span class="token punctuation">(</span>fd2conn<span class="token punctuation">,</span> conn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>connection_io 是客户端连接的状态机</p>
+</blockquote>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">connection_io</span><span class="token punctuation">(</span>Conn <span class="token operator">*</span>conn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>state <span class="token operator">==</span> STATE_REQ<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">state_req</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>state <span class="token operator">==</span> STATE_RES<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">state_res</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token function">assert</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// not expected</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>STATE_REQ 状态用于读取</p>
+</blockquote>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token keyword">static</span> <span class="token keyword">void</span> <span class="token function">state_req</span><span class="token punctuation">(</span>Conn <span class="token operator">*</span>conn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token function">try_fill_buffer</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">static</span> <span class="token keyword">bool</span> <span class="token function">try_fill_buffer</span><span class="token punctuation">(</span>Conn <span class="token operator">*</span>conn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// try to fill the buffer</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>rbuf_size <span class="token operator">&lt;</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>rbuf<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    ssize_t rv <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token keyword">do</span> <span class="token punctuation">{</span>
+        size_t cap <span class="token operator">=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>rbuf<span class="token punctuation">)</span> <span class="token operator">-</span> conn<span class="token operator">-</span><span class="token operator">></span>rbuf_size<span class="token punctuation">;</span>
+        rv <span class="token operator">=</span> <span class="token function">read</span><span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>fd<span class="token punctuation">,</span> <span class="token operator">&amp;</span>conn<span class="token operator">-</span><span class="token operator">></span>rbuf<span class="token punctuation">[</span>conn<span class="token operator">-</span><span class="token operator">></span>rbuf_size<span class="token punctuation">]</span><span class="token punctuation">,</span> cap<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>rv <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> errno <span class="token operator">==</span> EINTR<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rv <span class="token operator">&lt;</span> <span class="token number">0</span> <span class="token operator">&amp;&amp;</span> errno <span class="token operator">==</span> EAGAIN<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// got EAGAIN, stop.</span>
+        <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rv <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"read() error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        conn<span class="token operator">-</span><span class="token operator">></span>state <span class="token operator">=</span> STATE_END<span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>rv <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>rbuf_size <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"unexpected EOF"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token function">msg</span><span class="token punctuation">(</span><span class="token string">"EOF"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        conn<span class="token operator">-</span><span class="token operator">></span>state <span class="token operator">=</span> STATE_END<span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    conn<span class="token operator">-</span><span class="token operator">></span>rbuf_size <span class="token operator">+</span><span class="token operator">=</span> <span class="token punctuation">(</span>size_t<span class="token punctuation">)</span>rv<span class="token punctuation">;</span>
+    <span class="token function">assert</span><span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>rbuf_size <span class="token operator">&lt;=</span> <span class="token keyword">sizeof</span><span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>rbuf<span class="token punctuation">)</span> <span class="token operator">-</span> conn<span class="token operator">-</span><span class="token operator">></span>rbuf_size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// Try to process requests one by one.</span>
+    <span class="token comment" spellcheck="true">// Why is there a loop? Please read the explanation of "pipelining".</span>
+    <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token function">try_one_request</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>conn<span class="token operator">-</span><span class="token operator">></span>state <span class="token operator">==</span> STATE_REQ<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+
+            </div>
+            <hr/>
+
+            
+            <style>
+    #reward {
+        margin: 40px 0;
+        text-align: center;
+    }
+
+    #reward .reward-link {
+        font-size: 1.88rem;
+    }
+
+    #reward .btn-floating:hover {
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #rewardModal {
+        width: 320px;
+        height: 350px;
+    }
+
+    #rewardModal .reward-title {
+        margin: 15px auto;
+        padding-bottom: 5px;
+    }
+
+    #rewardModal .modal-content {
+        padding: 10px;
+    }
+
+    #rewardModal .close {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 1.3rem;
+        line-height: 20px;
+        cursor: pointer;
+    }
+
+    #rewardModal .reward-tabs {
+        margin: 0 auto;
+        width: 210px;
+    }
+
+    .reward-tabs .tabs {
+        height: 38px;
+        margin: 10px auto;
+        padding-left: 0;
+    }
+
+    .reward-tabs .tabs .tab {
+        height: 38px;
+        line-height: 38px;
+    }
+
+    .reward-tabs .tab a {
+        color: #fff;
+        background-color: #ccc;
+    }
+
+    .reward-tabs .tab a:hover {
+        color: #fff;
+    }
+
+    .reward-tabs .wechat-tab .active {
+        color: #fff;
+        background-color: #22AB38;
+    }
+
+    .reward-tabs .alipay-tab .active {
+        color: #fff;
+        background-color: #019FE8;
+    }
+
+    .reward-tabs .reward-img {
+        width: 210px;
+        height: 210px;
+    }
+</style>
+
+<div id="reward">
+    <a class="reward-link btn-floating btn-large waves-effect waves-light red">赏</a>
+
+    <!-- Modal Structure -->
+    <div id="rewardModal" class="modal">
+        <div class="modal-content">
+            <a class="close"><i class="fa fa-close"></i></a>
+            <h4 class="reward-title">你的赏识是我前进的动力</h4>
+            <div class="reward-content">
+                <div class="reward-tabs">
+                    <ul class="tabs">
+                        <li class="tab wechat-tab waves-effect waves-light"><a class="active" href="#wechat">微信</a></li>
+                        <li class="tab alipay-tab waves-effect waves-light"><a href="#alipay">支付宝</a></li>
+                    </ul>
+                    <div id="wechat">
+                        <img src="/medias/reward/wechat.png" class="reward-img" alt="微信打赏二维码">
+                    </div>
+                    <div id="alipay">
+                        <img src="/medias/reward/alipay.png" class="reward-img" alt="支付宝打赏二维码">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        $('#reward .reward-link').on('click', function () {
+            $('#rewardModal').openModal();
+        });
+
+        $('#rewardModal .close').on('click', function () {
+            $('#rewardModal').closeModal();
+        });
+    });
+</script>
+            
+
+            <link rel="stylesheet" type="text/css" href="/libs/share/css/share.min.css">
+
+<div id="article-share">
+    
+    <div class="social-share" data-disabled="qzone" data-wechat-qrcode-helper="<p>微信里点“发现”->“扫一扫”二维码便可查看分享。</p>"></div>
+    
+</div>
+
+<script src="/libs/share/js/social-share.min.js"></script>
+
+            <div class="reprint">
+                <p>
+                    <span class="reprint-tip">
+                        <i class="fa fa-exclamation-circle"></i>&nbsp;&nbsp;转载请注明:
+                    </span>
+                    <a href="https://malred.github.io" class="b-link-green">malred-blog</a>
+                    <i class="fa fa-angle-right fa-lg fa-fw text-color"></i>
+                    <a href="/2023/07/15/backend/c-c/build-your-own-redis/z/" class="b-link-green">build your own redis</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+<article id="prenext-posts" class="prev-next articles">
+    <div class="row article-row">
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge left-badge text-color">
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
+            <div class="card">
+                <a href="/2023/07/16/backend/java/springsecuritycorebeginnertoguru/z/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/4.jpg" class="responsive-img" alt="Spring Security Core Beginner to Guru">
+                        
+                        <span class="card-title">Spring Security Core Beginner to Guru</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary">01 - Introduction
+git
+
+
+
+02 - Introduction to Spring Security002 Application Security 101
+003 Introducing Spring Securit</div>
+                    <div class="publish-info">
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2023-07-16
+                        </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/java/" class="post-category" target="_blank">
+                                    java
+                                </a>
+                            
+                            <a href="/categories/java/spring-security/" class="post-category" target="_blank">
+                                    spring-security
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/java/" target="_blank">
+                        <span class="chip bg-color">java</span>
+                    </a>
+                    
+                    <a href="/tags/spring-security/" target="_blank">
+                        <span class="chip bg-color">spring-security</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+        
+        <div class="article col s12 m6" data-aos="fade-up">
+            <div class="article-badge right-badge text-color">
+                下一篇&nbsp;<i class="fa fa-chevron-right"></i>
+            </div>
+            <div class="card">
+                <a href="/2023/07/15/frontend/react/nextjs-react-thecompleteguide/z-1/">
+                    <div class="card-image">
+                        
+                        
+                        <img src="/medias/featureimages/18.jpg" class="responsive-img" alt="NextJS & React - The Complete Guide">
+                        
+                        <span class="card-title">NextJS & React - The Complete Guide</span>
+                    </div>
+                </a>
+                <div class="card-content article-content">
+                    <div class="summary">01 Getting Started002 What Is Next.js_ And Why Would You Use It_
+nextjs对react进行增强，提供很多规范和开箱即用的功能
+
+
+003 Key Feature_ Serv</div>
+                    <div class="publish-info">
+                            <span class="publish-date">
+                                <i class="fa fa-clock-o fa-fw icon-date"></i>2023-07-15
+                            </span>
+                        <span class="publish-author">
+                            
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/react/" class="post-category" target="_blank">
+                                    react
+                                </a>
+                            
+                            <a href="/categories/react/nextjs/" class="post-category" target="_blank">
+                                    nextjs
+                                </a>
+                            
+                            
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/react/" target="_blank">
+                        <span class="chip bg-color">react</span>
+                    </a>
+                    
+                    <a href="/tags/nextjs/" target="_blank">
+                        <span class="chip bg-color">nextjs</span>
+                    </a>
+                    
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+</article>
+</div>
+
+
+<script>
+    $('#articleContent').on('copy', function (e) {
+        // IE8 or earlier browser is 'undefined'
+        if (typeof window.getSelection === 'undefined') return;
+
+        var selection = window.getSelection();
+        // if the selection is short let's not annoy our users.
+        if (('' + selection).length < Number.parseInt('120')) {
+            return;
+        }
+
+        // create a div outside of the visible area and fill it with the selected text.
+        var bodyElement = document.getElementsByTagName('body')[0];
+        var newdiv = document.createElement('div');
+        newdiv.style.position = 'absolute';
+        newdiv.style.left = '-99999px';
+        bodyElement.appendChild(newdiv);
+        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
+
+        // we need a <pre> tag workaround.
+        // otherwise the text inside "pre" loses all the line breaks!
+        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
+            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
+        }
+
+        var url = document.location.href;
+        newdiv.innerHTML += '<br />'
+            + '来源: malred-blog<br />'
+            + '作者: malred<br />'
+            + '链接: <a href="' + url + '">' + url + '</a><br />'
+            + '本文章著作权归作者所有，任何形式的转载都请注明出处 -> https://malred.github.io/。';
+
+        selection.selectAllChildren(newdiv);
+        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
+    });
+</script>
+
+    </div>
+    <div class="col l3 hide-on-med-and-down">
+        <div class="toc-widget">
+            <div class="toc-title"><i class="fa fa-list-alt"></i>&nbsp;&nbsp;目录</div>
+            <div id="toc-content"></div>
+        </div>
+    </div>
+</div>
+
+<script src="/libs/tocbot/tocbot.min.js"></script>
+<script>
+    $(function () {
+        tocbot.init({
+            tocSelector: '#toc-content',
+            contentSelector: '#articleContent',
+            headingsOffset: -($(window).height() * 0.4 - 45),
+            // headingsOffset: -205,
+            headingSelector: 'h1, h2, h3, h4'
+        });
+
+        // modify the toc link href to support Chinese.
+        let i = 0;
+        let tocHeading = 'toc-heading-';
+        $('#toc-content a').each(function () {
+            $(this).attr('href', '#' + tocHeading + (++i));
+        });
+
+        // modify the heading title id to support Chinese.
+        i = 0;
+        $('#articleContent').children('h1, h2, h3, h4').each(function () {
+            $(this).attr('id', tocHeading + (++i));
+        });
+
+        // Set scroll toc fixed.
+        let tocHeight = parseInt($(window).height() * 0.4 - 64);
+        let $tocWidget = $('.toc-widget');
+        $(window).scroll(function () {
+            let scroll = $(window).scrollTop();
+            /* add post toc fixed. */
+            if (scroll > tocHeight) {
+                $tocWidget.addClass('toc-fixed');
+            } else {
+                $tocWidget.removeClass('toc-fixed');
+            }
+        });
+    });
+</script>
+    
+
+</main>
+
+
+<footer class="page-footer bg-color">
+    <div class="container row center-align">
+        <div class="col s12 m8 l8 copy-right">
+            本站由&copy;<a href="https://blinkfox.github.io/" target="_blank">Blinkfox</a>基于
+            <a href="https://hexo.io/" target="_blank">Hexo</a> 的
+            <a href="https://github.com/blinkfox/hexo-theme-matery" target="_blank">hexo-theme-matery</a>主题搭建.
+
+            
+                &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
+                <span class="white-color">254.8k</span>
+            
+
+            
+			
+        </div>
+        <div class="col s12 m4 l4 social-link ">
+    <a href="https://github.com/malred" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+        <i class="fa fa-github"></i>
+    </a>
+
+
+
+    <a href="mailto:malguy2022@163.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+        <i class="fa fa-envelope-open"></i>
+    </a>
+
+
+
+    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=2725953379" class="tooltipped" data-tooltip="QQ联系我: 2725953379" data-position="top" data-delay="50">
+        <i class="fa fa-qq"></i>
+    </a>
+
+
+</div>
+    </div>
+</footer>
+
+<div class="progress-bar"></div>
+
+
+<!-- 搜索遮罩框 -->
+<div id="searchModal" class="modal">
+    <div class="modal-content">
+        <div class="search-header">
+            <span class="title"><i class="fa fa-search"></i>&nbsp;&nbsp;搜索</span>
+            <input type="search" id="searchInput" name="s" placeholder="请输入搜索的关键字"
+                   class="search-input" autofocus="">
+        </div>
+        <div id="searchResult"></div>
+    </div>
+</div>
+
+<script src="/js/search.js"></script>
+<script type="text/javascript">
+    searchFunc("/" + "search.xml", 'searchInput', 'searchResult');
+</script>
+<!-- 回到顶部按钮 -->
+<div id="backTop" class="top-scroll">
+    <a class="btn-floating btn-large waves-effect waves-light" href="#!">
+        <i class="fa fa-angle-up"></i>
+    </a>
+</div>
+
+
+<script src="/libs/materialize/js/materialize.min.js"></script>
+<script src="/libs/masonry/masonry.pkgd.min.js"></script>
+<script src="/libs/aos/aos.js"></script>
+<script src="/libs/scrollprogress/scrollProgress.min.js"></script>
+<script src="/libs/lightGallery/js/lightgallery-all.min.js"></script>
+<script src="/js/matery.js"></script>
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MSEYRC5EW5"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+    gtag('config', 'G-MSEYRC5EW5');
+</script>
+
+
+
+    <script src="/libs/others/clicklove.js"></script>
+
+
+
+</body>
+</html>
