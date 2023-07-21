@@ -1920,11 +1920,86 @@ wasm-pack build --target web
 <h2 id="002-Init-Our-Code–-koudaizy-com"><a href="#002-Init-Our-Code–-koudaizy-com" class="headerlink" title="002 Init Our Code–[koudaizy.com]"></a>002 Init Our Code–[koudaizy.com]</h2><blockquote>
 <p>如果出现这个 bug</p>
 </blockquote>
-<p><img src="20230721110259.png"><br><img src="20230721110308.png"><br><img src="20230721110314.png"></p>
+<p><img src="20230721110259.png"><br><img src="20230721110308.png"></p>
+<pre class=" language-toml"><code class="language-toml">[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+</code></pre>
+<p><img src="20230721110314.png"></p>
+<blockquote>
+<p>打包后出现 package.json</p>
+</blockquote>
+<pre class=" language-sh"><code class="language-sh">wasm-pack build --target web
+</code></pre>
 <blockquote>
 <p>在 www 的 package.json 里导入生成的 wasm 项目</p>
 </blockquote>
 <p><img src="20230721110526.png"><br><img src="20230721110535.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token keyword">import</span> init<span class="token punctuation">,</span> <span class="token punctuation">{</span> greet <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"snake_game"</span><span class="token punctuation">;</span>
+
+<span class="token function">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span>_<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token function">greet</span><span class="token punctuation">(</span><span class="token string">"Filip"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"OK!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="003-AI-pkg-files–-koudaizy-com"><a href="#003-AI-pkg-files–-koudaizy-com" class="headerlink" title="003 [AI] pkg files–[koudaizy.com]"></a>003 [AI] pkg files–[koudaizy.com]</h2><p><img src="20230721112539.png"><br><img src="20230721112626.png"><br><img src="20230721112636.png"><br><img src="20230721112643.png"><br><img src="20230721112742.png"><br><img src="20230721112816.png"></p>
+<h2 id="004-Import-FN-to-webassembly–-koudaizy-com"><a href="#004-Import-FN-to-webassembly–-koudaizy-com" class="headerlink" title="004 Import FN to webassembly–[koudaizy.com]"></a>004 Import FN to webassembly–[koudaizy.com]</h2><pre class=" language-js"><code class="language-js"><span class="token keyword">import</span> init<span class="token punctuation">,</span> <span class="token punctuation">{</span> greet <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"snake_game"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 如果接收了wasm参数，然后调用wasm.greet，会发现不生效</span>
+<span class="token comment" spellcheck="true">// 因为wasm不支持string等复杂类型</span>
+<span class="token function">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span>_<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// 被包装了一层，所以可以使用string</span>
+  <span class="token function">greet</span><span class="token punctuation">(</span><span class="token string">"Filip"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-rs"><code class="language-rs">use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn greet(name: &str) {
+    // println!("Hi there {}", name);
+    alert(name);
+}
+
+#[wasm_bindgen]
+extern {
+    pub fn alert(s: &str);
+}
+</code></pre>
+<p><img src="20230721113623.png"></p>
+<h2 id="005-Bootstrap"><a href="#005-Bootstrap" class="headerlink" title="005 Bootstrap"></a>005 Bootstrap</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// bootstrap.js</span>
+<span class="token keyword">import</span><span class="token punctuation">(</span><span class="token string">"./index.js"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token keyword">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> console<span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"Error import index.js: "</span><span class="token punctuation">,</span> e<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p><img src="20230721114154.png"><br><img src="20230721114243.png"></p>
+<h2 id="006-Wee-alloc–-koudaizy-com"><a href="#006-Wee-alloc–-koudaizy-com" class="headerlink" title="006 Wee alloc–[koudaizy.com]"></a>006 Wee alloc–[koudaizy.com]</h2><blockquote>
+<p>用 wee_alloc 缩小打包后体积</p>
+</blockquote>
+<p><img src="20230721121202.png"><br><img src="20230721121258.png"></p>
+<pre class=" language-rs"><code class="language-rs">// src/lib.rs
+use wasm_bindgen::prelude::*;
+
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+// ...
+</code></pre>
+<blockquote>
+<p>再次打包</p>
+</blockquote>
+<blockquote>
+<p>可以看到右下角体积显示 4.23kb，比原来的 12 多 kb 小</p>
+</blockquote>
+<p><img src="20230721121456.png"><br><img src="20230721121603.png"></p>
+<h1 id="13-Starting-the-Game"><a href="#13-Starting-the-Game" class="headerlink" title="13 - Starting the Game"></a>13 - Starting the Game</h1><h2 id="001-World-struct–-koudaizy-com"><a href="#001-World-struct–-koudaizy-com" class="headerlink" title="001 World struct–[koudaizy.com]"></a>001 World struct–[koudaizy.com]</h2><pre class=" language-rs"><code class="language-rs">
+![](20230721121818.png)
+
+```js
+import init, { World } from "snake_game";
+
+// 发现：rust重新打包wasm后，webpack热更新，不用重启服务器，也不用重新npm i
+init().then((_) => {
+  const world = World.new();
+  console.log(world.width);
+});
+</code></pre>
 
             </div>
             <hr/>
