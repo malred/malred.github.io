@@ -2829,7 +2829,790 @@ console<span class="token punctuation">.</span><span class="token function">log<
         };
     }
 </code></pre>
-<h1 id="16-Move-Snake-Cells"><a href="#16-Move-Snake-Cells" class="headerlink" title="16 - Move Snake Cells"></a>16 - Move Snake Cells</h1><h2 id="001-Move-cells"><a href="#001-Move-cells" class="headerlink" title="001 Move cells"></a>001 Move cells</h2>
+<h1 id="16-Move-Snake-Cells"><a href="#16-Move-Snake-Cells" class="headerlink" title="16 - Move Snake Cells"></a>16 - Move Snake Cells</h1><h2 id="001-Move-cells"><a href="#001-Move-cells" class="headerlink" title="001 Move cells"></a>001 Move cells</h2><pre class=" language-rs"><code class="language-rs">#[derive(Clone)]
+pub struct SnakeCell(usize);
+
+    pub fn step(&mut self) {
+        let temp = self.snake.body.clone();
+        let next_cell = self.gen_next_snake_cell();
+        self.snake.body[0] = next_cell;
+
+        let len = self.snake.body.len();
+
+        // 每个cell都移动到前一个cell的位置
+        for i in 1..len {
+            self.snake.body[i] = SnakeCell(temp[i - 1].0);
+        }
+    }
+</code></pre>
+<p><img src="20230722053837.png"></p>
+<h2 id="002-Change-snake-dir-check"><a href="#002-Change-snake-dir-check" class="headerlink" title="002 Change snake dir check"></a>002 Change snake dir check</h2><pre class=" language-rs"><code class="language-rs">    pub fn change_snake_dir(&mut self, direction: Direction) {
+        let next_cell = self.gen_next_snake_cell(&direction);
+
+        // 如果头的下一个位置是第二个cell，说明直接往回
+        if self.snake.body[1].0 == next_cell.0 {
+            return;
+        }
+
+        self.snake.direction = direction;
+    }
+</code></pre>
+<h2 id="003-Improve-snake-dir"><a href="#003-Improve-snake-dir" class="headerlink" title="003 Improve snake dir"></a>003 Improve snake dir</h2><pre class=" language-rs"><code class="language-rs">// ...
+
+#[derive(Clone, Copy)]
+pub struct SnakeCell(usize);
+
+// ...
+
+#[wasm_bindgen]
+pub struct World {
+    width: usize,
+    size: usize,
+    snake: Snake,
+    // option是特殊的枚举
+    next_cell: Option<SnakeCell>,
+}
+
+#[wasm_bindgen]
+impl World {
+    // ...
+    pub fn change_snake_dir(&mut self, direction: Direction) {
+        let next_cell = self.gen_next_snake_cell(&direction);
+
+        // 如果头的下一个位置是第二个cell，说明直接往回
+        if self.snake.body[1].0 == next_cell.0 {
+            return;
+        }
+
+        self.next_cell = Some(next_cell);
+        // self.next_cell = Option::Some(next_cell);
+        self.snake.direction = direction;
+    }
+
+    // ...
+    pub fn step(&mut self) {
+        let temp = self.snake.body.clone();
+
+        match self.next_cell{
+            Some(cell)=>{
+                self.snake.body[0]=cell;
+                self.next_cell=None;
+            },
+            None=>{
+                self.snake.body[0]=self.gen_next_snake_cell(&self.snake.direction);
+            }
+        }
+
+        // let next_cell = self.gen_next_snake_cell(&self.snake.direction);
+        // self.snake.body[0] = next_cell;
+
+        let len = self.snake.body.len();
+
+        // 每个cell都移动到前一个cell的位置
+        for i in 1..len {
+            self.snake.body[i] = SnakeCell(temp[i - 1].0);
+        }
+    }
+    // ...
+}
+// wasm-pack build --target web
+</code></pre>
+<h1 id="17-Reward-Cell"><a href="#17-Reward-Cell" class="headerlink" title="17 - Reward Cell"></a>17 - Reward Cell</h1><h2 id="001-Reward-cell"><a href="#001-Reward-cell" class="headerlink" title="001 Reward cell"></a>001 Reward cell</h2><pre class=" language-rs"><code class="language-rs">// ...
+
+#[wasm_bindgen]
+pub struct World {
+    width: usize,
+    size: usize,
+    snake: Snake,
+    // option是特殊的枚举
+    next_cell: Option<SnakeCell>,
+    reward_cell: usize,
+}
+
+#[wasm_bindgen]
+impl World {
+    pub fn new(width: usize, snake_idx: usize) -> World {
+        World {
+            width,
+            size: width * width,
+            snake: Snake::new(snake_idx, 3),
+            next_cell: None,
+            reward_cell: 10,
+        }
+    }
+    // ...
+}
+// wasm-pack build --target web
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">drawReward</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> idx <span class="token operator">=</span> world<span class="token punctuation">.</span><span class="token function">reward_cell</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> col <span class="token operator">=</span> idx <span class="token operator">%</span> worldWidth<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> row <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">floor</span><span class="token punctuation">(</span>idx <span class="token operator">/</span> worldWidth<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  ctx<span class="token punctuation">.</span><span class="token function">beginPath</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  ctx<span class="token punctuation">.</span>fillStyle <span class="token operator">=</span> <span class="token string">"#FF0000"</span><span class="token punctuation">;</span>
+
+  ctx<span class="token punctuation">.</span><span class="token function">fillRect</span><span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// x</span>
+    col <span class="token operator">*</span> CELL_SIZE<span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// y</span>
+    row <span class="token operator">*</span> CELL_SIZE<span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// draw x</span>
+    CELL_SIZE<span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// draw y</span>
+    CELL_SIZE
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  ctx<span class="token punctuation">.</span><span class="token function">stroke</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="002-Import-Date-to-Rust"><a href="#002-Import-Date-to-Rust" class="headerlink" title="002 Import Date to Rust"></a>002 Import Date to Rust</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// www/utils/date.js</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> now <span class="token operator">=</span> Date<span class="token punctuation">.</span>now<span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-rs"><code class="language-rs">#[wasm_bindgen(module = "/www/utils/date.js")]
+extern "C" {
+    // 导入js函数
+    fn now() -> usize;
+}
+
+#[wasm_bindgen]
+impl World {
+    pub fn new(width: usize, snake_idx: usize) -> World {
+        let size = width * width;
+        let reward_cell = now() % size;
+
+        World {
+            width,
+            size,
+            snake: Snake::new(snake_idx, 3),
+            next_cell: None,
+            reward_cell,
+        }
+    }
+}
+</code></pre>
+<h2 id="003-Random-function"><a href="#003-Random-function" class="headerlink" title="003 Random function"></a>003 Random function</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// www/utils/rnd</span>
+<span class="token keyword">export</span> <span class="token keyword">function</span> <span class="token function">rnd</span><span class="token punctuation">(</span>max<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> Math<span class="token punctuation">.</span><span class="token function">floor</span><span class="token punctuation">(</span>Math<span class="token punctuation">.</span><span class="token function">random</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span> max<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-rs"><code class="language-rs">#[wasm_bindgen(module = "/www/utils/rnd.js")]
+extern "C" {
+    // 导入js函数
+    fn rnd(max: usize) -> usize;
+}
+
+#[wasm_bindgen]
+impl World {
+    pub fn new(width: usize, snake_idx: usize) -> World {
+        let size = width * width;
+        let reward_cell = rnd(size);
+
+        World {
+            width,
+            size,
+            snake: Snake::new(snake_idx, 3),
+            next_cell: None,
+            reward_cell,
+        }
+    }
+}
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token function">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span>wasm<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> CELL_SIZE <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> WORLD_WIDTH <span class="token operator">=</span> <span class="token number">8</span><span class="token punctuation">;</span>
+  <span class="token keyword">let</span> snakeSpawnIdx <span class="token operator">=</span> <span class="token function">rnd</span><span class="token punctuation">(</span>WORLD_WIDTH <span class="token operator">*</span> WORLD_WIDTH<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="004-Check-if-body-contains-reward"><a href="#004-Check-if-body-contains-reward" class="headerlink" title="004 Check if body contains reward"></a>004 Check if body contains reward</h2><pre class=" language-rs"><code class="language-rs">#[wasm_bindgen]
+impl World {
+    pub fn new(width: usize, snake_idx: usize) -> World {
+        let snake = Snake::new(snake_idx, 3);
+        let size = width * width;
+        let mut reward_cell;
+
+        loop {
+            // 保证不生成到蛇身上
+            reward_cell = rnd(size);
+            if !snake.body.contains(&SnakeCell(reward_cell)) {
+                break;
+            }
+        }
+
+        World {
+            width,
+            size,
+            snake,
+            next_cell: None,
+            reward_cell,
+        }
+    }
+}
+</code></pre>
+<h2 id="005-Consume-reward-cell"><a href="#005-Consume-reward-cell" class="headerlink" title="005 Consume reward cell"></a>005 Consume reward cell</h2><pre class=" language-rs"><code class="language-rs">    pub fn step(&mut self) {
+        let temp = self.snake.body.clone();
+
+        match self.next_cell {
+            Some(cell) => {
+                self.snake.body[0] = cell;
+                self.next_cell = None;
+            }
+            None => {
+                self.snake.body[0] = self.gen_next_snake_cell(&self.snake.direction);
+            }
+        }
+
+        // let next_cell = self.gen_next_snake_cell(&self.snake.direction);
+        // self.snake.body[0] = next_cell;
+
+        let len = self.snake.body.len();
+
+        // 每个cell都移动到前一个cell的位置
+        for i in 1..len {
+            self.snake.body[i] = SnakeCell(temp[i - 1].0);
+        }
+
+        // 吃到豆子
+        if self.reward_cell == self.snake_head_idx() {
+            self.snake.body.push(SnakeCell(self.snake.body[1].0));
+        }
+    }
+</code></pre>
+<h2 id="006-AI-Reward-cell"><a href="#006-AI-Reward-cell" class="headerlink" title="006 AI Reward cell"></a>006 AI Reward cell</h2><p><img src="20230722071137.png"></p>
+<h2 id="007-Fn-to-gen-reward"><a href="#007-Fn-to-gen-reward" class="headerlink" title="007 Fn to gen reward"></a>007 Fn to gen reward</h2><pre class=" language-rs"><code class="language-rs">#[wasm_bindgen]
+impl World {
+    pub fn new(width: usize, snake_idx: usize) -> World {
+        let snake = Snake::new(snake_idx, 3);
+        let size = width * width;
+
+        World {
+            width,
+            reward_cell: World::gen_reward_cell(size, &snake.body),
+            size,
+            snake,
+            next_cell: None,
+        }
+    }
+
+    pub fn step(&mut self) {
+        let temp = self.snake.body.clone();
+
+        match self.next_cell {
+            Some(cell) => {
+                self.snake.body[0] = cell;
+                self.next_cell = None;
+            }
+            None => {
+                self.snake.body[0] = self.gen_next_snake_cell(&self.snake.direction);
+            }
+        }
+
+        // let next_cell = self.gen_next_snake_cell(&self.snake.direction);
+        // self.snake.body[0] = next_cell;
+
+        let len = self.snake.body.len();
+
+        // 每个cell都移动到前一个cell的位置
+        for i in 1..len {
+            self.snake.body[i] = SnakeCell(temp[i - 1].0);
+        }
+
+        // 吃到豆子
+        if self.reward_cell == self.snake_head_idx() {
+            self.snake.body.push(SnakeCell(self.snake.body[1].0));
+            self.reward_cell = World::gen_reward_cell(self.size, &self.snake.body);
+        }
+    }
+
+    fn gen_reward_cell(max: usize, snake_body: &Vec<SnakeCell>) -> usize {
+        let mut reward_cell;
+
+        loop {
+            // 保证不生成到蛇身上
+            reward_cell = rnd(max);
+            if !snake_body.contains(&SnakeCell(reward_cell)) {
+                break;
+            }
+        }
+
+        reward_cell
+    }
+}
+</code></pre>
+<h2 id="008-Reward-cell-generate-fix"><a href="#008-Reward-cell-generate-fix" class="headerlink" title="008 Reward cell generate fix"></a>008 Reward cell generate fix</h2><blockquote>
+<p>如果整个屏幕都占满了，程序会卡死</p>
+</blockquote>
+<pre class=" language-rs"><code class="language-rs">pub fn step(&mut self) {
+        // ...
+        // 吃到豆子
+        if self.reward_cell == self.snake_head_idx() {
+            if (self.snake_length() < self.size) {
+                self.reward_cell = World::gen_reward_cell(self.size, &self.snake.body);
+            } else {
+                // 占满后移到world外，就不会再被吃到
+                self.reward_cell = 1000;
+            }
+
+            self.snake.body.push(SnakeCell(self.snake.body[1].0));
+        }
+    }
+</code></pre>
+<h1 id="18-Game-status"><a href="#18-Game-status" class="headerlink" title="18 - Game status"></a>18 - Game status</h1><h2 id="001-Game-Status"><a href="#001-Game-Status" class="headerlink" title="001 Game Status"></a>001 Game Status</h2><pre class=" language-rs"><code class="language-rs">// ...
+
+#[wasm_bindgen]
+pub enum GameStatus {
+    Won,
+    Lost,
+    Played,
+}
+
+// ...
+
+#[wasm_bindgen]
+pub struct World {
+    width: usize,
+    size: usize,
+    snake: Snake,
+    // option是特殊的枚举
+    next_cell: Option<SnakeCell>,
+    // 豆子的位置
+    reward_cell: usize,
+    status: Option<GameStatus>,
+}
+
+#[wasm_bindgen]
+impl World {
+    // ...
+
+    pub fn step(&mut self) {
+        match self.status {
+            Some(GameStatus::Played) => {
+                let temp = self.snake.body.clone();
+
+                match self.next_cell {
+                    Some(cell) => {
+                        self.snake.body[0] = cell;
+                        self.next_cell = None;
+                    }
+                    None => {
+                        self.snake.body[0] = self.gen_next_snake_cell(&self.snake.direction);
+                    }
+                }
+
+                // let next_cell = self.gen_next_snake_cell(&self.snake.direction);
+                // self.snake.body[0] = next_cell;
+
+                let len = self.snake.body.len();
+
+                // 每个cell都移动到前一个cell的位置
+                for i in 1..len {
+                    self.snake.body[i] = SnakeCell(temp[i - 1].0);
+                }
+
+                // 吃到豆子
+                if self.reward_cell == self.snake_head_idx() {
+                    if (self.snake_length() < self.size) {
+                        self.reward_cell = World::gen_reward_cell(self.size, &self.snake.body);
+                    } else {
+                        // 占满后移到world外，就不会再被吃到
+                        self.reward_cell = 1000;
+                    }
+
+                    self.snake.body.push(SnakeCell(self.snake.body[1].0));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // ...
+}
+// wasm-pack build --target web
+</code></pre>
+<h2 id="002-Simple-UI"><a href="#002-Simple-UI" class="headerlink" title="002 Simple UI"></a>002 Simple UI</h2><pre class=" language-html"><code class="language-html"><span class="token doctype">&lt;!DOCTYPE html></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>zh<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>head</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">charset</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>UTF-8<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>meta</span> <span class="token attr-name">name</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>viewport<span class="token punctuation">"</span></span> <span class="token attr-name">content</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>width<span class="token punctuation">=</span>device-width, initial-scale<span class="token punctuation">=</span>1.0<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>title</span><span class="token punctuation">></span></span>Document<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>title</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>style</span><span class="token punctuation">></span></span><span class="token style language-css">
+      <span class="token selector"><span class="token class">.content-wrapper</span> </span><span class="token punctuation">{</span>
+        <span class="token property">top</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token property">left</span><span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token property">width</span><span class="token punctuation">:</span> <span class="token number">100%</span><span class="token punctuation">;</span>
+        <span class="token property">height</span><span class="token punctuation">:</span> <span class="token number">100%</span><span class="token punctuation">;</span>
+        <span class="token property">position</span><span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+        <span class="token property">display</span><span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+        <span class="token property">align-items</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+        <span class="token property">justify-content</span><span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+        <span class="token property">flex-direction</span><span class="token punctuation">:</span> column<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token selector"><span class="token class">.game-panel</span> </span><span class="token punctuation">{</span>
+        <span class="token property">margin-bottom</span><span class="token punctuation">:</span> <span class="token number">20</span>px<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token selector"><span class="token class">.flex</span> </span><span class="token punctuation">{</span>
+        <span class="token property">display</span><span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+
+      <span class="token selector"><span class="token class">.label</span> </span><span class="token punctuation">{</span>
+        <span class="token property">font-weight</span><span class="token punctuation">:</span> bold<span class="token punctuation">;</span>
+        <span class="token property">margin-right</span><span class="token punctuation">:</span> <span class="token number">10</span>px<span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    </span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>style</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>head</span><span class="token punctuation">></span></span>
+
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>body</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>content-wrapper<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>game-panel<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>flex<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+          <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>label<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Status:<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+          <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>game-status<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>None<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>flex<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+          <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>button</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>game-control-btn<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Play<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>button</span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>canvas</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>snake-canvas<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>canvas</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>./bootstrap.js<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script language-javascript"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>body</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">></span></span>
+</code></pre>
+<h2 id="003-Start-the-game"><a href="#003-Start-the-game" class="headerlink" title="003 Start the game"></a>003 Start the game</h2><pre class=" language-rs"><code class="language-rs">    pub fn start_game(&mut self) {
+        self.status = Some(GameStatus::Played);
+    }
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> init<span class="token punctuation">,</span> <span class="token punctuation">{</span> World<span class="token punctuation">,</span> Direction <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"snake_game"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> rnd <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"./utils/rnd"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// 重新打包后，不用重启服务器，也不用重新npm i</span>
+<span class="token function">init</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">then</span><span class="token punctuation">(</span><span class="token punctuation">(</span>wasm<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// ...</span>
+  <span class="token keyword">const</span> gameControlBtn <span class="token operator">=</span> document<span class="token punctuation">.</span><span class="token function">getElementById</span><span class="token punctuation">(</span><span class="token string">"game-control-btn"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">// ...</span>
+  gameControlBtn<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">"click"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    world<span class="token punctuation">.</span><span class="token function">start_game</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">play</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment" spellcheck="true">// ...</span>
+
+  <span class="token keyword">function</span> <span class="token function">play</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> fps <span class="token operator">=</span> <span class="token number">10</span><span class="token punctuation">;</span>
+    <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+      ctx<span class="token punctuation">.</span><span class="token function">clearRect</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> canvas<span class="token punctuation">.</span>width<span class="token punctuation">,</span> canvas<span class="token punctuation">.</span>height<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      world<span class="token punctuation">.</span><span class="token function">step</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token function">paint</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment" spellcheck="true">// 你希望执行一个动画，并且要求浏览器在下次重绘之前调用指定的回调函数更新动画。</span>
+      <span class="token comment" spellcheck="true">// 该方法需要传入一个回调函数作为参数，该回调函数会在浏览器下一次重绘之前执行。</span>
+      <span class="token function">requestAnimationFrame</span><span class="token punctuation">(</span>play<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1000</span> <span class="token operator">/</span> fps<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token function">paint</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="004-Handle-game-status"><a href="#004-Handle-game-status" class="headerlink" title="004 Handle game status"></a>004 Handle game status</h2><pre class=" language-rs"><code class="language-rs">    pub fn game_status(&self) -> Option<GameStatus> {
+        self.status
+    }
+</code></pre>
+<pre class=" language-ts"><code class="language-ts">gameControlBtn<span class="token punctuation">.</span><span class="token function">addEventListener</span><span class="token punctuation">(</span><span class="token string">"click"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> gameStatus <span class="token operator">=</span> world<span class="token punctuation">.</span><span class="token function">game_status</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token comment" spellcheck="true">// if (gameStatus === undefined) {</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>gameStatus<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    gameControlBtn<span class="token punctuation">.</span>textContent <span class="token operator">=</span> <span class="token string">"Playing..."</span><span class="token punctuation">;</span>
+    world<span class="token punctuation">.</span><span class="token function">start_game</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">play</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+    location<span class="token punctuation">.</span><span class="token function">reload</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="005-Draw-game-status"><a href="#005-Draw-game-status" class="headerlink" title="005 Draw game status"></a>005 Draw game status</h2><pre class=" language-rs"><code class="language-rs">    pub fn game_status_text(&self) -> String {
+        match self.status {
+            Some(GameStatus::Won) => String::from("You have won!"),
+            Some(GameStatus::Lost) => String::from("You have lost!"),
+            Some(GameStatus::Played) => String::from("Playing!"),
+            None => String::from("No Status"),
+        }
+    }
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token keyword">function</span> <span class="token function">drawGameStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  gameStatus<span class="token punctuation">.</span>textContent <span class="token operator">=</span> world<span class="token punctuation">.</span><span class="token function">game_status_text</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">paint</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token function">drawWorld</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">drawReward</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">drawSnake</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token function">drawGameStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="19-Game-Outcomes"><a href="#19-Game-Outcomes" class="headerlink" title="19 - Game Outcomes"></a>19 - Game Outcomes</h1><h2 id="001-Win-Case"><a href="#001-Win-Case" class="headerlink" title="001 Win Case"></a>001 Win Case</h2><p><img src="20230722104822.png"></p>
+<h2 id="002-Lost-Case"><a href="#002-Lost-Case" class="headerlink" title="002 Lost Case"></a>002 Lost Case</h2><p><img src="20230722105036.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">function</span> <span class="token function">drawSnake</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> snakeCells <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Uint32Array</span><span class="token punctuation">(</span>
+    wasm<span class="token punctuation">.</span>memory<span class="token punctuation">.</span>buffer<span class="token punctuation">,</span>
+    world<span class="token punctuation">.</span><span class="token function">snake_cells</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    world<span class="token punctuation">.</span><span class="token function">snake_length</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  snakeCells
+    <span class="token comment" spellcheck="true">// 撞到的那个去掉，就显示头部</span>
+    <span class="token comment" spellcheck="true">// 这样碰撞lose后显示的蛇就有头，而不是全是body</span>
+    <span class="token comment" spellcheck="true">// .filter((cellIdx, i) => !(i > 0 &amp;&amp; cellIdx === snakeCells[0]))</span>
+    <span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">reverse</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span>cellIdx<span class="token punctuation">,</span> i<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+      <span class="token keyword">const</span> col <span class="token operator">=</span> cellIdx <span class="token operator">%</span> worldWidth<span class="token punctuation">;</span>
+      <span class="token keyword">const</span> row <span class="token operator">=</span> Math<span class="token punctuation">.</span><span class="token function">floor</span><span class="token punctuation">(</span>cellIdx <span class="token operator">/</span> worldWidth<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      ctx<span class="token punctuation">.</span>fillStyle <span class="token operator">=</span> i <span class="token operator">===</span> snakeCells<span class="token punctuation">.</span>length <span class="token operator">-</span> <span class="token number">1</span> <span class="token operator">?</span> <span class="token string">"#7878db"</span> <span class="token punctuation">:</span> <span class="token string">"#000000"</span><span class="token punctuation">;</span>
+
+      ctx<span class="token punctuation">.</span><span class="token function">beginPath</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      ctx<span class="token punctuation">.</span><span class="token function">fillRect</span><span class="token punctuation">(</span>
+        <span class="token comment" spellcheck="true">// x</span>
+        col <span class="token operator">*</span> CELL_SIZE<span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">// y</span>
+        row <span class="token operator">*</span> CELL_SIZE<span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">// draw x</span>
+        CELL_SIZE<span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">// draw y</span>
+        CELL_SIZE
+      <span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  ctx<span class="token punctuation">.</span><span class="token function">stroke</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="003-Mapping-function"><a href="#003-Mapping-function" class="headerlink" title="003 Mapping function"></a>003 Mapping function</h2><pre class=" language-rs"><code class="language-rs">// ...
+
+#[wasm_bindgen]
+pub struct World {
+    width: usize,
+    size: usize,
+    snake: Snake,
+    // option是特殊的枚举
+    next_cell: Option<SnakeCell>,
+    // 豆子的位置
+    reward_cell: Option<usize>,
+    status: Option<GameStatus>,
+}
+
+#[wasm_bindgen]
+impl World {
+    pub fn new(width: usize, snake_idx: usize) -> World {
+        let snake = Snake::new(snake_idx, 3);
+        let size = width * width;
+
+        World {
+            width,
+            reward_cell: World::gen_reward_cell(size, &snake.body),
+            size,
+            snake,
+            next_cell: None,
+            status: None,
+        }
+    }
+
+    // ...
+
+    pub fn reward_cell(&self) -> Option<usize> {
+        self.reward_cell
+    }
+
+    pub fn step(&mut self) {
+        match self.status {
+            Some(GameStatus::Played) => {
+                // ...
+
+                // 吃到豆子
+                if self.reward_cell == Some(self.snake_head_idx()) {
+                    if (self.snake_length() < self.size) {
+                        self.reward_cell = World::gen_reward_cell(self.size, &self.snake.body);
+                    } else {
+                        self.reward_cell = None;
+                        self.status = Some(GameStatus::Won);
+                    }
+
+                    self.snake.body.push(SnakeCell(self.snake.body[1].0));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn gen_reward_cell(max: usize, snake_body: &Vec<SnakeCell>) -> Option<usize> {
+        let mut reward_cell;
+
+        loop {
+            // 保证不生成到蛇身上
+            reward_cell = rnd(max);
+            if !snake_body.contains(&SnakeCell(reward_cell)) {
+                break;
+            }
+        }
+
+        Some(reward_cell)
+    }
+    // ...
+}
+// wasm-pack build --target web
+</code></pre>
+<h2 id="004-Some-reward"><a href="#004-Some-reward" class="headerlink" title="004 Some reward"></a>004 Some reward</h2><h2 id="005-Add-points"><a href="#005-Add-points" class="headerlink" title="005 Add points"></a>005 Add points</h2><pre class=" language-rs"><code class="language-rs">// ...
+
+#[wasm_bindgen]
+pub struct World {
+    width: usize,
+    size: usize,
+    snake: Snake,
+    // option是特殊的枚举
+    next_cell: Option<SnakeCell>,
+    // 豆子的位置
+    reward_cell: Option<usize>,
+    status: Option<GameStatus>,
+    // 积分
+    points: usize,
+}
+
+#[wasm_bindgen]
+impl World {
+    pub fn new(width: usize, snake_idx: usize) -> World {
+        let snake = Snake::new(snake_idx, 3);
+        let size = width * width;
+
+        World {
+            width,
+            reward_cell: World::gen_reward_cell(size, &snake.body),
+            size,
+            snake,
+            next_cell: None,
+            status: None,
+            points: 0,
+        }
+    }
+
+    pub fn points(&self) -> usize {
+        self.points
+    }
+
+    // ...
+
+    pub fn step(&mut self) {
+        match self.status {
+            Some(GameStatus::Played) => {
+                // ...
+
+                // 吃到豆子
+                if self.reward_cell == Some(self.snake_head_idx()) {
+                    if (self.snake_length() < self.size) {
+                        self.points += 1;
+                        self.reward_cell = World::gen_reward_cell(self.size, &self.snake.body);
+                    } else {
+                        self.reward_cell = None;
+                        self.status = Some(GameStatus::Won);
+                    }
+
+                    self.snake.body.push(SnakeCell(self.snake.body[1].0));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // ...
+}
+// wasm-pack build --target web
+</code></pre>
+<pre class=" language-html"><code class="language-html"><span class="token doctype">&lt;!DOCTYPE html></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>html</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>zh<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+  <span class="token comment" spellcheck="true">&lt;!-- --></span>
+
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>body</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>content-wrapper<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>game-panel<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>flex<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+          <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>label<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Status:<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+          <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>game-status<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>None<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>flex<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+          <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>label<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Points:<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+          <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>points<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span> <span class="token attr-name">class</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>flex<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+          <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>button</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>game-control-btn<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>Play<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>button</span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+      <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>canvas</span> <span class="token attr-name">id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>snake-canvas<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>canvas</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">src</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>./bootstrap.js<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script language-javascript"></span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+  <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>body</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>html</span><span class="token punctuation">></span></span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">function</span> <span class="token function">drawGameStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> status <span class="token operator">=</span> world<span class="token punctuation">.</span><span class="token function">game_status</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  gameStatus<span class="token punctuation">.</span>textContent <span class="token operator">=</span> world<span class="token punctuation">.</span><span class="token function">game_status_text</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  points<span class="token punctuation">.</span>textContent <span class="token operator">=</span> world<span class="token punctuation">.</span><span class="token function">points</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>status <span class="token operator">==</span> GameStatus<span class="token punctuation">.</span>Won <span class="token operator">||</span> status <span class="token operator">==</span> GameStatus<span class="token punctuation">.</span>Lost<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    gameControlBtn<span class="token punctuation">.</span>textContent <span class="token operator">=</span> <span class="token string">"Re-Play"</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="006-Handle-play-loop"><a href="#006-Handle-play-loop" class="headerlink" title="006 Handle play loop"></a>006 Handle play loop</h2><pre class=" language-ts"><code class="language-ts"><span class="token keyword">function</span> <span class="token function">play</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> status <span class="token operator">=</span> world<span class="token punctuation">.</span><span class="token function">game_status</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>status <span class="token operator">==</span> GameStatus<span class="token punctuation">.</span>Won <span class="token operator">||</span> status <span class="token operator">==</span> GameStatus<span class="token punctuation">.</span>Lost<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    gameControlBtn<span class="token punctuation">.</span>textContent <span class="token operator">=</span> <span class="token string">"Re-Play"</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">const</span> fps <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">;</span>
+  <span class="token function">setTimeout</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    ctx<span class="token punctuation">.</span><span class="token function">clearRect</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> canvas<span class="token punctuation">.</span>width<span class="token punctuation">,</span> canvas<span class="token punctuation">.</span>height<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    world<span class="token punctuation">.</span><span class="token function">step</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">paint</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 你希望执行一个动画，并且要求浏览器在下次重绘之前调用指定的回调函数更新动画。</span>
+    <span class="token comment" spellcheck="true">// 该方法需要传入一个回调函数作为参数，该回调函数会在浏览器下一次重绘之前执行。</span>
+    <span class="token function">requestAnimationFrame</span><span class="token punctuation">(</span>play<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token number">1000</span> <span class="token operator">/</span> fps<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="20-Deployment"><a href="#20-Deployment" class="headerlink" title="20 - Deployment"></a>20 - Deployment</h1><h2 id="001-Prod-server"><a href="#001-Prod-server" class="headerlink" title="001 Prod server"></a>001 Prod server</h2><pre class=" language-sh"><code class="language-sh"># /server
+npm init -y
+npm i --save express compression
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// server/index.js</span>
+<span class="token keyword">const</span> compression <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"compression"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> express <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"express"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> path <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"path"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> app <span class="token operator">=</span> <span class="token function">express</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> port <span class="token operator">=</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span>PORT <span class="token operator">||</span> <span class="token number">3000</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token keyword">public</span> <span class="token operator">=</span> path<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span>__dirname<span class="token punctuation">,</span> <span class="token string">".."</span><span class="token punctuation">,</span> <span class="token string">"www"</span><span class="token punctuation">,</span> <span class="token string">"public"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+app<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span><span class="token function">compression</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+app<span class="token punctuation">.</span><span class="token function">use</span><span class="token punctuation">(</span>express<span class="token punctuation">.</span><span class="token keyword">static</span><span class="token punctuation">(</span><span class="token keyword">public</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+app<span class="token punctuation">.</span><span class="token keyword">get</span><span class="token punctuation">(</span><span class="token string">"*"</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>_<span class="token punctuation">,</span> res<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  res<span class="token punctuation">.</span><span class="token function">sendFile</span><span class="token punctuation">(</span><span class="token keyword">public</span> <span class="token operator">+</span> <span class="token string">"/index.html"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+app<span class="token punctuation">.</span><span class="token function">listen</span><span class="token punctuation">(</span>port<span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"Server is running!"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p><img src="20230722152315.png"></p>
+<h2 id="2"><a href="#2" class="headerlink" title="2"></a>2</h2><p><img src="20230722152634.png"><br><img src="20230722152730.png"><br><img src="20230722152734.png"><br><img src="20230722152740.png"><br><img src="20230722152745.png"></p>
+<h2 id="3"><a href="#3" class="headerlink" title="3"></a>3</h2><p><img src="20230722152808.png"><br><img src="20230722152815.png"></p>
+<h2 id="4"><a href="#4" class="headerlink" title="4"></a>4</h2><p><img src="20230722152836.png"></p>
+
             </div>
             <hr/>
 
@@ -3514,7 +4297,7 @@ nest new nest-event</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">273.8k</span>
+                <span class="white-color">274.9k</span>
             
 
             
