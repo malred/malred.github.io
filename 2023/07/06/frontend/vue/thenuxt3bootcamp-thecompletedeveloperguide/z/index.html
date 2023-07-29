@@ -374,14 +374,14 @@ UR(通用渲染) ">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        7.8k
+                        9.1k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        47 分
+                        55 分
                     </div>
                     
                 
@@ -2872,7 +2872,501 @@ module<span class="token punctuation">.</span>exports <span class="token operato
 <span class="token punctuation">}</span>
 </code></pre>
 <h1 id="9-Building-a-REST-API"><a href="#9-Building-a-REST-API" class="headerlink" title="9. Building a REST API"></a>9. Building a REST API</h1><h2 id="1-App-Overview-4"><a href="#1-App-Overview-4" class="headerlink" title="1. App Overview"></a>1. App Overview</h2><h2 id="2-Our-Endpoints"><a href="#2-Our-Endpoints" class="headerlink" title="2. Our Endpoints"></a>2. Our Endpoints</h2><p><img src="20230716160227.png"></p>
-<h2 id="3-Creating-Our-Server"><a href="#3-Creating-Our-Server" class="headerlink" title="3. Creating Our Server"></a>3. Creating Our Server</h2>
+<h2 id="3-Creating-Our-Server"><a href="#3-Creating-Our-Server" class="headerlink" title="3. Creating Our Server"></a>3. Creating Our Server</h2><pre class=" language-sh"><code class="language-sh">npx nuxi init todo
+cd
+npm i
+npm run dev
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// app.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">""</span><span class="token operator">></span>
+    <span class="token punctuation">{</span><span class="token punctuation">{</span> data <span class="token punctuation">}</span><span class="token punctuation">}</span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> data <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useFetch</span><span class="token punctuation">(</span><span class="token string">'/api/todo'</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// index.ts</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineEventHandler</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">return</span> <span class="token string">"Hello this is data"</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="4-GET-Requests"><a href="#4-GET-Requests" class="headerlink" title="4. GET Requests"></a>4. GET Requests</h2><pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> db <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"~~/server/db"</span><span class="token punctuation">;</span>
+<span class="token comment" spellcheck="true">// server/api/todo/index.ts</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineEventHandler</span><span class="token punctuation">(</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> method <span class="token operator">=</span> e<span class="token punctuation">.</span>req<span class="token punctuation">.</span>method<span class="token punctuation">;</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>method <span class="token operator">===</span> <span class="token string">"GET"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> db<span class="token punctuation">.</span>todos<span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// server/db/index.ts</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> db <span class="token operator">=</span> <span class="token punctuation">{</span>
+  todos<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="5-POST-Requests-and-Body"><a href="#5-POST-Requests-and-Body" class="headerlink" title="5. POST Requests and Body"></a>5. POST Requests and Body</h2><pre class=" language-sh"><code class="language-sh">npm i uuid
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> db <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"~~/server/db"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> v4 as uuid <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"uuid"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// /api/todo/</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineEventHandler</span><span class="token punctuation">(</span>async <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> method <span class="token operator">=</span> e<span class="token punctuation">.</span>req<span class="token punctuation">.</span>method<span class="token punctuation">;</span>
+  <span class="token keyword">switch</span> <span class="token punctuation">(</span>method<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">"GET"</span><span class="token punctuation">:</span>
+      <span class="token keyword">return</span> db<span class="token punctuation">.</span>todos<span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">"POST"</span><span class="token punctuation">:</span>
+      <span class="token keyword">const</span> body <span class="token operator">=</span> await <span class="token function">useBody</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment" spellcheck="true">// console.log({ body });</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>body<span class="token punctuation">.</span>item<span class="token punctuation">)</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">const</span> newTodo <span class="token operator">=</span> <span class="token punctuation">{</span>
+        id<span class="token punctuation">:</span> <span class="token function">uuid</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        item<span class="token punctuation">:</span> body<span class="token punctuation">.</span>item<span class="token punctuation">,</span>
+        completed<span class="token punctuation">:</span> <span class="token keyword">false</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+      db<span class="token punctuation">.</span>todos<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>newTodo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> newTodo<span class="token punctuation">;</span>
+    <span class="token keyword">default</span><span class="token punctuation">:</span>
+      console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"default"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p><img src="20230724164724.png"><br><img src="20230724164747.png"></p>
+<h2 id="6-PUT-amp-DELETE-with-Dynamic-Endpoints"><a href="#6-PUT-amp-DELETE-with-Dynamic-Endpoints" class="headerlink" title="6. PUT &amp; DELETE with Dynamic Endpoints"></a>6. PUT &amp; DELETE with Dynamic Endpoints</h2><pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// server/api/todo/[id].ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> db <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"~~/server/db"</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineEventHandler</span><span class="token punctuation">(</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> method <span class="token operator">=</span> e<span class="token punctuation">.</span>req<span class="token punctuation">.</span>method<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> context <span class="token operator">=</span> e<span class="token punctuation">.</span>context<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span> id <span class="token punctuation">}</span> <span class="token operator">=</span> context<span class="token punctuation">.</span>params<span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> findById <span class="token operator">=</span> <span class="token punctuation">(</span>id<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> index<span class="token punctuation">;</span>
+    <span class="token keyword">const</span> todo <span class="token operator">=</span> db<span class="token punctuation">.</span>todos<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> i<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span>id <span class="token operator">===</span> id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        index <span class="token operator">=</span> i<span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      <span class="token keyword">return</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>todo<span class="token punctuation">)</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span> todo<span class="token punctuation">,</span> index <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> <span class="token punctuation">{</span> todo<span class="token punctuation">,</span> index <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">findById</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">switch</span> <span class="token punctuation">(</span>method<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">"PUT"</span><span class="token punctuation">:</span>
+      <span class="token keyword">const</span> uptTodo <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token operator">...</span>todo<span class="token punctuation">,</span>
+        completed<span class="token punctuation">:</span> <span class="token operator">!</span>todo<span class="token punctuation">.</span>completed<span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+      db<span class="token punctuation">.</span>todos<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">=</span> uptTodo<span class="token punctuation">;</span>
+      <span class="token keyword">return</span> uptTodo<span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">"DELETE"</span><span class="token punctuation">:</span>
+      db<span class="token punctuation">.</span>todos<span class="token punctuation">.</span><span class="token function">splice</span><span class="token punctuation">(</span>index<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">return</span> <span class="token punctuation">{</span> msg<span class="token punctuation">:</span> <span class="token string">"item deleted"</span> <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="7-Error-Handling"><a href="#7-Error-Handling" class="headerlink" title="7. Error Handling"></a>7. Error Handling</h2><pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> db <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"~~/server/db"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> createError<span class="token punctuation">,</span> sendError <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"h3"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineEventHandler</span><span class="token punctuation">(</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> method <span class="token operator">=</span> e<span class="token punctuation">.</span>req<span class="token punctuation">.</span>method<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> context <span class="token operator">=</span> e<span class="token punctuation">.</span>context<span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span> id <span class="token punctuation">}</span> <span class="token operator">=</span> context<span class="token punctuation">.</span>params<span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> TodoNotFoundError <span class="token operator">=</span> <span class="token function">createError</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    statusCode<span class="token punctuation">:</span> <span class="token number">404</span><span class="token punctuation">,</span>
+    statusMessage<span class="token punctuation">:</span> <span class="token string">"Todo not found"</span><span class="token punctuation">,</span>
+    data<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> findById <span class="token operator">=</span> <span class="token punctuation">(</span>id<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> index<span class="token punctuation">;</span>
+    <span class="token keyword">const</span> todo <span class="token operator">=</span> db<span class="token punctuation">.</span>todos<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> i<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span>t<span class="token punctuation">.</span>id <span class="token operator">===</span> id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        index <span class="token operator">=</span> i<span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      <span class="token keyword">return</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>todo<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token function">sendError</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span> TodoNotFoundError<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span> todo<span class="token punctuation">,</span> index <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+  <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> <span class="token punctuation">{</span> db <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"~~/server/db"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> v4 as uuid <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"uuid"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> createError<span class="token punctuation">,</span> sendError <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"h3"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// /api/todo/</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> <span class="token function">defineEventHandler</span><span class="token punctuation">(</span>async <span class="token punctuation">(</span>e<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> method <span class="token operator">=</span> e<span class="token punctuation">.</span>req<span class="token punctuation">.</span>method<span class="token punctuation">;</span>
+  <span class="token keyword">switch</span> <span class="token punctuation">(</span>method<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token string">"GET"</span><span class="token punctuation">:</span>
+      <span class="token keyword">return</span> db<span class="token punctuation">.</span>todos<span class="token punctuation">;</span>
+    <span class="token keyword">case</span> <span class="token string">"POST"</span><span class="token punctuation">:</span>
+      <span class="token keyword">const</span> body <span class="token operator">=</span> await <span class="token function">useBody</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token comment" spellcheck="true">// console.log({ body });</span>
+      <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>body<span class="token punctuation">.</span>item<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> BadReqError <span class="token operator">=</span> <span class="token function">createError</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+          statusCode<span class="token punctuation">:</span> <span class="token number">400</span><span class="token punctuation">,</span>
+          statusMessage<span class="token punctuation">:</span> <span class="token string">"No item provided"</span><span class="token punctuation">,</span>
+          data<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">sendError</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span> BadReqError<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p><img src="20230724184831.png"></p>
+<h2 id="8-Building-the-HTML"><a href="#8-Building-the-HTML" class="headerlink" title="8. Building the HTML"></a>8. Building the HTML</h2><pre class=" language-sh"><code class="language-sh">npm i @nuxt/ui
+</code></pre>
+<p><img src="20230724185650.png"></p>
+<pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"container"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>NCard <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"cards"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>h1<span class="token operator">></span>My Todos<span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"add-todo"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input type<span class="token operator">=</span><span class="token string">"text"</span> placeholder<span class="token operator">=</span><span class="token string">"Add a new todo..."</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>NButton<span class="token operator">></span>Add<span class="token operator">&lt;</span><span class="token operator">/</span>NButton<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>NCard <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card"</span> v<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">=</span><span class="token string">"todo in todos"</span> <span class="token punctuation">:</span>key<span class="token operator">=</span><span class="token string">"todo.id"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>h4<span class="token operator">></span>
+          <span class="token punctuation">{</span><span class="token punctuation">{</span> todo<span class="token punctuation">.</span>item <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>h4<span class="token operator">></span>
+        <span class="token operator">&lt;</span>p<span class="token operator">></span>x<span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>NCard<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>NCard<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> data<span class="token punctuation">:</span> todos <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useFetch</span><span class="token punctuation">(</span><span class="token string">'/api/todo'</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>container <span class="token punctuation">{</span>
+  padding<span class="token punctuation">:</span> 2rem<span class="token punctuation">;</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span> auto<span class="token punctuation">;</span>
+  max<span class="token operator">-</span>width<span class="token punctuation">:</span> <span class="token number">50</span><span class="token operator">%</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>cards <span class="token punctuation">{</span>
+  padding<span class="token punctuation">:</span> 2rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>card <span class="token punctuation">{</span>
+  padding<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>5rem<span class="token punctuation">;</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> 1rem<span class="token punctuation">;</span>
+  cursor<span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  justify<span class="token operator">-</span>content<span class="token punctuation">:</span> space<span class="token operator">-</span>between<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+input <span class="token punctuation">{</span>
+  outline<span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>add<span class="token operator">-</span>todo <span class="token punctuation">{</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  justify<span class="token operator">-</span>content<span class="token punctuation">:</span> space<span class="token operator">-</span>between<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="9-Making-POST-PUT-DELETE-Requests-From-the-Frontend"><a href="#9-Making-POST-PUT-DELETE-Requests-From-the-Frontend" class="headerlink" title="9. Making POST, PUT, DELETE Requests From the Frontend"></a>9. Making POST, PUT, DELETE Requests From the Frontend</h2><pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"container"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>NCard <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"cards"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>h1<span class="token operator">></span>My Todos<span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"add-todo"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"input"</span> type<span class="token operator">=</span><span class="token string">"text"</span> placeholder<span class="token operator">=</span><span class="token string">"Add a new todo..."</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>NButton @Click<span class="token operator">=</span><span class="token string">"addTodo"</span><span class="token operator">></span>Add<span class="token operator">&lt;</span><span class="token operator">/</span>NButton<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>NCard
+        @Click<span class="token operator">=</span><span class="token string">"() => uptTodo(todo.id)"</span>
+        <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card"</span>
+        v<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">=</span><span class="token string">"todo in todos"</span>
+        <span class="token punctuation">:</span>key<span class="token operator">=</span><span class="token string">"todo.id"</span>
+      <span class="token operator">></span>
+        <span class="token operator">&lt;</span>h4 <span class="token punctuation">:</span><span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"todo.completed ? 'completed' : null"</span><span class="token operator">></span>
+          <span class="token punctuation">{</span><span class="token punctuation">{</span> todo<span class="token punctuation">.</span>item <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>h4<span class="token operator">></span>
+        <span class="token operator">&lt;</span>p @Click<span class="token operator">=</span><span class="token string">"() => delTodo(todo.id)"</span><span class="token operator">></span>x<span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>NCard<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>NCard<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> data<span class="token punctuation">:</span> todos <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useFetch</span><span class="token punctuation">(</span><span class="token string">'/api/todo'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> addTodo <span class="token operator">=</span> async <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>input<span class="token punctuation">.</span>value<span class="token punctuation">)</span> <span class="token keyword">return</span>
+  await <span class="token function">$fetch</span><span class="token punctuation">(</span><span class="token string">'/api/todo'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    method<span class="token punctuation">:</span> <span class="token string">'POST'</span><span class="token punctuation">,</span>
+    body<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+      item<span class="token punctuation">:</span> input<span class="token punctuation">.</span>value
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> uptTodo <span class="token operator">=</span> async id <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  await <span class="token function">$fetch</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`/api/todo/</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>id<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span> method<span class="token punctuation">:</span> <span class="token string">'PUT'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> delTodo <span class="token operator">=</span> async id <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  await <span class="token function">$fetch</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`/api/todo/</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>id<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span> method<span class="token punctuation">:</span> <span class="token string">'DELETE'</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>container <span class="token punctuation">{</span>
+  padding<span class="token punctuation">:</span> 2rem<span class="token punctuation">;</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span> auto<span class="token punctuation">;</span>
+  max<span class="token operator">-</span>width<span class="token punctuation">:</span> <span class="token number">50</span><span class="token operator">%</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>cards <span class="token punctuation">{</span>
+  padding<span class="token punctuation">:</span> 2rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>card <span class="token punctuation">{</span>
+  padding<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>5rem<span class="token punctuation">;</span>
+  margin<span class="token operator">-</span>top<span class="token punctuation">:</span> 1rem<span class="token punctuation">;</span>
+  cursor<span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  justify<span class="token operator">-</span>content<span class="token punctuation">:</span> space<span class="token operator">-</span>between<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>completed <span class="token punctuation">{</span>
+  text<span class="token operator">-</span>decoration<span class="token punctuation">:</span> line<span class="token operator">-</span>through<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+input <span class="token punctuation">{</span>
+  outline<span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>add<span class="token operator">-</span>todo <span class="token punctuation">{</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  justify<span class="token operator">-</span>content<span class="token punctuation">:</span> space<span class="token operator">-</span>between<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="10-Organizing-Code-in-Composable"><a href="#10-Organizing-Code-in-Composable" class="headerlink" title="10. Organizing Code in Composable"></a>10. Organizing Code in Composable</h2><pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// composables/useTodos.ts</span>
+<span class="token keyword">const</span> useTodos <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span> data<span class="token punctuation">:</span> todos<span class="token punctuation">,</span> refresh <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useAsyncData</span><span class="token punctuation">(</span><span class="token string">"todos"</span><span class="token punctuation">,</span> async <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token function">$fetch</span><span class="token punctuation">(</span><span class="token string">"/api/todo"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> addTodo <span class="token operator">=</span> async <span class="token punctuation">(</span>item<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>item<span class="token punctuation">)</span> <span class="token keyword">return</span><span class="token punctuation">;</span>
+    await <span class="token function">$fetch</span><span class="token punctuation">(</span><span class="token string">"/api/todo"</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+      method<span class="token punctuation">:</span> <span class="token string">"POST"</span><span class="token punctuation">,</span>
+      body<span class="token punctuation">:</span> <span class="token punctuation">{</span> item <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">refresh</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> uptTodo <span class="token operator">=</span> async <span class="token punctuation">(</span>id<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    await <span class="token function">$fetch</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`/api/todo/</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>id<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span> method<span class="token punctuation">:</span> <span class="token string">"PUT"</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">refresh</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> delTodo <span class="token operator">=</span> async <span class="token punctuation">(</span>id<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    await <span class="token function">$fetch</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`/api/todo/</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>id<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span> method<span class="token punctuation">:</span> <span class="token string">"DELETE"</span> <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">refresh</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">return</span> <span class="token punctuation">{</span>
+    todos<span class="token punctuation">,</span>
+    addTodo<span class="token punctuation">,</span>
+    uptTodo<span class="token punctuation">,</span>
+    delTodo<span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">default</span> useTodos<span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"container"</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>NCard <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"cards"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>h1<span class="token operator">></span>My Todos<span class="token operator">&lt;</span><span class="token operator">/</span>h1<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"add-todo"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input v<span class="token operator">-</span>model<span class="token operator">=</span><span class="token string">"input"</span> type<span class="token operator">=</span><span class="token string">"text"</span> placeholder<span class="token operator">=</span><span class="token string">"Add a new todo..."</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>NButton @Click<span class="token operator">=</span><span class="token string">"handleClick"</span><span class="token operator">></span>Add<span class="token operator">&lt;</span><span class="token operator">/</span>NButton<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>NCard
+        @Click<span class="token operator">=</span><span class="token string">"() => uptTodo(todo.id)"</span>
+        <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card"</span>
+        v<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">=</span><span class="token string">"todo in todos"</span>
+        <span class="token punctuation">:</span>key<span class="token operator">=</span><span class="token string">"todo.id"</span>
+      <span class="token operator">></span>
+        <span class="token operator">&lt;</span>h4 <span class="token punctuation">:</span><span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"todo.completed ? 'completed' : null"</span><span class="token operator">></span>
+          <span class="token punctuation">{</span><span class="token punctuation">{</span> todo<span class="token punctuation">.</span>item <span class="token punctuation">}</span><span class="token punctuation">}</span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>h4<span class="token operator">></span>
+        <span class="token operator">&lt;</span>p @Click<span class="token operator">=</span><span class="token string">"() => delTodo(todo.id)"</span><span class="token operator">></span>x<span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>NCard<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>NCard<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> todos<span class="token punctuation">,</span> addTodo<span class="token punctuation">,</span> uptTodo<span class="token punctuation">,</span> delTodo <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useTodos</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> input <span class="token operator">=</span> <span class="token function">ref</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> handleClick <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token function">addTodo</span><span class="token punctuation">(</span>input<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+  input<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">''</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token comment" spellcheck="true">// ...</span>
+</code></pre>
+<h1 id="10-Integrating-with-Supabase"><a href="#10-Integrating-with-Supabase" class="headerlink" title="10. Integrating with Supabase"></a>10. Integrating with Supabase</h1><h2 id="1-App-Overview-5"><a href="#1-App-Overview-5" class="headerlink" title="1. App Overview"></a>1. App Overview</h2><p><img src="20230724194104.png"><br><img src="20230724194110.png"><br><img src="20230724194043.png"></p>
+<h2 id="2-Building-the-Authentication-Card"><a href="#2-Building-the-Authentication-Card" class="headerlink" title="2. Building the Authentication Card"></a>2. Building the Authentication Card</h2><pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// components/Auth/Card.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">""</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>NCard <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>h3<span class="token operator">></span>Login<span class="token operator">&lt;</span><span class="token operator">/</span>h3<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"input-container"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input placeholder<span class="token operator">=</span><span class="token string">"Email"</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input placeholder<span class="token operator">=</span><span class="token string">"Password"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>NButton<span class="token operator">></span>Login<span class="token operator">&lt;</span><span class="token operator">/</span>NButton<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>NCard<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script setup<span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token operator">&lt;</span>style<span class="token operator">></span>
+<span class="token punctuation">.</span>card <span class="token punctuation">{</span>
+  padding<span class="token punctuation">:</span> 1rem<span class="token punctuation">;</span>
+  width<span class="token punctuation">:</span> 25rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>card h3 <span class="token punctuation">{</span>
+  font<span class="token operator">-</span>size<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>input<span class="token operator">-</span>container <span class="token punctuation">{</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>3rem <span class="token number">0</span><span class="token punctuation">;</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  flex<span class="token operator">-</span>direction<span class="token punctuation">:</span> column<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>input<span class="token operator">-</span>container input <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">/* width: 10rem; */</span>
+  margin<span class="token operator">-</span>bottom<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>5rem<span class="token punctuation">;</span>
+  padding<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>2rem<span class="token punctuation">;</span>
+  outline<span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+
+  border<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>1rem solid <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  border<span class="token operator">-</span>radius<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>2rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// pages/index.vue</span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">""</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"container"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>AuthCard <span class="token operator">/</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script setup<span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token operator">&lt;</span>style scoped<span class="token operator">></span>
+<span class="token punctuation">.</span>container <span class="token punctuation">{</span>
+  max<span class="token operator">-</span>width<span class="token punctuation">:</span> <span class="token number">50</span><span class="token operator">%</span><span class="token punctuation">;</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span> auto<span class="token punctuation">;</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  justify<span class="token operator">-</span>content<span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+  align<span class="token operator">-</span>items<span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+  height<span class="token punctuation">:</span> 100vh<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="3-Conditionally-Displaying-Signup-or-Signin-Form"><a href="#3-Conditionally-Displaying-Signup-or-Signin-Form" class="headerlink" title="3. Conditionally Displaying Signup or Signin Form"></a>3. Conditionally Displaying Signup or Signin Form</h2><pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">""</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>NCard <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"card"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>h3<span class="token operator">></span><span class="token punctuation">{</span><span class="token punctuation">{</span> authState <span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h3<span class="token operator">></span>
+      <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"input-container"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input placeholder<span class="token operator">=</span><span class="token string">"Email"</span> <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>input placeholder<span class="token operator">=</span><span class="token string">"Password"</span> <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+      <span class="token operator">&lt;</span>NButton<span class="token operator">></span>Submit<span class="token operator">&lt;</span><span class="token operator">/</span>NButton<span class="token operator">></span>
+      <span class="token operator">&lt;</span>p @Click<span class="token operator">=</span><span class="token string">"toggleAuthState"</span><span class="token operator">></span>
+        <span class="token punctuation">{</span><span class="token punctuation">{</span>
+          authState <span class="token operator">===</span> <span class="token string">'Login'</span>
+            <span class="token operator">?</span> <span class="token string">"Don't have an account? Create one now"</span>
+            <span class="token punctuation">:</span> <span class="token string">'Already have an account? Go ahead an log in'</span>
+        <span class="token punctuation">}</span><span class="token punctuation">}</span>
+      <span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>NCard<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> authState <span class="token operator">=</span> ref<span class="token operator">&lt;</span><span class="token string">'Login'</span> <span class="token operator">|</span> <span class="token string">'Signup'</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token string">'login'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> toggleAuthState <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>authState<span class="token punctuation">.</span>value <span class="token operator">===</span> <span class="token string">'Login'</span><span class="token punctuation">)</span> authState<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'Signup'</span>
+  <span class="token keyword">else</span> authState<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">'Login'</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token operator">&lt;</span>style<span class="token operator">></span>
+<span class="token punctuation">.</span>card <span class="token punctuation">{</span>
+  padding<span class="token punctuation">:</span> 1rem<span class="token punctuation">;</span>
+  width<span class="token punctuation">:</span> 25rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>card h3 <span class="token punctuation">{</span>
+  font<span class="token operator">-</span>size<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">.</span>75rem<span class="token punctuation">;</span>
+  text<span class="token operator">-</span>transform<span class="token punctuation">:</span> capitalize<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>input<span class="token operator">-</span>container <span class="token punctuation">{</span>
+  margin<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>3rem <span class="token number">0</span><span class="token punctuation">;</span>
+  display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+  flex<span class="token operator">-</span>direction<span class="token punctuation">:</span> column<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">.</span>input<span class="token operator">-</span>container input <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">/* width: 10rem; */</span>
+  margin<span class="token operator">-</span>bottom<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>5rem<span class="token punctuation">;</span>
+  padding<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>2rem<span class="token punctuation">;</span>
+  outline<span class="token punctuation">:</span> none<span class="token punctuation">;</span>
+
+  border<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>1rem solid <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  border<span class="token operator">-</span>radius<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>2rem<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+p <span class="token punctuation">{</span>
+  color<span class="token punctuation">:</span> blue<span class="token punctuation">;</span>
+  font<span class="token operator">-</span>size<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">.</span>5rem<span class="token punctuation">;</span>
+  cursor<span class="token punctuation">:</span> pointer<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<h2 id="4-Creating-a-Supabase-Account-and-Project"><a href="#4-Creating-a-Supabase-Account-and-Project" class="headerlink" title="4. Creating a Supabase Account and Project"></a>4. Creating a Supabase Account and Project</h2><p><img src="20230725062721.png"><br><img src="20230725063131.png" alt="supabase"></p>
+<h2 id="5-Connect-Nuxt-to-Supabase"><a href="#5-Connect-Nuxt-to-Supabase" class="headerlink" title="5. Connect Nuxt to Supabase"></a>5. Connect Nuxt to Supabase</h2><pre class=" language-sh"><code class="language-sh">npm install @supabase/supabase-js
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// composables/useSupabase.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> createClient <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@supabase/supabase-js"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> supabaseUrl <span class="token operator">=</span> <span class="token string">"https://dfhsbkwiamyvtpzrkvgg.supabase.co"</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> supabaseKey <span class="token operator">=</span> <span class="token string">""</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> useSupabase <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> supabase <span class="token operator">=</span> <span class="token function">createClient</span><span class="token punctuation">(</span>supabaseUrl<span class="token punctuation">,</span> supabaseKey<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">return</span> <span class="token punctuation">{</span>
+    supabase<span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">default</span> useSupabase<span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token operator">&lt;</span>template<span class="token operator">></span>
+  <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">""</span><span class="token operator">></span>
+    <span class="token operator">&lt;</span>div <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"container"</span><span class="token operator">></span>
+      <span class="token operator">&lt;</span>AuthCard <span class="token operator">/</span><span class="token operator">></span>
+      <span class="token punctuation">{</span><span class="token punctuation">{</span> supabase <span class="token punctuation">}</span><span class="token punctuation">}</span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+  <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span> supabase <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">useSupabase</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token comment" spellcheck="true">// ...</span>
+</code></pre>
+<h1 id="11-Handling-Authentication"><a href="#11-Handling-Authentication" class="headerlink" title="11. Handling Authentication"></a>11. Handling Authentication</h1>
             </div>
             <hr/>
 
@@ -3473,43 +3967,6 @@ gitment.render('gitment-content');
 </div>
 
 
-<script>
-    $('#articleContent').on('copy', function (e) {
-        // IE8 or earlier browser is 'undefined'
-        if (typeof window.getSelection === 'undefined') return;
-
-        var selection = window.getSelection();
-        // if the selection is short let's not annoy our users.
-        if (('' + selection).length < Number.parseInt('120')) {
-            return;
-        }
-
-        // create a div outside of the visible area and fill it with the selected text.
-        var bodyElement = document.getElementsByTagName('body')[0];
-        var newdiv = document.createElement('div');
-        newdiv.style.position = 'absolute';
-        newdiv.style.left = '-99999px';
-        bodyElement.appendChild(newdiv);
-        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
-
-        // we need a <pre> tag workaround.
-        // otherwise the text inside "pre" loses all the line breaks!
-        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
-            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
-        }
-
-        var url = document.location.href;
-        newdiv.innerHTML += '<br />'
-            + '来源: malred-blog<br />'
-            + '作者: malred<br />'
-            + '链接: <a href="' + url + '">' + url + '</a><br />'
-            + '本文章著作权归作者所有，任何形式的转载都请注明出处 -> https://malred.github.io/。';
-
-        selection.selectAllChildren(newdiv);
-        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
-    });
-</script>
-
     </div>
     <div class="col l3 hide-on-med-and-down">
         <div class="toc-widget">
@@ -3571,7 +4028,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">280.4k</span>
+                <span class="white-color">303.7k</span>
             
 
             

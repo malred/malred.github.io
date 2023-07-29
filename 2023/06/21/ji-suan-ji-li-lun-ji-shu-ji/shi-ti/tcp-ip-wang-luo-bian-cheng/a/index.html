@@ -375,14 +375,14 @@ c 语言的 print 和 scanf 进行控制台输入输出,控制台 IO 和文件 I
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        6.3k
+                        7.1k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        26 分
+                        30 分
                     </div>
                     
                 
@@ -1348,7 +1348,148 @@ SOCKET <span class="token function">socket</span><span class="token punctuation"
 <blockquote>
 <p>如果不考虑这种顺序的不同，则对接收数据有影响</p>
 </blockquote>
-<h4 id="3-3-1-字节序-order-与网络字节序"><a href="#3-3-1-字节序-order-与网络字节序" class="headerlink" title="3.3.1 字节序(order)与网络字节序"></a>3.3.1 字节序(order)与网络字节序</h4>
+<h4 id="3-3-1-字节序-order-与网络字节序"><a href="#3-3-1-字节序-order-与网络字节序" class="headerlink" title="3.3.1 字节序(order)与网络字节序"></a>3.3.1 字节序(order)与网络字节序</h4><blockquote>
+<p>cpu 向内存保存数据的方式有 2 种，所以 cpu 解释数据的方式也分 2 种</p>
+</blockquote>
+<ul>
+<li>大端序（Big Endian）：高位字节存放到低位地址</li>
+<li>小端序（Little Endian）：高位字节存放到高位地址</li>
+</ul>
+<blockquote>
+<p>以 4 字节整数 0x12345678 存放到 0x20 为例</p>
+</blockquote>
+<p><img src="20230726100045.png" alt="0x12是最高位字节（数的高位就是最左边），保存在0x12（地址越小越低位）"><br><img src="20230726100204.png" alt="0x12是最高位字节，保存在0x23高位"></p>
+<blockquote>
+<p>每种 cpu 的数据保存方式都不同，所以代表 cpu 数据保存方式的主机字节序（host byte order）也不同。目前主流的 intel 系列 cpu 以小端序保存数据。</p>
+</blockquote>
+<p><img src="20230726100555.png"></p>
+<blockquote>
+<p>为了解决字节序问题，网络传输数据时约定统一使用网络字节序（network byte order）————大端序</p>
+</blockquote>
+<h4 id="3-3-2-字节序转换（Endian-Conversions）"><a href="#3-3-2-字节序转换（Endian-Conversions）" class="headerlink" title="3.3.2 字节序转换（Endian Conversions）"></a>3.3.2 字节序转换（Endian Conversions）</h4><blockquote>
+<p>在填充 sockadr_in 结构体前要先将数据转换成网络字节序</p>
+</blockquote>
+<ul>
+<li>unsigned short htons(unsigned short);</li>
+<li>unsigned short ntohl(unsigned short);</li>
+<li>unsigned long htons(unsigned long);</li>
+<li>unsigned long ntohl(unsigned long);</li>
+</ul>
+<blockquote>
+<p>s 代表 short，l 代表 long（linux 中 long 类型占 4 字节），htons 可以解释为：把 short 类型数据从主机字节序转化为网络字节序</p>
+</blockquote>
+<blockquote>
+<p>虽然大端序的主机字节序和网络字节序一样，但是为了程序通用性，还是要作转换工作</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token comment" spellcheck="true">// endian_conv.c</span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span>argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">short</span> host_port<span class="token operator">=</span><span class="token number">0x1234</span><span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">short</span> net_port<span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">long</span> host_addr<span class="token operator">=</span><span class="token number">0x12345678</span><span class="token punctuation">;</span>
+    <span class="token keyword">unsigned</span> <span class="token keyword">long</span> net_addr<span class="token punctuation">;</span>
+
+    net_port<span class="token operator">=</span><span class="token function">htons</span><span class="token punctuation">(</span>host_port<span class="token punctuation">)</span><span class="token punctuation">;</span>gcc endian_conv<span class="token punctuation">.</span>c <span class="token operator">-</span>o conv
+    <span class="token punctuation">.</span><span class="token operator">/</span>conv
+    ```
+    net_addr<span class="token operator">=</span><span class="token function">htonl</span><span class="token punctuation">(</span>host_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Host ordered port: %#x \n"</span><span class="token punctuation">,</span> host_port<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Network ordered port: %#x \n"</span><span class="token punctuation">,</span> net_port<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Host ordered address: %#lx \n"</span><span class="token punctuation">,</span> host_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Network ordered address: %#lx \n"</span><span class="token punctuation">,</span> net_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-sh"><code class="language-sh">gcc endian_conv.c -o conv
+./conv
+</code></pre>
+<p><img src="20230726102827.png"></p>
+<blockquote>
+<p>如果在大端序 cpu 中运行，变量值不会变，但是 intel 和 amd 系列都是小端序</p>
+</blockquote>
+<h3 id="3-4-网络地址的初始化与分配"><a href="#3-4-网络地址的初始化与分配" class="headerlink" title="3.4 网络地址的初始化与分配"></a>3.4 网络地址的初始化与分配</h3><h4 id="3-4-1-将字符串信息转换为网络字节序的整数型"><a href="#3-4-1-将字符串信息转换为网络字节序的整数型" class="headerlink" title="3.4.1 将字符串信息转换为网络字节序的整数型"></a>3.4.1 将字符串信息转换为网络字节序的整数型</h4><blockquote>
+<p>sockaddr_in 中保存地址信息的成员为 32 位整数型。ip 地址的表示有点分十进制表示法（Dotted Decimal Notation）而非整数型数据表示法。有个函数可以帮我们把字符串形式的 ip 地址转为 32 位整数型，同时进行网络字节序的转换</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+
+<span class="token comment" spellcheck="true">// in_addr_t -> 32位整数</span>
+in_addr_t <span class="token function">inet_addr</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span> string<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span> argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span>addr1<span class="token operator">=</span><span class="token string">"1.2.3.4"</span><span class="token punctuation">;</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span>addr2<span class="token operator">=</span><span class="token string">"1.2.3.256"</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">unsigned</span> <span class="token keyword">long</span> conv_addr<span class="token operator">=</span><span class="token function">inet_addr</span><span class="token punctuation">(</span>addr1<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>conv_addr<span class="token operator">==</span>INADDR_NONE<span class="token punctuation">)</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Error occured! \n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">else</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Network ordered integer addr: %#lx \n"</span><span class="token punctuation">,</span>conv_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    conv_addr<span class="token operator">=</span><span class="token function">inet_addr</span><span class="token punctuation">(</span>addr2<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>conv_addr<span class="token operator">==</span>INADDR_NONE<span class="token punctuation">)</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>conv_addr<span class="token operator">==</span>INADDR_NONE<span class="token punctuation">)</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Error occured! \n"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">else</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Network ordered integer addr: %#lx \n"</span><span class="token punctuation">,</span>conv_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-sh"><code class="language-sh">gcc inet_addr.c -o addr
+./addr
+</code></pre>
+<p><img src="20230726155338.png" alt="inet_addr不仅可以转换ip地址，还能检测无效的ip地址"></p>
+<blockquote>
+<p>inet_aton 函数和 inet_addr 函数功能相同，但是它利用 in_addr 结构体，而且更常用</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+
+<span class="token keyword">int</span> <span class="token function">inet_aton</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">char</span> <span class="token operator">*</span> string<span class="token punctuation">,</span> <span class="token keyword">struct</span> in_addr <span class="token operator">*</span> addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<blockquote>
+<p>如果调用 inet_addr 函数，需要将结果填入 sockaddr_in 结构体里的 in_addr 结构体变量。而 inet_aton 函数会把结果自动填入传给该函数的 in_addr 结构体变量</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdio.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;stdlib.h></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+<span class="token keyword">void</span> <span class="token function">error_handing</span><span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token operator">*</span> argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">char</span> <span class="token operator">*</span>addr<span class="token operator">=</span><span class="token string">"127.232.124.79"</span><span class="token punctuation">;</span>
+    <span class="token keyword">struct</span> sockaddr_in addr_inet<span class="token punctuation">;</span>
+
+    <span class="token keyword">if</span><span class="token punctuation">(</span><span class="token operator">!</span><span class="token function">inet_aton</span><span class="token punctuation">(</span>addr<span class="token punctuation">,</span> <span class="token operator">&amp;</span>addr_inet<span class="token punctuation">.</span>sin_addr<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token function">error_handing</span><span class="token punctuation">(</span><span class="token string">"Conversion error"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">else</span>
+        <span class="token function">printf</span><span class="token punctuation">(</span><span class="token string">"Network ordered integer addr: %#x \n"</span><span class="token punctuation">,</span>addr_inet<span class="token punctuation">.</span>sin_addr<span class="token punctuation">.</span>s_addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">void</span> <span class="token function">error_handing</span><span class="token punctuation">(</span><span class="token keyword">char</span> <span class="token operator">*</span>message<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token function">fputs</span><span class="token punctuation">(</span>message<span class="token punctuation">,</span> <span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">fputc</span><span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">,</span> <span class="token constant">stderr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-sh"><code class="language-sh">gcc inet_aton.c -o aton
+./aton
+</code></pre>
+<p><img src="20230726161056.png"></p>
+<blockquote>
+<p>接下来这个函数的作用和 inet_aton 正好相反，可以把网络字节序 ip 地址转换为字符串形式</p>
+</blockquote>
+<pre class=" language-c"><code class="language-c"><span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;arpa/inet.h></span></span>
+
+<span class="token function">inet_ntoa</span><span class="token punctuation">(</span><span class="token keyword">struct</span> in_addr addr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+
             </div>
             <hr/>
 
@@ -1905,8 +2046,8 @@ mysql的运行过程和微信(c/s架构)类似,它的服务器程序直接与要
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">第一部分 Go与Web应用1. Go与Web应用
-一门新的编程语言,需要构建与互联网(internet)和万维网(World Wide Web)交互的库和框架,go语言从问世以来,在编写web应用和x即服务系统(*-as-a-service</div>
+                    <div class="summary">第一部分 Go 与 Web 应用1. Go 与 Web 应用
+一门新的编程语言,需要构建与互联网(internet)和万维网(World Wide Web)交互的库和框架,go 语言从问世以来,在编写 web 应用和 x 即服务系统(*-a</div>
                     <div class="publish-info">
                             <span class="publish-date">
                                 <i class="fa fa-clock-o fa-fw icon-date"></i>2023-06-17
@@ -1939,43 +2080,6 @@ mysql的运行过程和微信(c/s架构)类似,它的服务器程序直接与要
 </article>
 </div>
 
-
-<script>
-    $('#articleContent').on('copy', function (e) {
-        // IE8 or earlier browser is 'undefined'
-        if (typeof window.getSelection === 'undefined') return;
-
-        var selection = window.getSelection();
-        // if the selection is short let's not annoy our users.
-        if (('' + selection).length < Number.parseInt('120')) {
-            return;
-        }
-
-        // create a div outside of the visible area and fill it with the selected text.
-        var bodyElement = document.getElementsByTagName('body')[0];
-        var newdiv = document.createElement('div');
-        newdiv.style.position = 'absolute';
-        newdiv.style.left = '-99999px';
-        bodyElement.appendChild(newdiv);
-        newdiv.appendChild(selection.getRangeAt(0).cloneContents());
-
-        // we need a <pre> tag workaround.
-        // otherwise the text inside "pre" loses all the line breaks!
-        if (selection.getRangeAt(0).commonAncestorContainer.nodeName === 'PRE') {
-            newdiv.innerHTML = "<pre>" + newdiv.innerHTML + "</pre>";
-        }
-
-        var url = document.location.href;
-        newdiv.innerHTML += '<br />'
-            + '来源: malred-blog<br />'
-            + '作者: malred<br />'
-            + '链接: <a href="' + url + '">' + url + '</a><br />'
-            + '本文章著作权归作者所有，任何形式的转载都请注明出处 -> https://malred.github.io/。';
-
-        selection.selectAllChildren(newdiv);
-        window.setTimeout(function () {bodyElement.removeChild(newdiv);}, 200);
-    });
-</script>
 
     </div>
     <div class="col l3 hide-on-med-and-down">
@@ -2038,7 +2142,7 @@ mysql的运行过程和微信(c/s架构)类似,它的服务器程序直接与要
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">280.4k</span>
+                <span class="white-color">303.7k</span>
             
 
             
