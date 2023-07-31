@@ -375,14 +375,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        10.7k
+                        16.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        42 分
+                        69 分
                     </div>
                     
                 
@@ -1726,6 +1726,1445 @@
 <h2 id="2-3-连接-REPL"><a href="#2-3-连接-REPL" class="headerlink" title="2.3 连接 REPL"></a>2.3 连接 REPL</h2><blockquote>
 <p>从 REPL 的 Start 函数中删除求值器和环境设置，并替换为对编译器和虚拟机的调用</p>
 </blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">Start</span><span class="token punctuation">(</span>in io<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> out io<span class="token punctuation">.</span>Writer<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    scanner <span class="token operator">:=</span> bufio<span class="token punctuation">.</span><span class="token function">NewScanner</span><span class="token punctuation">(</span>in<span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> <span class="token punctuation">{</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>out<span class="token punctuation">,</span> PROMPT<span class="token punctuation">)</span>
+        scanned <span class="token operator">:=</span> scanner<span class="token punctuation">.</span><span class="token function">Scan</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token operator">!</span>scanned <span class="token punctuation">{</span>
+            <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+
+        line <span class="token operator">:=</span> scanner<span class="token punctuation">.</span><span class="token function">Text</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        l <span class="token operator">:=</span> lexer<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span>
+        p <span class="token operator">:=</span> parser<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>l<span class="token punctuation">)</span>
+
+        program <span class="token operator">:=</span> p<span class="token punctuation">.</span><span class="token function">ParseProgram</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>p<span class="token punctuation">.</span><span class="token function">Errors</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            <span class="token function">printParserErrors</span><span class="token punctuation">(</span>out<span class="token punctuation">,</span> p<span class="token punctuation">.</span><span class="token function">Errors</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">continue</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 求值不同</span>
+        comp <span class="token operator">:=</span> compiler<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        err <span class="token operator">:=</span> comp<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>program<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>out<span class="token punctuation">,</span> <span class="token string">"Woops! Compilation failed:\n %s\n"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+            <span class="token keyword">continue</span>
+        <span class="token punctuation">}</span>
+
+        machine <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>comp<span class="token punctuation">.</span><span class="token function">Bytecode</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        err <span class="token operator">=</span> machine<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            fmt<span class="token punctuation">.</span><span class="token function">Fprintf</span><span class="token punctuation">(</span>out<span class="token punctuation">,</span> <span class="token string">"Woops! Executing bytecode failed:\n %s\n"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+            <span class="token keyword">continue</span>
+        <span class="token punctuation">}</span>
+
+        stackTop <span class="token operator">:=</span> machine<span class="token punctuation">.</span><span class="token function">StackTop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        io<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>out<span class="token punctuation">,</span> stackTop<span class="token punctuation">.</span><span class="token function">Inspect</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        io<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>out<span class="token punctuation">,</span> <span class="token string">"\n"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230730065751.png"></p>
+<h1 id="3-编译表达式"><a href="#3-编译表达式" class="headerlink" title="3. 编译表达式"></a>3. 编译表达式</h1><h2 id="3-1-栈清理"><a href="#3-1-栈清理" class="headerlink" title="3.1 栈清理"></a>3.1 栈清理</h2><blockquote>
+<p>现在可以将两个数相加，但是有个问题：如果不采取任何措施，1+2 的结果会永远留在栈中</p>
+</blockquote>
+<blockquote>
+<p>Monkey 里有 3 种语句：let 语句、return 语句、表达式语句。1+2 是表达式语句。前两种语句可以显式复用子表达式节点的值，而表达式语句只是用来包装表达式，从定义上说，它的值无法复用。</p>
+</blockquote>
+<blockquote>
+<p>如果输入 1;2;3; 则栈中会存在 1、2、3。如果表达式语句更多，栈会被填满，这是个大问题</p>
+</blockquote>
+<blockquote>
+<p>为了解决这个问题，需要做两件事：1.定义一个新操作码 OpPop，让虚拟机将栈顶元素弹出；2.每一个表达式语句之后都执行这个新的操作码</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// code/code.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpPop
+<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// 操作码定义详细信息</span>
+<span class="token keyword">var</span> definitions <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span>Opcode<span class="token punctuation">]</span><span class="token operator">*</span>Definition<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpPop<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"OpPop"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>向编译器添加 c.emit 调用</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>ExpressionStatement<span class="token punctuation">:</span>
+        err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Expression<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+        c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestIntegerArithmetic</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>compilerTestCase<span class="token punctuation">{</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"1 + 2"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpAdd<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span> <span class="token string">"1; 2"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span><span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runCompilerTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>虚拟机处理弹栈</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">Run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 取指</span>
+    <span class="token keyword">for</span> ip <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> ip <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>vm<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span><span class="token punctuation">;</span> ip<span class="token operator">++</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">switch</span> op <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpPop<span class="token punctuation">:</span>
+            vm<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>为了测试“在虚拟机弹出它之前，它必须在栈上”，添加一个用于测试的方法来代替 StackTop</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">LastPoppedStackElem</span><span class="token punctuation">(</span><span class="token punctuation">)</span> object<span class="token punctuation">.</span>Object <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> vm<span class="token punctuation">.</span>stack<span class="token punctuation">[</span>vm<span class="token punctuation">.</span>sp<span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>按照约定，vm.sp 总是指向 vm.stack 的下一个空槽。这是一个新元素被压栈的地方。用于我们只是递减 vm.sp（没有将值设置为 nil）使元素弹栈，因此 vm.sp 也可以指向之前的栈顶元素。</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm_test.go</span>
+<span class="token keyword">func</span> <span class="token function">runVmTests</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">,</span> ts <span class="token punctuation">[</span><span class="token punctuation">]</span>vmTestCase<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    t<span class="token punctuation">.</span><span class="token function">Helper</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> tt <span class="token operator">:=</span> <span class="token keyword">range</span> ts <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+
+        stackElem <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">LastPoppedStackElem</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        <span class="token function">testExpectedObject</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> tt<span class="token punctuation">.</span>expected<span class="token punctuation">,</span> stackElem<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>修改 REPL</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// repl/repl.go</span>
+<span class="token keyword">func</span> <span class="token function">Start</span><span class="token punctuation">(</span>in io<span class="token punctuation">.</span>Reader<span class="token punctuation">,</span> out io<span class="token punctuation">.</span>Writer<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    scanner <span class="token operator">:=</span> bufio<span class="token punctuation">.</span><span class="token function">NewScanner</span><span class="token punctuation">(</span>in<span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+
+        lastPopped <span class="token operator">:=</span> machine<span class="token punctuation">.</span><span class="token function">LastPoppedStackElem</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        io<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>out<span class="token punctuation">,</span> lastPopped<span class="token punctuation">.</span><span class="token function">Inspect</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        io<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>out<span class="token punctuation">,</span> <span class="token string">"\n"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-2-中缀表达式"><a href="#3-2-中缀表达式" class="headerlink" title="3.2 中缀表达式"></a>3.2 中缀表达式</h2><blockquote>
+<p>添加四则运算剩下的三则</p>
+</blockquote>
+<blockquote>
+<p>将操作码 Opcode 定义在 code 包里</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// code/code.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    OpConstant Opcode <span class="token operator">=</span> <span class="token boolean">iota</span>
+    OpAdd             <span class="token comment" spellcheck="true">// +</span>
+    OpSub             <span class="token comment" spellcheck="true">// -</span>
+    OpMul             <span class="token comment" spellcheck="true">// *</span>
+    OpDiv             <span class="token comment" spellcheck="true">// /</span>
+    OpPop
+<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">// ...</span>
+<span class="token keyword">var</span> definitions <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span>Opcode<span class="token punctuation">]</span><span class="token operator">*</span>Definition<span class="token punctuation">{</span>
+    OpConstant<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"OpConstant"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpAdd<span class="token punctuation">:</span>      <span class="token punctuation">{</span><span class="token string">"OpAdd"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpSub<span class="token punctuation">:</span>      <span class="token punctuation">{</span><span class="token string">"OpSub"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpMul<span class="token punctuation">:</span>      <span class="token punctuation">{</span><span class="token string">"OpMul"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpDiv<span class="token punctuation">:</span>      <span class="token punctuation">{</span><span class="token string">"OpDiv"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpPop<span class="token punctuation">:</span>      <span class="token punctuation">{</span><span class="token string">"OpPop"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>compiler 中添加解析新的运算，发起指令调用的 case 分支</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>InfixExpression<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+
+        <span class="token keyword">switch</span> node<span class="token punctuation">.</span>Operator <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> <span class="token string">"+"</span><span class="token punctuation">:</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpAdd<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> <span class="token string">"-"</span><span class="token punctuation">:</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpSub<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> <span class="token string">"*"</span><span class="token punctuation">:</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpMul<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> <span class="token string">"/"</span><span class="token punctuation">:</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpDiv<span class="token punctuation">)</span>
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unknown operator %s"</span><span class="token punctuation">,</span> node<span class="token punctuation">.</span>Operator<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>测试 compiler</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token function">TestIntegerArithmetic</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>compilerTestCase<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"1 - 2"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpSub<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"1 * 2"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpMul<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"1 / 2"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpDiv<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runCompilerTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>修改 vm，支持四则运算</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">executeBinaryIntegerOperation</span><span class="token punctuation">(</span>
+    op code<span class="token punctuation">.</span>Opcode<span class="token punctuation">,</span>
+    left<span class="token punctuation">,</span> right object<span class="token punctuation">.</span>Object<span class="token punctuation">,</span>
+<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    leftValue <span class="token operator">:=</span> left<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>Integer<span class="token punctuation">)</span><span class="token punctuation">.</span>Value
+    rightValue <span class="token operator">:=</span> right<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>Integer<span class="token punctuation">)</span><span class="token punctuation">.</span>Value
+
+    <span class="token keyword">var</span> res <span class="token builtin">int64</span>
+
+    <span class="token keyword">switch</span> op <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpAdd<span class="token punctuation">:</span>
+        res <span class="token operator">=</span> leftValue <span class="token operator">+</span> rightValue
+    <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpSub<span class="token punctuation">:</span>
+        res <span class="token operator">=</span> leftValue <span class="token operator">-</span> rightValue
+    <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpMul<span class="token punctuation">:</span>
+        res <span class="token operator">=</span> leftValue <span class="token operator">*</span> rightValue
+    <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpDiv<span class="token punctuation">:</span>
+        res <span class="token operator">=</span> leftValue <span class="token operator">/</span> rightValue
+    <span class="token keyword">default</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unknown integer operator: %d"</span><span class="token punctuation">,</span> op<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>object<span class="token punctuation">.</span>Integer<span class="token punctuation">{</span>Value<span class="token punctuation">:</span> res<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">executeBinaryOperation</span><span class="token punctuation">(</span>op code<span class="token punctuation">.</span>Opcode<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    right <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    left <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    leftType <span class="token operator">:=</span> left<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    rightType <span class="token operator">:=</span> right<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> leftType <span class="token operator">==</span> object<span class="token punctuation">.</span>INTEGER_OBJ <span class="token operator">&amp;&amp;</span> rightType <span class="token operator">==</span> object<span class="token punctuation">.</span>INTEGER_OBJ <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">executeBinaryIntegerOperation</span><span class="token punctuation">(</span>op<span class="token punctuation">,</span> left<span class="token punctuation">,</span> right<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unsupported types for binary operation: %s %s"</span><span class="token punctuation">,</span> leftType<span class="token punctuation">,</span> rightType<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">Run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 取指</span>
+    <span class="token keyword">for</span> ip <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> ip <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>vm<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span><span class="token punctuation">;</span> ip<span class="token operator">++</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 字节转换为操作码</span>
+        op <span class="token operator">:=</span> code<span class="token punctuation">.</span><span class="token function">Opcode</span><span class="token punctuation">(</span>vm<span class="token punctuation">.</span>instructions<span class="token punctuation">[</span>ip<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// 解码</span>
+        <span class="token keyword">switch</span> op <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpAdd<span class="token punctuation">,</span> code<span class="token punctuation">.</span>OpSub<span class="token punctuation">,</span> code<span class="token punctuation">.</span>OpMul<span class="token punctuation">,</span> code<span class="token punctuation">.</span>OpDiv<span class="token punctuation">:</span>
+            err <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">executeBinaryOperation</span><span class="token punctuation">(</span>op<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestIntegerArithmetic</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>vmTestCase<span class="token punctuation">{</span>
+        <span class="token punctuation">{</span><span class="token string">"1 - 2"</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"1 * 2"</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"4 / 2"</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"50 / 2 * 2 + 10 - 5"</span><span class="token punctuation">,</span> <span class="token number">55</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"5 + 5 + 5 + 5 - 10"</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"2 * 2 * 2 * 2 * 2"</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"5 * 2 + 10"</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"5 + 2 * 10"</span><span class="token punctuation">,</span> <span class="token number">25</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"5 * (2 + 10)"</span><span class="token punctuation">,</span> <span class="token number">60</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runVmTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-3-布尔类型"><a href="#3-3-布尔类型" class="headerlink" title="3.3 布尔类型"></a>3.3 布尔类型</h2><blockquote>
+<p>还剩比较运算符==、!、&lt;、&gt;，以及两个前缀表达式!和-。需要用到布尔类型</p>
+</blockquote>
+<blockquote>
+<p>如果像整数字面量一样编译为 OpConstant 指令，会浪费字节码和编译器和虚拟机资源，我们只需要定义两个操作码，将求值结果*object.Boolean 压入栈中</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// code/code.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpTrue
+    OpFalse
+<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+
+<span class="token keyword">var</span> definitions <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span>Opcode<span class="token punctuation">]</span><span class="token operator">*</span>Definition<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpTrue<span class="token punctuation">:</span>     <span class="token punctuation">{</span><span class="token string">"OpTrue"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpFalse<span class="token punctuation">:</span>    <span class="token punctuation">{</span><span class="token string">"OpFalse"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>在编译器 compiler 里添加一个 case，发出指令 OpTrue 或 OpFalse</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>Boolean<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> node<span class="token punctuation">.</span>Value <span class="token punctuation">{</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpTrue<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpFalse<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestBooleanExpression</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>compilerTestCase<span class="token punctuation">{</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"true"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpTrue<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"false"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpFalse<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runCompilerTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>让虚拟机处理 true 和 false</p>
+</blockquote>
+<blockquote>
+<p>先添加测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestBooleanExpression</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>vmTestCase<span class="token punctuation">{</span>
+        <span class="token punctuation">{</span><span class="token string">"true"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"false"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runVmTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">testExpectedObject</span><span class="token punctuation">(</span>
+    t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">,</span>
+    expected <span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    actual object<span class="token punctuation">.</span>Object<span class="token punctuation">,</span>
+<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    t<span class="token punctuation">.</span><span class="token function">Helper</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">switch</span> expected <span class="token operator">:=</span> expected<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token builtin">bool</span><span class="token punctuation">:</span>
+        err <span class="token operator">:=</span> <span class="token function">testBooleanObject</span><span class="token punctuation">(</span><span class="token function">bool</span><span class="token punctuation">(</span>expected<span class="token punctuation">)</span><span class="token punctuation">,</span> actual<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            t<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"testBooleanObject failed: %s"</span><span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">testBooleanObject</span><span class="token punctuation">(</span>expected <span class="token builtin">bool</span><span class="token punctuation">,</span> actual object<span class="token punctuation">.</span>Object<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    res<span class="token punctuation">,</span> ok <span class="token operator">:=</span> actual<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>Boolean<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"object is not Boolean. got=%T (%+v)"</span><span class="token punctuation">,</span> actual<span class="token punctuation">,</span> actual<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> res<span class="token punctuation">.</span>Value <span class="token operator">!=</span> expected <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"object has wrong value. got=%T (%+v)"</span><span class="token punctuation">,</span> actual<span class="token punctuation">,</span> actual<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230730102104.png"></p>
+<blockquote>
+<p>这里虚拟机崩溃了，因为每个表达式语句都会发出 OpPop，但是此时没有东西被压栈（还不能识别布尔类型，没有处理并压栈），所以弹栈指针移动，报错 index out of range</p>
+</blockquote>
+<blockquote>
+<p>先在虚拟机定义全局布尔变量</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm.go</span>
+<span class="token keyword">var</span> True <span class="token operator">=</span> <span class="token operator">&amp;</span>object<span class="token punctuation">.</span>Boolean<span class="token punctuation">{</span>Value<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">}</span>
+<span class="token keyword">var</span> False <span class="token operator">=</span> <span class="token operator">&amp;</span>object<span class="token punctuation">.</span>Boolean<span class="token punctuation">{</span>Value<span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>设为全局变量，1.它们是唯一且不变的值；2.每次使用 bool 都是引用全局变量，省空间；3.更容易实现比较运算（只需要对比两个指针，无需对比指向的值）</p>
+</blockquote>
+<blockquote>
+<p>扩展虚拟机的主循环，添加将 True、False 压栈的逻辑</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">Run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 取指</span>
+    <span class="token keyword">for</span> ip <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> ip <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>vm<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span><span class="token punctuation">;</span> ip<span class="token operator">++</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 字节转换为操作码</span>
+        op <span class="token operator">:=</span> code<span class="token punctuation">.</span><span class="token function">Opcode</span><span class="token punctuation">(</span>vm<span class="token punctuation">.</span>instructions<span class="token punctuation">[</span>ip<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// 解码</span>
+        <span class="token keyword">switch</span> op <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpTrue<span class="token punctuation">:</span>
+            err <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>True<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+        <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpFalse<span class="token punctuation">:</span>
+            err <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>False<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-4-比较运算符"><a href="#3-4-比较运算符" class="headerlink" title="3.4 比较运算符"></a>3.4 比较运算符</h2><blockquote>
+<p>Monkey 支持 4 个比较运算符: == != &gt; &lt;，首先添加 3 个新操作码</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// code/code.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpEqual
+    OpNotEqual
+    OpGreaterThan
+<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+
+<span class="token keyword">var</span> definitions <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span>Opcode<span class="token punctuation">]</span><span class="token operator">*</span>Definition<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpEqual<span class="token punctuation">:</span>       <span class="token punctuation">{</span><span class="token string">"OpEqual"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpNotEqual<span class="token punctuation">:</span>    <span class="token punctuation">{</span><span class="token string">"OpNotEqual"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpGreaterThan<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"OpGreaterThan"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>这些操作码通过比较栈顶两个元素来完成工作。它们让虚拟机将栈顶待比较的元素弹出，然后将比较结果压栈</p>
+</blockquote>
+<blockquote>
+<p>为什么没有 OpLessThan？因为可以通过编译器的代码重排序来完成。比如 3&lt;5 可以重新排序为 5&gt;3，结果不变。让编译器将小于表达式重排序为大于表达式，可以保持更小的指令集，虚拟机循环更紧凑。</p>
+</blockquote>
+<blockquote>
+<p>测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestBooleanExpression</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>compilerTestCase<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"1 > 2"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpGreaterThan<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"1 &lt; 2"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpGreaterThan<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"1 == 2"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpEqual<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"1 != 2"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpNotEqual<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"true == false"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpTrue<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpFalse<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpEqual<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"true != false"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpTrue<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpFalse<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpNotEqual<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runCompilerTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230730163348.png"></p>
+<blockquote>
+<p>扩展 Compile 方法</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>InfixExpression<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+
+        <span class="token keyword">switch</span> node<span class="token punctuation">.</span>Operator <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">case</span> <span class="token string">">"</span><span class="token punctuation">:</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpGreaterThan<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> <span class="token string">"=="</span><span class="token punctuation">:</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpEqual<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> <span class="token string">"!="</span><span class="token punctuation">:</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpNotEqual<span class="token punctuation">)</span>
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unknown operator %s"</span><span class="token punctuation">,</span> node<span class="token punctuation">.</span>Operator<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230730163533.png"></p>
+<blockquote>
+<p>添加对&lt;的处理</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>InfixExpression<span class="token punctuation">:</span>
+        <span class="token keyword">if</span> node<span class="token punctuation">.</span>Operator <span class="token operator">==</span> <span class="token string">"&lt;"</span> <span class="token punctuation">{</span>
+            err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Right<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+            err <span class="token operator">=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Left<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpGreaterThan<span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>这里&lt;作为一个特殊用例来处理。如果遇到&lt;，就调整编译顺序，首先编译 node.Right，然后是 node.Left，再发出 OpGreaterThan 操作码。</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestBooleanExpression</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>vmTestCase<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span><span class="token string">"1 &lt; 2"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"1 > 2"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"1 &lt; 1"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"1 > 1"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"1 == 1"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"1 != 1"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"1 == 2"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"1 != 2"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"true == true"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"false == false"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"true == false"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"true != false"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"false != true"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"(1 &lt; 2) == true"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"(1 &lt; 2) == false"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"(1 > 2) == true"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"(1 > 2) == false"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runVmTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230730165455.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm.go</span>
+<span class="token keyword">func</span> <span class="token function">nativeBoolToBooleanObject</span><span class="token punctuation">(</span>input <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token operator">*</span>object<span class="token punctuation">.</span>Boolean <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> input <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> True
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> False
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 比较数字</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">executeIntegerComparison</span><span class="token punctuation">(</span>
+    op code<span class="token punctuation">.</span>Opcode<span class="token punctuation">,</span>
+    left<span class="token punctuation">,</span> right object<span class="token punctuation">.</span>Object<span class="token punctuation">,</span>
+<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    leftValue <span class="token operator">:=</span> left<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>Integer<span class="token punctuation">)</span><span class="token punctuation">.</span>Value
+    rightValue <span class="token operator">:=</span> right<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>Integer<span class="token punctuation">)</span><span class="token punctuation">.</span>Value
+
+    <span class="token keyword">switch</span> op <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpEqual<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token function">nativeBoolToBooleanObject</span><span class="token punctuation">(</span>rightValue <span class="token operator">==</span> leftValue<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpNotEqual<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token function">nativeBoolToBooleanObject</span><span class="token punctuation">(</span>rightValue <span class="token operator">!=</span> leftValue<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpGreaterThan<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token function">nativeBoolToBooleanObject</span><span class="token punctuation">(</span>leftValue <span class="token operator">></span> rightValue<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">default</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unknown operator: %d"</span><span class="token punctuation">,</span> op<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">executeComparison</span><span class="token punctuation">(</span>op code<span class="token punctuation">.</span>Opcode<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    right <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    left <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> left<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> object<span class="token punctuation">.</span>INTEGER_OBJ <span class="token operator">&amp;&amp;</span> right<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">==</span> object<span class="token punctuation">.</span>INTEGER_OBJ <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">executeIntegerComparison</span><span class="token punctuation">(</span>op<span class="token punctuation">,</span> left<span class="token punctuation">,</span> right<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">switch</span> op <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 将go的布尔类型转换成*Object.Boolean</span>
+    <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpEqual<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token function">nativeBoolToBooleanObject</span><span class="token punctuation">(</span>right <span class="token operator">==</span> left<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpNotEqual<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token function">nativeBoolToBooleanObject</span><span class="token punctuation">(</span>right <span class="token operator">!=</span> left<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">default</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unknown operator: %d (%s %s)"</span><span class="token punctuation">,</span> op<span class="token punctuation">,</span> left<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> right<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">Run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 取指</span>
+    <span class="token keyword">for</span> ip <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> ip <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>vm<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span><span class="token punctuation">;</span> ip<span class="token operator">++</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 字节转换为操作码</span>
+        op <span class="token operator">:=</span> code<span class="token punctuation">.</span><span class="token function">Opcode</span><span class="token punctuation">(</span>vm<span class="token punctuation">.</span>instructions<span class="token punctuation">[</span>ip<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// 解码</span>
+        <span class="token keyword">switch</span> op <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpEqual<span class="token punctuation">,</span> code<span class="token punctuation">.</span>OpNotEqual<span class="token punctuation">,</span> code<span class="token punctuation">.</span>OpGreaterThan<span class="token punctuation">:</span>
+            err <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">executeComparison</span><span class="token punctuation">(</span>op<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-5-前缀表达式"><a href="#3-5-前缀表达式" class="headerlink" title="3.5 前缀表达式"></a>3.5 前缀表达式</h2><blockquote>
+<p>Monkey 支持前缀运算符-和!</p>
+</blockquote>
+<blockquote>
+<p>定义操作码</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// code/code.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpMinus
+    OpBang
+<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+
+<span class="token comment" spellcheck="true">// 操作码定义详细信息</span>
+<span class="token keyword">var</span> definitions <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span>Opcode<span class="token punctuation">]</span><span class="token operator">*</span>Definition<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpMinus<span class="token punctuation">:</span>       <span class="token punctuation">{</span><span class="token string">"OpMinus"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpBang<span class="token punctuation">:</span>        <span class="token punctuation">{</span><span class="token string">"OpBang"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>-是整数运算符，!是布尔运算符，各自添加测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestIntegerArithmetic</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>compilerTestCase<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"-1"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpMinus<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runCompilerTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">TestBooleanExpression</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>compilerTestCase<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span>             <span class="token string">"!true"</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpTrue<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpBang<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runCompilerTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230730172652.png"></p>
+<blockquote>
+<p>因为我们之前 Compile 方法中的*ast.PrefixExpression 节点没有处理，所以没有编译带前缀的整数字面量和布尔字面量，测试输出没有出现 OpConstant 和 OpTrue。</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>PrefixExpression<span class="token punctuation">:</span>
+        err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Right<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">switch</span> node<span class="token punctuation">.</span>Operator <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> <span class="token string">"!"</span><span class="token punctuation">:</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpBang<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> <span class="token string">"-"</span><span class="token punctuation">:</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpMinus<span class="token punctuation">)</span>
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unknown operator %s"</span><span class="token punctuation">,</span> node<span class="token punctuation">.</span>Operator<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>为虚拟机添加测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestIntegerArithmetic</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>vmTestCase<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span><span class="token string">"-5"</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">5</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"-10"</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">10</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"-50 + 100 + -50"</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"(5 + 10 * 2 + 15 / 3) * 2 + -10"</span><span class="token punctuation">,</span> <span class="token number">50</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runVmTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">TestBooleanExpression</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>vmTestCase<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span><span class="token string">"!true"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"!false"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"!5"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"!!true"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"!!false"</span><span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"!!5"</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runVmTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230730173026.png"></p>
+<blockquote>
+<p>补充虚拟机主循环</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">executeMinusOperator</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    operand <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> operand<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!=</span> object<span class="token punctuation">.</span>INTEGER_OBJ <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span><span class="token string">"unsupported type for negation: %s"</span><span class="token punctuation">,</span> operand<span class="token punctuation">.</span><span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    value <span class="token operator">:=</span> operand<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>object<span class="token punctuation">.</span>Integer<span class="token punctuation">)</span><span class="token punctuation">.</span>Value
+    <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>object<span class="token punctuation">.</span>Integer<span class="token punctuation">{</span>Value<span class="token punctuation">:</span> <span class="token operator">-</span>value<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">executeBangOperator</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    operand <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">pop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">switch</span> operand <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> True<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>False<span class="token punctuation">)</span>
+    <span class="token keyword">case</span> False<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>True<span class="token punctuation">)</span>
+    <span class="token keyword">default</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> vm<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>False<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>vm <span class="token operator">*</span>VM<span class="token punctuation">)</span> <span class="token function">Run</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 取指</span>
+    <span class="token keyword">for</span> ip <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> ip <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>vm<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span><span class="token punctuation">;</span> ip<span class="token operator">++</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 字节转换为操作码</span>
+        op <span class="token operator">:=</span> code<span class="token punctuation">.</span><span class="token function">Opcode</span><span class="token punctuation">(</span>vm<span class="token punctuation">.</span>instructions<span class="token punctuation">[</span>ip<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// 解码</span>
+        <span class="token keyword">switch</span> op <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpBang<span class="token punctuation">:</span>
+            err <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">executeBangOperator</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+        <span class="token keyword">case</span> code<span class="token punctuation">.</span>OpMinus<span class="token punctuation">:</span>
+            err <span class="token operator">:=</span> vm<span class="token punctuation">.</span><span class="token function">executeMinusOperator</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>在 executeBangOperator 中，我们实现操作数弹栈，并通过将除 False 以外的所有内容视为真值来否定其值。从技术上说，True 分支没必要，但是就文档而言是有保留意义的，这种方法现在是我们的虚拟机对 Monkey 的真实性概念的实现。</p>
+</blockquote>
+<h1 id="4-条件语句"><a href="#4-条件语句" class="headerlink" title="4. 条件语句"></a>4. 条件语句</h1><blockquote>
+<p>前面都是添加运算符之类的，而接下来难度会提升很多</p>
+</blockquote>
+<blockquote>
+<p>一个问题：如何让虚拟机根据条件执行不同的字节码指令？</p>
+</blockquote>
+<blockquote>
+<p>条件语句的 if 分支称为条件语句的‘结果’，else 分支称为‘备选’</p>
+</blockquote>
+<blockquote>
+<p>回顾解释器中的实现：evaluator 包的 Eval 函数遇到*ast.IfExression 时会对条件进行求值，并检查 isTruthy 函数的结果。如果为真，就执行结果部分，如果非真且包含备选，则执行备选，如果没有备选，就返回*object.Null</p>
+</blockquote>
+<blockquote>
+<p>之所以可以这样做，是因为有 AST 节点。可以决定对*ast.IfExpression 的任意侧进行求值。</p>
+</blockquote>
+<blockquote>
+<p>但是现在，不会递归遍历 AST 并同时执行它，而是将 AST 转换为字节码并将其<strong>铺平</strong>。铺平的原因是，字节码是一系列指令，而且它们没有子节点，无法递归</p>
+</blockquote>
+<blockquote>
+<p>假设这段代码</p>
+</blockquote>
+<pre><code>if (5 &gt; 2) {
+    30 + 20
+} else {
+    50 -25
+}
+</code></pre>
+<blockquote>
+<p>已经知道如何表达 5 &gt; 2 和 30 + 20、50 - 25</p>
+</blockquote>
+<blockquote>
+<p>如何根据 OpGreaterThen 指令的结果让机器执行某一部分呢？</p>
+</blockquote>
+<p><img src="20230730191807.png"><img src="20230730191830.png"></p>
+<blockquote>
+<p>我们使用一个指令来跳转，实现根据 OpGreaterThan 的结果执行不同部分</p>
+</blockquote>
+<h2 id="4-1-跳转"><a href="#4-1-跳转" class="headerlink" title="4.1 跳转"></a>4.1 跳转</h2><blockquote>
+<p>在机器码中，跳转指令用于实现分支（条件语句），这里说的机器码不仅包括计算机执行的代码，也包括虚拟机执行的字节码。翻译成虚拟机术语是：跳转是告知虚拟机将指令指针转化为一个确定值的指令</p>
+</blockquote>
+<p><img src="20230730192553.png"></p>
+<blockquote>
+<p>当虚拟机从上到下执行这些指令，会先执行前面构成条件的指令，结果是栈中保存一个布尔值</p>
+</blockquote>
+<blockquote>
+<p>接下来是 JUMP_IF_NOT_TRUE，会让虚拟机跳到 OpConstant 4 指令，前提是栈中的布尔值不为真。如果不为真，就会跳过条件语句的结果部分，转到条件语句的备选部分。如果栈中布尔值为真，则 JUMP_IF_NOT_TRUE 不会生效，虚拟机往下正常执行。</p>
+</blockquote>
+<blockquote>
+<p>执行完条件的结果部分后，会遇到 JUMP_NO_MATTER_WHAT 指令，直接跳到条件备选部分结束后的第一条指令（跳出了条件语句）</p>
+</blockquote>
+<blockquote>
+<p>跳转是告诉虚拟机更改指令指针值，它的操作数就是虚拟机应该跳转到的指令的索引。该值称为偏移量。跳转目标是指令的索引，它是一个绝对偏移量。相对偏移量是相对于跳转指令本身的位置，表示的<strong>不是跳转到的确切位置，而是跳转的距离</strong></p>
+</blockquote>
+<p><img src="20230730192542.png"></p>
+<blockquote>
+<p>实现条件语句，我们将定义两个跳转操作码：一个带有条件（“如果不为真则跳转”），一个没有条件（“直接跳转”）。它们都有一个操作数，即虚拟机应该跳转到的指令的索引</p>
+</blockquote>
+<h2 id="4-2-编译条件语句"><a href="#4-2-编译条件语句" class="headerlink" title="4.2 编译条件语句"></a>4.2 编译条件语句</h2><blockquote>
+<p>发出跳转指令的难点不是操作码，而是操作数。</p>
+</blockquote>
+<blockquote>
+<p>我们应该为跳转指令添加什么操作数呢？虚拟机要跳转到哪里呢？因为我们没有编译结果分支和备选分支，也不知道要跳多少条指令，这才是挑战</p>
+</blockquote>
+<blockquote>
+<p>先定义操作码，一个直接跳转，一个有条件跳转</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// code/code.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpJumpNotTruthy <span class="token comment" spellcheck="true">// 有条件跳转</span>
+    OpJump          <span class="token comment" spellcheck="true">// 无条件跳转</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// 操作码定义详细信息</span>
+<span class="token keyword">var</span> definitions <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span>Opcode<span class="token punctuation">]</span><span class="token operator">*</span>Definition<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// 跳转指令有两字节大小（16位）的操作数（目标指令的绝对偏移量）</span>
+    OpJumpNotTruthy<span class="token punctuation">:</span> <span class="token punctuation">{</span><span class="token string">"OpJumpNotTruthy"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    OpJump<span class="token punctuation">:</span>          <span class="token punctuation">{</span><span class="token string">"OpJump"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestConditional</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>compilerTestCase<span class="token punctuation">{</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span> <span class="token string">`
+            if (true) { 10 }; 3333
+            `</span><span class="token punctuation">,</span>
+            expectedContants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">3333</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// 0000</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpTrue<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0001</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpJumpNotTruthy<span class="token punctuation">,</span> <span class="token number">7</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0004</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0007</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0008</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0011</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runCompilerTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230731054728.png"></p>
+<blockquote>
+<p>条件语句的条件和结果部分都没有被编译。扩展 Compiler 方法</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>IfExpression<span class="token punctuation">:</span>
+        err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Condition<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>目前最大的跳转是，在编译 node.Consequence 之前，发出一个偏移量为 node.Consequence 之后的 OpJumpNotTruthy 指令</p>
+</blockquote>
+<blockquote>
+<p>在不知道要跳转多远的时候，先使用虚假的偏移量，后面再处理</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>IfExpression<span class="token punctuation">:</span>
+        err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Condition<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 发出带虚假偏移量的OpJumpNotTruthy</span>
+        c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpJumpNotTruthy<span class="token punctuation">,</span> <span class="token number">9999</span><span class="token punctuation">)</span>
+        err <span class="token operator">=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Consequence<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230731060627.png"></p>
+<blockquote>
+<p>测试发现还是不能编译条件语句的结果部分</p>
+</blockquote>
+<blockquote>
+<p>目前编译器还不能处理*ast.BlockStatement，我们扩展 Compiler 方法</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>BlockStatement<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> s <span class="token operator">:=</span> <span class="token keyword">range</span> node<span class="token punctuation">.</span>Statements <span class="token punctuation">{</span>
+            err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230731061550.png"></p>
+<blockquote>
+<p>此时有个问题，在 0007 位置多了一个编译器自动生成的 OpPop 指令，而我们希望条件的结果部分和备选部分中，有一个能在栈中保留值。</p>
+</blockquote>
+<pre><code>let result = if (5 &gt; 4) { 5 } else { 3 }
+</code></pre>
+<blockquote>
+<p>似乎可以直接删掉 node.Consequence 中的最后一条 OpPop 指令，但是如果遇到这种情况：</p>
+</blockquote>
+<pre><code>if (true) {
+    3;
+    2;
+    1;
+}
+</code></pre>
+<blockquote>
+<p>我们希望 3 和 2 弹栈，而 1 留在栈中</p>
+</blockquote>
+<blockquote>
+<p>为了摆脱额外的 OpPop 指令，我们先更改编译器，以追踪发出的最后两条指令，包括追踪它们的操作码和它们被发出的位置。准备一个新类型和两个新字段</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">type</span> EmittedInstruction <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Opcode   code<span class="token punctuation">.</span>Opcode
+    Position <span class="token builtin">int</span>
+<span class="token punctuation">}</span>
+
+
+<span class="token keyword">type</span> Compiler <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    instructions         code<span class="token punctuation">.</span>Instructions
+    constants            <span class="token punctuation">[</span><span class="token punctuation">]</span>object<span class="token punctuation">.</span>Object
+    lastInstruction     EmittedInstruction
+    previousInstruction  EmittedInstruction
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">New</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Compiler <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Compiler<span class="token punctuation">{</span>
+        instructions<span class="token punctuation">:</span>         code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        constants<span class="token punctuation">:</span>            <span class="token punctuation">[</span><span class="token punctuation">]</span>object<span class="token punctuation">.</span>Object<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        lastInstruction<span class="token punctuation">:</span>     EmittedInstruction<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        previousInstruction<span class="token punctuation">:</span> EmittedInstruction<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>lastInstructions 是发出的最后一条指令，previousInstructions 是倒数第二条，接下来修改编译器 emit 方法来填充两者的字段</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token comment" spellcheck="true">// 传入操作码和操作数，返回操作码在字节码里的位置</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">emit</span><span class="token punctuation">(</span>op code<span class="token punctuation">.</span>Opcode<span class="token punctuation">,</span> operands <span class="token operator">...</span><span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token builtin">int</span> <span class="token punctuation">{</span>
+    ins <span class="token operator">:=</span> code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>op<span class="token punctuation">,</span> operands<span class="token operator">...</span><span class="token punctuation">)</span>
+    pos <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">addInstruction</span><span class="token punctuation">(</span>ins<span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// 记录最后两条指令</span>
+    c<span class="token punctuation">.</span><span class="token function">setLastInstruction</span><span class="token punctuation">(</span>op<span class="token punctuation">,</span> pos<span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> pos
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 记录最后两条指令</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">setLastInstruction</span><span class="token punctuation">(</span>op code<span class="token punctuation">.</span>Opcode<span class="token punctuation">,</span> pos <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    previous <span class="token operator">:=</span> c<span class="token punctuation">.</span>lastInstruction
+    last <span class="token operator">:=</span> EmittedInstruction<span class="token punctuation">{</span>Opcode<span class="token punctuation">:</span> op<span class="token punctuation">,</span> Position<span class="token punctuation">:</span> pos<span class="token punctuation">}</span>
+
+    c<span class="token punctuation">.</span>previousInstruction <span class="token operator">=</span> previous
+    c<span class="token punctuation">.</span>lastInstruction <span class="token operator">=</span> last
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>接下来我们采用类型安全的方式检查最后发出的指令的操作码，如果最后一条发出的指令是 OpPop，就将其移除</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token comment" spellcheck="true">// 移除最后一条指令OpPop</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">removeLastPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    c<span class="token punctuation">.</span>instructions <span class="token operator">=</span> c<span class="token punctuation">.</span>instructions<span class="token punctuation">[</span><span class="token punctuation">:</span>c<span class="token punctuation">.</span>lastInstruction<span class="token punctuation">.</span>Position<span class="token punctuation">]</span>
+    c<span class="token punctuation">.</span>lastInstruction <span class="token operator">=</span> c<span class="token punctuation">.</span>previousInstruction
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 判断if最后一个指令是不是OpPop</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">lastInstructionsIsPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">bool</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> c<span class="token punctuation">.</span>lastInstruction<span class="token punctuation">.</span>Opcode <span class="token operator">==</span> code<span class="token punctuation">.</span>OpPop
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 遍历AST，触发指令</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>IfExpression<span class="token punctuation">:</span>
+        err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Condition<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 发出带虚假偏移量的OpJumpNotTruthy</span>
+        c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpJumpNotTruthy<span class="token punctuation">,</span> <span class="token number">9999</span><span class="token punctuation">)</span>
+        err <span class="token operator">=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Consequence<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> c<span class="token punctuation">.</span><span class="token function">lastInstructionsIsPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            c<span class="token punctuation">.</span><span class="token function">removeLastPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230731191506.png"></p>
+<blockquote>
+<p>从移除 OpPop 的例子可以看出，发出的指令是可以改变的。我们也可以修改 OpJumpNotTruthy 9999</p>
+</blockquote>
+<blockquote>
+<p>我们不用删除 c.emit(code.OpJumpNotTruthy, 9999)，只需要使用 c.lastInstruction 的 Position 字段。我们在编译 node.Consequence 之后修改 OpJumpNotTruthy 的操作数。此时，我们知道虚拟机需要跳转的距离和替换 9999 的正确偏移量</p>
+</blockquote>
+<blockquote>
+<p>这个操作被称为回填，广泛应用于编译器。由于只遍历 AST 一次，因此这样的编译器被称为单遍编译器。更高级的编译器会将跳转指令的目标留空，直到知道要跳转的距离，然后对 AST（或其他 IR）进行第二次遍历并填充目标</p>
+</blockquote>
+<blockquote>
+<p>我们继续发出 9999，记住其位置，一旦知道要跳转到哪里，就返回并将 9999 替换为正确的偏移量</p>
+</blockquote>
+<blockquote>
+<p>添加一个方法，可以替换 instructions 切片中任意偏移处的指令</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token comment" spellcheck="true">// 替换instructions切片中任意偏移处的指令</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">replaceInstruction</span><span class="token punctuation">(</span>pos <span class="token builtin">int</span><span class="token punctuation">,</span> newInstruction <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">byte</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token function">len</span><span class="token punctuation">(</span>newInstruction<span class="token punctuation">)</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+        c<span class="token punctuation">.</span>instructions<span class="token punctuation">[</span>pos<span class="token operator">+</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> newInstruction<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>changeOperand 方法用于替换指令的操作数</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token comment" spellcheck="true">// 替换指令的操作数</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">changeOperand</span><span class="token punctuation">(</span>opPos <span class="token builtin">int</span><span class="token punctuation">,</span> operand <span class="token builtin">int</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 从编译器的指令s里找到要修改的指令</span>
+    op <span class="token operator">:=</span> code<span class="token punctuation">.</span><span class="token function">Opcode</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>instructions<span class="token punctuation">[</span>opPos<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 重新创建指令</span>
+    newInstruction <span class="token operator">:=</span> code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>op<span class="token punctuation">,</span> operand<span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// 替换</span>
+    c<span class="token punctuation">.</span><span class="token function">replaceInstruction</span><span class="token punctuation">(</span>opPos<span class="token punctuation">,</span> newInstruction<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>changeOperand 没有真的修改操作数本身（防止修改多字节操作数变得混乱），而是使用新操作数重新创建指令，并把旧指令替换为新指令。</p>
+</blockquote>
+<blockquote>
+<p>这里的基本假设是：只替换具有相同非可变长度的相同类型的指令。如果不成立，必须相应地更新 c.lastInstruction 和 c.previousInstruction。一旦编译器发出的指令变得更复杂，另一个类型安全且独立于编码指令字节大小的 IR 是如何派上用场的。</p>
+</blockquote>
+<blockquote>
+<p>不过，当前解决方案仍然符合我们的需求。即 replaceInstruction 和 changeOperand，我们现在使用它们</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>IfExpression<span class="token punctuation">:</span>
+        err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Condition<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 发出带虚假偏移量的OpJumpNotTruthy</span>
+        jumpNotTruthyPos <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpJumpNotTruthy<span class="token punctuation">,</span> <span class="token number">9999</span><span class="token punctuation">)</span>
+
+        err <span class="token operator">=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Consequence<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> c<span class="token punctuation">.</span><span class="token function">lastInstructionsIsPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            c<span class="token punctuation">.</span><span class="token function">removeLastPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// if的结果部分后下一条指令的地址</span>
+        afterConsequencePos <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span>
+        c<span class="token punctuation">.</span><span class="token function">changeOperand</span><span class="token punctuation">(</span>jumpNotTruthyPos<span class="token punctuation">,</span> afterConsequencePos<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>现在只能编译条件语句的结果部分，不能编译同时具有结果和备选部分的条件语句。现在写测试</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// compiler/compiler_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestConditional</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>compilerTestCase<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span>
+            input<span class="token punctuation">:</span> <span class="token string">`
+            if (true) { 10 } else { 20 }; 3333;
+            `</span><span class="token punctuation">,</span>
+            expectedConstants<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">interface</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">{</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">,</span> <span class="token number">3333</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            expectedInstructions<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>code<span class="token punctuation">.</span>Instructions<span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// 0000</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpTrue<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0001</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpJumpNotTruthy<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0004</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0007</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpJump<span class="token punctuation">,</span> <span class="token number">13</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0010</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0013</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0014</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpConstant<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">// 0017</span>
+                code<span class="token punctuation">.</span><span class="token function">Make</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpPop<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runCompilerTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>这个用例条件部分编译为 OpTrue，此时，OpJump 会跳过备选部分。OpJump 之后应该是组成备选部分的指令，条件为真，OpJump 生效，跳过备选，否则忽略 OpJump，执行备选，备选需要被编译，才能知道 OpJump 要跳到哪</p>
+</blockquote>
+<p><img src="20230731201846.png"></p>
+<blockquote>
+<p>测试</p>
+</blockquote>
+<p><img src="20230731202048.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>IfExpression<span class="token punctuation">:</span>
+        err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Condition<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 发出带虚假偏移量的OpJumpNotTruthy</span>
+        jumpNotTruthyPos <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpJumpNotTruthy<span class="token punctuation">,</span> <span class="token number">9999</span><span class="token punctuation">)</span>
+
+        err <span class="token operator">=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Consequence<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> c<span class="token punctuation">.</span><span class="token function">lastInstructionsIsPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            c<span class="token punctuation">.</span><span class="token function">removeLastPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> node<span class="token punctuation">.</span>Alternative <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// if后下一条指令的地址</span>
+            afterConsequencePos <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span>
+            c<span class="token punctuation">.</span><span class="token function">changeOperand</span><span class="token punctuation">(</span>jumpNotTruthyPos<span class="token punctuation">,</span> afterConsequencePos<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 发出带有虚假偏移量的OpJump，跳过备选</span>
+            c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpJump<span class="token punctuation">,</span> <span class="token number">9999</span><span class="token punctuation">)</span>
+
+            afterConsequencePos <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span>
+            c<span class="token punctuation">.</span><span class="token function">changeOperand</span><span class="token punctuation">(</span>jumpNotTruthyPos<span class="token punctuation">,</span> afterConsequencePos<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230731203221.png"></p>
+<blockquote>
+<p>OpJump 操作数错误，并且缺失整个备选部分</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Compiler<span class="token punctuation">)</span> <span class="token function">Compiler</span><span class="token punctuation">(</span>node ast<span class="token punctuation">.</span>Node<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> node <span class="token operator">:=</span> node<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">case</span> <span class="token operator">*</span>ast<span class="token punctuation">.</span>IfExpression<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+
+        <span class="token keyword">if</span> node<span class="token punctuation">.</span>Alternative <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// if后下一条指令的地址</span>
+            afterConsequencePos <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span>
+            c<span class="token punctuation">.</span><span class="token function">changeOperand</span><span class="token punctuation">(</span>jumpNotTruthyPos<span class="token punctuation">,</span> afterConsequencePos<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 发出带有虚假偏移量的OpJump</span>
+            jumpPos <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">emit</span><span class="token punctuation">(</span>code<span class="token punctuation">.</span>OpJump<span class="token punctuation">,</span> <span class="token number">9999</span><span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// 跳转到备选部分</span>
+            afterConsequencePos <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span>
+            c<span class="token punctuation">.</span><span class="token function">changeOperand</span><span class="token punctuation">(</span>jumpNotTruthyPos<span class="token punctuation">,</span> afterConsequencePos<span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// 编译备选部分</span>
+            err <span class="token operator">:=</span> c<span class="token punctuation">.</span><span class="token function">Compiler</span><span class="token punctuation">(</span>node<span class="token punctuation">.</span>Alternative<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> err
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// 去掉OpPop，保留fn内表达式值</span>
+            <span class="token keyword">if</span> c<span class="token punctuation">.</span><span class="token function">lastInstructionsIsPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                c<span class="token punctuation">.</span><span class="token function">removeLastPop</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+
+            afterAlternativePos <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>instructions<span class="token punctuation">)</span>
+            c<span class="token punctuation">.</span><span class="token function">changeOperand</span><span class="token punctuation">(</span>jumpPos<span class="token punctuation">,</span> afterAlternativePos<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>首先将 OpJump 指令的位置保存在 jumpPos 中，以便后续回来修改，如何回填之前发出的 OpJumpNotTruthy 指令的操作数，将其修改到 jumpNotTruthyPos 处，以便在 OpJump 之后立即跳转（jumpNotTruthy 跳转到 OpJump 后-备选部分的第一条指令处）</p>
+</blockquote>
+<blockquote>
+<p>随后编译 node.Alternative。最后将 OpJump 指令的操作数改为下一条需要发出指令的偏移量，即备选部分之后的位置。</p>
+</blockquote>
+<h2 id="4-3-执行跳转"><a href="#4-3-执行跳转" class="headerlink" title="4.3 执行跳转"></a>4.3 执行跳转</h2><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// vm/vm_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestConditionals</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    ts <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>vmTestCase<span class="token punctuation">{</span>
+        <span class="token punctuation">{</span><span class="token string">"if (true) { 10 }"</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"if (true) { 10 } else { 20 }"</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"if (false) { 10 } else { 20 }"</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"if (1) { 10 }"</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"if (1 &lt; 2) { 10 }"</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"if (1 &lt; 2) { 10 } else { 20 }"</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"if (1 > 2) { 10 } else { 20 }"</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">runVmTests</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ts<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230731205027.png"></p>
 
             </div>
             <hr/>
@@ -2389,7 +3828,7 @@ What format is data saved in? (in memory and on disk)
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">303.7k</span>
+                <span class="white-color">309.5k</span>
             
 
             
