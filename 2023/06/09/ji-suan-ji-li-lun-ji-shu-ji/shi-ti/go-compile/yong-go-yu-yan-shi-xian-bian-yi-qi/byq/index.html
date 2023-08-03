@@ -375,14 +375,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        23.7k
+                        25.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        103 分
+                        108 分
                     </div>
                     
                 
@@ -4696,7 +4696,154 @@
     <span class="token keyword">return</span> <span class="token boolean">nil</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h1 id="7-函数"><a href="#7-函数" class="headerlink" title="7. 函数"></a>7. 函数</h1>
+<h1 id="7-函数"><a href="#7-函数" class="headerlink" title="7. 函数"></a>7. 函数</h1><blockquote>
+<p>本章将实现函数和函数调用，完成局部绑定并支持函数调用参数。</p>
+</blockquote>
+<blockquote>
+<p>第一个问题是如何表示函数？简单地说，函数是一系列指令，但是在 Monkey 中，所有函数都是头等函数，可以在其他函数中传递和返回。那么如何表示一系列可以传递的指令？</p>
+</blockquote>
+<blockquote>
+<p>还有控制流的问题。如何让虚拟机执行一个函数的指令？如何让它返回到之前执行的指令上？如何给函数传递参数？</p>
+</blockquote>
+<h2 id="7-1-一个简单的函数"><a href="#7-1-一个简单的函数" class="headerlink" title="7.1 一个简单的函数"></a>7.1 一个简单的函数</h2><blockquote>
+<p>本节目标</p>
+</blockquote>
+<pre><code>let fivePlusTen = fn() { 5 + 10 };
+</code></pre>
+<blockquote>
+<p>这个函数没有参数、没有局部绑定、没有参数调用、没有对全局绑定的访问</p>
+</blockquote>
+<h3 id="7-1-1-函数表示"><a href="#7-1-1-函数表示" class="headerlink" title="7.1.1 函数表示"></a>7.1.1 函数表示</h3><blockquote>
+<p>我们需要将函数转为字节码，关键在于，Monkey 函数也是一种 Monkey 值，可以绑定给名称、从其他函数返回、作为参数传递给其他函数等等，也就是说，函数也是表达式，是函数字面量</p>
+</blockquote>
+<blockquote>
+<p>函数字面量产生的值永远不会发生改变，这些值是常量，我们将它作为常量传递给虚拟机，编译成指令序列并添加到编译器的常量池中。</p>
+</blockquote>
+<blockquote>
+<p>我们之前定义了 object.Funtion，他是一个 Monkey 对象，用来表示求值后函数的字面量，它自身也能被求值。现在，我们需要一个不同的版本：一个用来保存字节码而不是 AST 节点的函数对象</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// object/object.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    COMPILED_FUNCTION_OBJ <span class="token operator">=</span> <span class="token string">"COMPILED_FUNCTION_OBJ"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> CompiledFunction <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Instructions code<span class="token punctuation">.</span>Instructions
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>cf <span class="token operator">*</span>CompiledFunction<span class="token punctuation">)</span> <span class="token function">Type</span><span class="token punctuation">(</span><span class="token punctuation">)</span> ObjectType <span class="token punctuation">{</span> <span class="token keyword">return</span> COMPILED_FUNCTION_OBJ <span class="token punctuation">}</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>cf <span class="token operator">*</span>CompiledFunction<span class="token punctuation">)</span> <span class="token function">Inspect</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"CompiledFunction[%p]"</span><span class="token punctuation">,</span> cf<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>object.CompiledFunction 可以保存从函数字面量编译中获得的 code.Instructions。并且是一个 object.Object，可以作为常量添加到 compiler.Bytecode 并加载到虚拟机中。</p>
+</blockquote>
+<h3 id="7-1-2-执行函数的操作码"><a href="#7-1-2-执行函数的操作码" class="headerlink" title="7.1.2 执行函数的操作码"></a>7.1.2 执行函数的操作码</h3><blockquote>
+<p>面临一个新问题：是否需要新的操作码来实现编译和执行 Monkey 代码片段</p>
+</blockquote>
+<blockquote>
+<p>函数字面量不需要新操作码，因为我们将它编译为*object.CompiledFunction 并视为常量，可以用 OpConstant 指令将它们加载到虚拟机栈中</p>
+</blockquote>
+<blockquote>
+<p>我们需要为函数调用新建操作码，将调用表达式(*ast.CallExpression)，编译成一条指令，让虚拟机执行相关函数</p>
+</blockquote>
+<blockquote>
+<p>现在需要定义新操作码：OpCall。它没有操作数</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// code/code.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpCall          <span class="token comment" spellcheck="true">// 调用函数</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// 操作码定义详细信息</span>
+<span class="token keyword">var</span> definitions <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span>Opcode<span class="token punctuation">]</span><span class="token operator">*</span>Definition<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpCall<span class="token punctuation">:</span>          <span class="token punctuation">{</span><span class="token string">"OpCall"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>OpCall 使用方式：首先使用 OpConstant 指令将想调用的函数压栈，随后发出 OpCall，让虚拟机执行栈顶的函数。</p>
+</blockquote>
+<blockquote>
+<p>这个精简的 OpCall 指令规范就是所谓的<strong>调用约定</strong>。一旦添加对函数调用参数的支持，就必须改变。但是现在只需要两步：将想调用的函数压栈，以及发出 OpCall 指令</p>
+</blockquote>
+<blockquote>
+<p>现在理论上可以将一个函数放到虚拟机的栈中并调用它。现在需要一种方法来让虚拟机从所调用的函数返回</p>
+</blockquote>
+<blockquote>
+<p>具体地说，需要区分虚拟机从函数返回的两种情况，第一种是函数隐式或显式地返回了一些内容；第二种是函数执行结束但是没有返回任何内容。</p>
+</blockquote>
+<blockquote>
+<p>第一种情况</p>
+</blockquote>
+<pre><code>let explicitReturn = fn() { return 5 + 10; };
+let implicitReturn = fn() { 5 + 10; };
+</code></pre>
+<blockquote>
+<p>显式返回的值由 return 语句产生，该语句阻止执行函数的剩余部分，其返回的是 return 关键字后面表达式产生的值。</p>
+</blockquote>
+<blockquote>
+<p>如果没有 return 语句，函数调用的求值结果是函数内部产生的最后一个值。这就是所谓的隐式返回</p>
+</blockquote>
+<blockquote>
+<p>本书中，隐式返回将通过略微改变显式返回来实现。它们将编译为相同的字节码</p>
+</blockquote>
+<blockquote>
+<p>它们将使用共同的操作码表示，OpReturnValue，用于让虚拟机从函数返回一个值</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// code/code.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpReturnValue   <span class="token comment" spellcheck="true">// 函数返回</span>
+<span class="token punctuation">)</span>
+<span class="token keyword">var</span> definitions <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span>Opcode<span class="token punctuation">]</span><span class="token operator">*</span>Definition<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpReturnValue<span class="token punctuation">:</span>   <span class="token punctuation">{</span><span class="token string">"OpReturnValue"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>该操作数没有任何参数，因此要返回的值必须在栈顶</p>
+</blockquote>
+<blockquote>
+<p>显式返回的情况下，编译 return 语句，返回值就会被压栈，然后发出 OpReturnValue。</p>
+</blockquote>
+<blockquote>
+<p>实现隐式返回值需要更多工作，意味着需要返回表达式语句产生的值————如果它由函数体中最后执行的语句产生。但是前文为了确保表达式语句不会在栈中留下任何值，我们显式地发出 OpPop 指令清理栈。如果现在想返回值，就需要找到一种方法，将清理空栈的需求与对隐式返回的需求结合起来。</p>
+</blockquote>
+<blockquote>
+<p>现在谈谈函数返回的第二种情况：函数不返回任何值</p>
+</blockquote>
+<pre><code>fn() { }
+</code></pre>
+<blockquote>
+<p>这个空函数体将编译为*object.CompiledFunction，可以被调用，只是函数体没有任何指令。另一个例子和局部绑定有关</p>
+</blockquote>
+<pre><code>fn() { let a = 1;}
+</code></pre>
+<blockquote>
+<p>一个不返回任何内容的函数并不常见，第一本书甚至没有处理它。我们认为这类函数也应该产生一个值。</p>
+</blockquote>
+<blockquote>
+<p>我们让这类函数返回*object.Null，也就是说，如果函数末尾没有 OpReturnValue 指令，需要让虚拟机从函数返回 vm.Null，我们通过引入新操作码来实现</p>
+</blockquote>
+<blockquote>
+<p>OpReturn 用于让虚拟机从当前函数返回有些信息（Null），并回到调用这个函数之前的逻辑</p>
+</blockquote>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// code/code.go</span>
+<span class="token keyword">const</span> <span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpReturn        <span class="token comment" spellcheck="true">// 函数没有返回值</span>
+<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">// 操作码定义详细信息</span>
+<span class="token keyword">var</span> definitions <span class="token operator">=</span> <span class="token keyword">map</span><span class="token punctuation">[</span>Opcode<span class="token punctuation">]</span><span class="token operator">*</span>Definition<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    OpReturn<span class="token punctuation">:</span>        <span class="token punctuation">{</span><span class="token string">"OpReturn"</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">int</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="7-1-3-编译函数字面量"><a href="#7-1-3-编译函数字面量" class="headerlink" title="7.1.3 编译函数字面量"></a>7.1.3 编译函数字面量</h3>
             </div>
             <hr/>
 
@@ -5359,7 +5506,7 @@ What format is data saved in? (in memory and on disk)
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">316.7k</span>
+                <span class="white-color">318.1k</span>
             
 
             
