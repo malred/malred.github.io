@@ -916,113 +916,113 @@ plt<span class="token punctuation">.</span>show<span class="token punctuation">(
 <blockquote>
 <p>重置版代码</p>
 </blockquote>
-<pre class=" language-py"><code class="language-py">import numpy as np
-import matplotlib.pyplot as plt
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
 
-# 设置随机种子,相同的随机种子生成的随机数相同
-np.random.seed(42)
+<span class="token comment" spellcheck="true"># 设置随机种子,相同的随机种子生成的随机数相同</span>
+np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span>
 
-# jupyter: %matplotlib inline
+<span class="token comment" spellcheck="true"># jupyter: %matplotlib inline</span>
 
-N = 100
-# rand: 生成N行1列的(正)随机数组(值0~1)
-x = np.random.rand(N, 1) * 5
-# print(x)
+N <span class="token operator">=</span> <span class="token number">100</span>
+<span class="token comment" spellcheck="true"># rand: 生成N行1列的(正)随机数组(值0~1)</span>
+x <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>rand<span class="token punctuation">(</span>N<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">5</span>
+<span class="token comment" spellcheck="true"># print(x)</span>
 
-# let the following command be the true function
-# n = mg
-y = 9.81 * x
-# get some noisy abservations (添加噪音)
-# randn: 生成的随机数服从均值0,方差1的正态分布
-noise = 2 * np.random.randn(N, 1)
-y_obs = y + noise
+<span class="token comment" spellcheck="true"># let the following command be the true function</span>
+<span class="token comment" spellcheck="true"># n = mg</span>
+y <span class="token operator">=</span> <span class="token number">9.81</span> <span class="token operator">*</span> x
+<span class="token comment" spellcheck="true"># get some noisy abservations (添加噪音)</span>
+<span class="token comment" spellcheck="true"># randn: 生成的随机数服从均值0,方差1的正态分布</span>
+noise <span class="token operator">=</span> <span class="token number">2</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>N<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+y_obs <span class="token operator">=</span> y <span class="token operator">+</span> noise
 
-plt.scatter(x, y_obs, label='Observations')
-plt.plot(x, y, c='r', label='True function')
-# 上面添加了label，这里legend生成图片
-plt.legend()
-plt.show()
-
-
-# 我们希望用梯度下降减少误差(y-y_obs)^2
-
-# 辅助函数
-def f(w):
-    return w * x
+plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>x<span class="token punctuation">,</span> y_obs<span class="token punctuation">,</span> label<span class="token operator">=</span><span class="token string">'Observations'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>x<span class="token punctuation">,</span> y<span class="token punctuation">,</span> c<span class="token operator">=</span><span class="token string">'r'</span><span class="token punctuation">,</span> label<span class="token operator">=</span><span class="token string">'True function'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 上面添加了label，这里legend生成图片</span>
+plt<span class="token punctuation">.</span>legend<span class="token punctuation">(</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
 
 
-# 损失函数，将误差平方后求合 / N (求平均)
-def loss_function(e):
-    L = np.sum(np.square(e)) / N
-    return L
+<span class="token comment" spellcheck="true"># 我们希望用梯度下降减少误差(y-y_obs)^2</span>
+
+<span class="token comment" spellcheck="true"># 辅助函数</span>
+<span class="token keyword">def</span> <span class="token function">f</span><span class="token punctuation">(</span>w<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> w <span class="token operator">*</span> x
 
 
-# 计算梯度: &L/&w = 1/N * ∑(2(y-wx)(-x)) = 1/N * ∑(2ξx)
-def dL_dw(e, w):
-    # mean：求平均
-    return -2 * np.mean(e * x)
+<span class="token comment" spellcheck="true"># 损失函数，将误差平方后求合 / N (求平均)</span>
+<span class="token keyword">def</span> <span class="token function">loss_function</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    L <span class="token operator">=</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>np<span class="token punctuation">.</span>square<span class="token punctuation">(</span>e<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">/</span> N
+    <span class="token keyword">return</span> L
 
 
-# w 会更新 -> w_new = w_current - γ * &L/&w ，其中γ是学习率(0~1)
+<span class="token comment" spellcheck="true"># 计算梯度: &amp;L/&amp;w = 1/N * ∑(2(y-wx)(-x)) = 1/N * ∑(2ξx)</span>
+<span class="token keyword">def</span> <span class="token function">dL_dw</span><span class="token punctuation">(</span>e<span class="token punctuation">,</span> w<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># mean：求平均</span>
+    <span class="token keyword">return</span> <span class="token operator">-</span><span class="token number">2</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>mean<span class="token punctuation">(</span>e <span class="token operator">*</span> x<span class="token punctuation">)</span>
 
-# the actual gradient descent
-def gradient_descent(iter=100, gamma=0.1):
-    '''
+
+<span class="token comment" spellcheck="true"># w 会更新 -> w_new = w_current - γ * &amp;L/&amp;w ，其中γ是学习率(0~1)</span>
+
+<span class="token comment" spellcheck="true"># the actual gradient descent</span>
+<span class="token keyword">def</span> <span class="token function">gradient_descent</span><span class="token punctuation">(</span>iter<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> gamma<span class="token operator">=</span><span class="token number">0.1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">'''
     :param iter: 迭代轮数
     :param gamma: 学习率
     :return: w的历史值，loss的历史值
-    '''
-    # get starting conditions
-    # 随机数
-    w = 10 * np.random.randn()
+    '''</span>
+    <span class="token comment" spellcheck="true"># get starting conditions</span>
+    <span class="token comment" spellcheck="true"># 随机数</span>
+    w <span class="token operator">=</span> <span class="token number">10</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token punctuation">)</span>
 
-    # 保存参数w的所有历史值
-    params = []
-    # 生成 iter行1列的 0填充的 数组
-    loss = np.zeros((iter, 1))
-    for i in range(iter):
-        params.append(w)
-        # 计算误差
-        e = y_obs - f(w)  # really important that you use y_obs and not y (you do not have access to true y)
-        loss[i] = loss_function(e)
+    <span class="token comment" spellcheck="true"># 保存参数w的所有历史值</span>
+    params <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token comment" spellcheck="true"># 生成 iter行1列的 0填充的 数组</span>
+    loss <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span>iter<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>iter<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        params<span class="token punctuation">.</span>append<span class="token punctuation">(</span>w<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 计算误差</span>
+        e <span class="token operator">=</span> y_obs <span class="token operator">-</span> f<span class="token punctuation">(</span>w<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># really important that you use y_obs and not y (you do not have access to true y)</span>
+        loss<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> loss_function<span class="token punctuation">(</span>e<span class="token punctuation">)</span>
 
-        # update parameters
-        # w更新
-        w_new = w - gamma * dL_dw(e, w)
-        w = w_new
+        <span class="token comment" spellcheck="true"># update parameters</span>
+        <span class="token comment" spellcheck="true"># w更新</span>
+        w_new <span class="token operator">=</span> w <span class="token operator">-</span> gamma <span class="token operator">*</span> dL_dw<span class="token punctuation">(</span>e<span class="token punctuation">,</span> w<span class="token punctuation">)</span>
+        w <span class="token operator">=</span> w_new
 
-    return params, loss
+    <span class="token keyword">return</span> params<span class="token punctuation">,</span> loss
 
 
-# params, loss = gradient_descent()
+<span class="token comment" spellcheck="true"># params, loss = gradient_descent()</span>
 
-iter = 100
-gamma = 0.1
-w = 10 * np.random.randn()
+iter <span class="token operator">=</span> <span class="token number">100</span>
+gamma <span class="token operator">=</span> <span class="token number">0.1</span>
+w <span class="token operator">=</span> <span class="token number">10</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token punctuation">)</span>
 
-params = []
-loss = np.zeros((iter, 1))
-for i in range(iter):
-    # from IPython.core.debugger import Tracer; Tracer()()
-    params.append(w)
-    e = y_obs - f(w)
-    loss[i] = loss_function(e)
+params <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+loss <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span>iter<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>iter<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># from IPython.core.debugger import Tracer; Tracer()()</span>
+    params<span class="token punctuation">.</span>append<span class="token punctuation">(</span>w<span class="token punctuation">)</span>
+    e <span class="token operator">=</span> y_obs <span class="token operator">-</span> f<span class="token punctuation">(</span>w<span class="token punctuation">)</span>
+    loss<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> loss_function<span class="token punctuation">(</span>e<span class="token punctuation">)</span>
 
-    w_new = w - gamma * dL_dw(e, w)
-    w = w_new
+    w_new <span class="token operator">=</span> w <span class="token operator">-</span> gamma <span class="token operator">*</span> dL_dw<span class="token punctuation">(</span>e<span class="token punctuation">,</span> w<span class="token punctuation">)</span>
+    w <span class="token operator">=</span> w_new
 
-print(dL_dw(e, w))  # 1.63025148935958e-14
-plt.plot(loss)
-plt.show()
+<span class="token keyword">print</span><span class="token punctuation">(</span>dL_dw<span class="token punctuation">(</span>e<span class="token punctuation">,</span> w<span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 1.63025148935958e-14</span>
+plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>loss<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
 
-params = np.array(params)
-plt.plot(params)
-plt.title('Gradient descent')
-plt.xlabel('w')
-plt.show()
+params <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>params<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>params<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token string">'Gradient descent'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>xlabel<span class="token punctuation">(</span><span class="token string">'w'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
 
-# 查看最后一个w，可以看到非常接近9.8
-print(params[-1])  # 9.757142247178274
+<span class="token comment" spellcheck="true"># 查看最后一个w，可以看到非常接近9.8</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>params<span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 9.757142247178274</span>
 </code></pre>
 <h2 id="03-04-Kmeans"><a href="#03-04-Kmeans" class="headerlink" title="03.04 Kmeans"></a>03.04 Kmeans</h2><p><img src="20230610105641.png"></p>
 <pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
@@ -1115,150 +1115,150 @@ means<span class="token operator">=</span>np<span class="token punctuation">.</s
 <blockquote>
 <p>重置版代码</p>
 </blockquote>
-<pre class=" language-py"><code class="language-py">import matplotlib.pyplot as plt
-import numpy as np
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
 
-# 设置随机数种子
-np.random.seed(42)
+<span class="token comment" spellcheck="true"># 设置随机数种子</span>
+np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span>
 
-# %matplotlib inline
+<span class="token comment" spellcheck="true"># %matplotlib inline</span>
 
-# 集群数
-K = 3
-# 两个维度
-D = 2
-# 点的总数
-N = 1000
-# 不同集群的点数
-Ns = [300, 400, 300]
+<span class="token comment" spellcheck="true"># 集群数</span>
+K <span class="token operator">=</span> <span class="token number">3</span>
+<span class="token comment" spellcheck="true"># 两个维度</span>
+D <span class="token operator">=</span> <span class="token number">2</span>
+<span class="token comment" spellcheck="true"># 点的总数</span>
+N <span class="token operator">=</span> <span class="token number">1000</span>
+<span class="token comment" spellcheck="true"># 不同集群的点数</span>
+Ns <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">300</span><span class="token punctuation">,</span> <span class="token number">400</span><span class="token punctuation">,</span> <span class="token number">300</span><span class="token punctuation">]</span>
 
-# 3行2列 的随机数组(服从正态分布)
-# 相当于生成3个二维坐标点 -> [[x1,y1],[x2,y2],[x3,y3]]
-means = 5 * np.random.randn(K, D)
-print(means)
+<span class="token comment" spellcheck="true"># 3行2列 的随机数组(服从正态分布)</span>
+<span class="token comment" spellcheck="true"># 相当于生成3个二维坐标点 -> [[x1,y1],[x2,y2],[x3,y3]]</span>
+means <span class="token operator">=</span> <span class="token number">5</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>K<span class="token punctuation">,</span> D<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>means<span class="token punctuation">)</span>
 
-x = []
-# x: ['a','b','c'], y: [1, 2, 3] -> zip(x,y) -> ('a',1), ('b', 2), ('c',3)
-# zip(Ns, means) -> [(300,[x1,y1]),(400,[x2,y2]),(300,[x3,y3])]
-for n, m in zip(Ns, means):
-    print(n, m)
-    # 生成 n行2列的 随机数组 -> 相当于n个二维坐标点 -> m是means里的二维坐标(集群中心点)
-    x.append(np.random.randn(n, D) + m)
+x <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token comment" spellcheck="true"># x: ['a','b','c'], y: [1, 2, 3] -> zip(x,y) -> ('a',1), ('b', 2), ('c',3)</span>
+<span class="token comment" spellcheck="true"># zip(Ns, means) -> [(300,[x1,y1]),(400,[x2,y2]),(300,[x3,y3])]</span>
+<span class="token keyword">for</span> n<span class="token punctuation">,</span> m <span class="token keyword">in</span> zip<span class="token punctuation">(</span>Ns<span class="token punctuation">,</span> means<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>n<span class="token punctuation">,</span> m<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 生成 n行2列的 随机数组 -> 相当于n个二维坐标点 -> m是means里的二维坐标(集群中心点)</span>
+    x<span class="token punctuation">.</span>append<span class="token punctuation">(</span>np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>n<span class="token punctuation">,</span> D<span class="token punctuation">)</span> <span class="token operator">+</span> m<span class="token punctuation">)</span>
 
-# 此时x的shape(形状)
-# [(300, 2), (400, 2), (300, 2)]
-print([x_.shape for x_ in x])
+<span class="token comment" spellcheck="true"># 此时x的shape(形状)</span>
+<span class="token comment" spellcheck="true"># [(300, 2), (400, 2), (300, 2)]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">[</span>x_<span class="token punctuation">.</span>shape <span class="token keyword">for</span> x_ <span class="token keyword">in</span> x<span class="token punctuation">]</span><span class="token punctuation">)</span>
 
-# zip -> [((300, 2),[x1,y1]),((400, 2),[x2,y2]),((300, 2),[x3,y3])]
-for x_, m in zip(x, means):
-    print(x_.shape, m.shape)
-    # scatter(x,y) -> 绘制散点图
-    # x: n行2列 -> x_[:,0]: 所有行的第一列(xi), x[:,1]: 所有行的第二列(yi)
-    plt.scatter(x_[:, 0], x_[:, 1])
-    # 绘制集群中心点
-    # plt.plot里的这个'kx' -> 颜色字符k: 表示黑色，标记字符x: 表示图案为x标记
-    plt.plot(m[0], m[1], 'kx')
-plt.title('True Clusters')
-plt.show()
+<span class="token comment" spellcheck="true"># zip -> [((300, 2),[x1,y1]),((400, 2),[x2,y2]),((300, 2),[x3,y3])]</span>
+<span class="token keyword">for</span> x_<span class="token punctuation">,</span> m <span class="token keyword">in</span> zip<span class="token punctuation">(</span>x<span class="token punctuation">,</span> means<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>x_<span class="token punctuation">.</span>shape<span class="token punctuation">,</span> m<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># scatter(x,y) -> 绘制散点图</span>
+    <span class="token comment" spellcheck="true"># x: n行2列 -> x_[:,0]: 所有行的第一列(xi), x[:,1]: 所有行的第二列(yi)</span>
+    plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>x_<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> x_<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 绘制集群中心点</span>
+    <span class="token comment" spellcheck="true"># plt.plot里的这个'kx' -> 颜色字符k: 表示黑色，标记字符x: 表示图案为x标记</span>
+    plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>m<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> m<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">'kx'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token string">'True Clusters'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
 
-# 从x取出所有数据
-# np.vstack: 按垂直方向（行顺序）堆叠数组构成一个新的数组,堆叠的数组需要具有相同的维度
-# np.hstack: 按水平方向（列顺序）堆叠数组构成一个新的数组,堆叠的数组需要具有相同的维度
-data = np.vstack(x)
-print(data.shape)
-plt.scatter(data[:, 0], data[:, 1])
-plt.show()
+<span class="token comment" spellcheck="true"># 从x取出所有数据</span>
+<span class="token comment" spellcheck="true"># np.vstack: 按垂直方向（行顺序）堆叠数组构成一个新的数组,堆叠的数组需要具有相同的维度</span>
+<span class="token comment" spellcheck="true"># np.hstack: 按水平方向（列顺序）堆叠数组构成一个新的数组,堆叠的数组需要具有相同的维度</span>
+data <span class="token operator">=</span> np<span class="token punctuation">.</span>vstack<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>data<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>data<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> data<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
 
 
-# 计算欧式距离 √((x1-x2)^2 + (y1-y2)^2)
-def dist(x1, x2, axis=None):
-    """
+<span class="token comment" spellcheck="true"># 计算欧式距离 √((x1-x2)^2 + (y1-y2)^2)</span>
+<span class="token keyword">def</span> <span class="token function">dist</span><span class="token punctuation">(</span>x1<span class="token punctuation">,</span> x2<span class="token punctuation">,</span> axis<span class="token operator">=</span>None<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
     Calculate euclidean distance
     :param x1: 点1 (x1,y1)
     :param x2: 点2 (x2,y2)
     :param axis:
     :return:
-    """
-    # np.square(x1 - x2) -> (x1-x2)^2 平方
-    # np.sqrt 开根号
-    return np.sqrt(np.sum(np.square(x1 - x2), axis))
+    """</span>
+    <span class="token comment" spellcheck="true"># np.square(x1 - x2) -> (x1-x2)^2 平方</span>
+    <span class="token comment" spellcheck="true"># np.sqrt 开根号</span>
+    <span class="token keyword">return</span> np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>np<span class="token punctuation">.</span>square<span class="token punctuation">(</span>x1 <span class="token operator">-</span> x2<span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token punctuation">)</span><span class="token punctuation">)</span>
 
 
-# 计算平均值和任意给定点的距离
-def distance_matrix(x, m):
-    """
+<span class="token comment" spellcheck="true"># 计算平均值和任意给定点的距离</span>
+<span class="token keyword">def</span> <span class="token function">distance_matrix</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> m<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
     Calculates the distance from each element x to each element in m.
     :param x: data points
     :param m: possible means
     :return: distance matrix
-    """
-    # 初始化(用0填充)距离矩阵(len(x)行len(m)列)
-    d = np.zeros((len(x), len(m)))
-    for i in range(len(x)):
-        for j in range(len(m)):
-            # 传入x的第i行所有列 x[i] -> (xi,yi)
-            # 传入m的第j行所有列 m[j] -> (xm,ym)
-            d[i, j] = dist(x[i, :], m[j, :])
+    """</span>
+    <span class="token comment" spellcheck="true"># 初始化(用0填充)距离矩阵(len(x)行len(m)列)</span>
+    d <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span>len<span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">,</span> len<span class="token punctuation">(</span>m<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>len<span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>len<span class="token punctuation">(</span>m<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token comment" spellcheck="true"># 传入x的第i行所有列 x[i] -> (xi,yi)</span>
+            <span class="token comment" spellcheck="true"># 传入m的第j行所有列 m[j] -> (xm,ym)</span>
+            d<span class="token punctuation">[</span>i<span class="token punctuation">,</span> j<span class="token punctuation">]</span> <span class="token operator">=</span> dist<span class="token punctuation">(</span>x<span class="token punctuation">[</span>i<span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">,</span> m<span class="token punctuation">[</span>j<span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
 
-    return d
-
-
-# 测试
-# Test out the distance matrix algorithm
-x_test = np.array([[0, 1], [1, 0], [0, 0], [1, 1]])
-print(distance_matrix(x_test, x_test))
+    <span class="token keyword">return</span> d
 
 
-# 使用广播替代循环(python的循环性能低)
-# broadcasting
-# 计算欧式距离 √((x1-x2)^2 + (y1-y2)^2)
-def dist(x1, x2, axis=-1):
-    """
+<span class="token comment" spellcheck="true"># 测试</span>
+<span class="token comment" spellcheck="true"># Test out the distance matrix algorithm</span>
+x_test <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>distance_matrix<span class="token punctuation">(</span>x_test<span class="token punctuation">,</span> x_test<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># 使用广播替代循环(python的循环性能低)</span>
+<span class="token comment" spellcheck="true"># broadcasting</span>
+<span class="token comment" spellcheck="true"># 计算欧式距离 √((x1-x2)^2 + (y1-y2)^2)</span>
+<span class="token keyword">def</span> <span class="token function">dist</span><span class="token punctuation">(</span>x1<span class="token punctuation">,</span> x2<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
     Calculate euclidean distance
     :param x1: 点1 (x1,y1)
     :param x2: 点2 (x2,y2)
     :param axis:
     :return:
-    """
-    return np.sqrt(np.sum(np.square(x1 - x2), axis))
+    """</span>
+    <span class="token keyword">return</span> np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>np<span class="token punctuation">.</span>square<span class="token punctuation">(</span>x1 <span class="token operator">-</span> x2<span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token punctuation">)</span><span class="token punctuation">)</span>
 
 
-def distance_matrix_broadcasting(x, m):
-    # np.sum(axis=0) -> 行(维度1)求和 -> [[x1,y1],[x2,y2]] -> [[x1+x2],[y1+y2]]
-    # np.sum(axis=1) -> 列(维度2)求和 -> [[x1,y1],[x2,y2]] -> [[x1+y1],[x2+y2]]
-    # x所有点与m_相减([xx-mx,xy-my])并求平方，然后列相加((xx-mx)^2+(xy-my)^2，然后开根号得距离
-    d = [dist(x, m_, axis=1) for m_ in m]
-    # print(d)
-    # 按行堆叠(axis=1)
-    d = np.stack(d, axis=1)
-    return d
+<span class="token keyword">def</span> <span class="token function">distance_matrix_broadcasting</span><span class="token punctuation">(</span>x<span class="token punctuation">,</span> m<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># np.sum(axis=0) -> 行(维度1)求和 -> [[x1,y1],[x2,y2]] -> [[x1+x2],[y1+y2]]</span>
+    <span class="token comment" spellcheck="true"># np.sum(axis=1) -> 列(维度2)求和 -> [[x1,y1],[x2,y2]] -> [[x1+y1],[x2+y2]]</span>
+    <span class="token comment" spellcheck="true"># x所有点与m_相减([xx-mx,xy-my])并求平方，然后列相加((xx-mx)^2+(xy-my)^2，然后开根号得距离</span>
+    d <span class="token operator">=</span> <span class="token punctuation">[</span>dist<span class="token punctuation">(</span>x<span class="token punctuation">,</span> m_<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token keyword">for</span> m_ <span class="token keyword">in</span> m<span class="token punctuation">]</span>
+    <span class="token comment" spellcheck="true"># print(d)</span>
+    <span class="token comment" spellcheck="true"># 按行堆叠(axis=1)</span>
+    d <span class="token operator">=</span> np<span class="token punctuation">.</span>stack<span class="token punctuation">(</span>d<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> d
 
 
-# 测试
-# Test out the distance matrix algorithm
-x_test = np.array([[0, 1], [1, 0], [0, 0], [1, 1]])
-print(distance_matrix_broadcasting(x_test, x_test))
+<span class="token comment" spellcheck="true"># 测试</span>
+<span class="token comment" spellcheck="true"># Test out the distance matrix algorithm</span>
+x_test <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>distance_matrix_broadcasting<span class="token punctuation">(</span>x_test<span class="token punctuation">,</span> x_test<span class="token punctuation">)</span><span class="token punctuation">)</span>
 
-# 计算k-means
+<span class="token comment" spellcheck="true"># 计算k-means</span>
 
-# 初始化数据
-# 集群数
-k = 3
-#
-iters = 10
-print(data.shape)
-print(data)
-# (1000, 2)
-# 3个集群中心点，(3行2列)
-means = np.random.randn(k, data.shape[1])
+<span class="token comment" spellcheck="true"># 初始化数据</span>
+<span class="token comment" spellcheck="true"># 集群数</span>
+k <span class="token operator">=</span> <span class="token number">3</span>
+<span class="token comment" spellcheck="true">#</span>
+iters <span class="token operator">=</span> <span class="token number">10</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>data<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>data<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (1000, 2)</span>
+<span class="token comment" spellcheck="true"># 3个集群中心点，(3行2列)</span>
+means <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>k<span class="token punctuation">,</span> data<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
 
-for i in range(iters):
-    # 求data和中心点的距离 -> shape: (1000, 3) -> 这1000个点分别到3个中心点的距离
-    d = distance_matrix_broadcasting(data, means)
-    # print(d[:10])
-    # print(d.shape) # (1000,3)
-    # np.argmin: 找到最小的(值的下标)然后映射到指定轴
-    '''
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>iters<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 求data和中心点的距离 -> shape: (1000, 3) -> 这1000个点分别到3个中心点的距离</span>
+    d <span class="token operator">=</span> distance_matrix_broadcasting<span class="token punctuation">(</span>data<span class="token punctuation">,</span> means<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># print(d[:10])</span>
+    <span class="token comment" spellcheck="true"># print(d.shape) # (1000,3)</span>
+    <span class="token comment" spellcheck="true"># np.argmin: 找到最小的(值的下标)然后映射到指定轴</span>
+    <span class="token triple-quoted-string string">'''
     array([[0, 4, 2],
            [3, 1, 5]]) # 3*2
     >>> np.argmin(a, axis=0)
@@ -1269,31 +1269,31 @@ for i in range(iters):
     映射到列y
     找出每行最小元素的下标
     array([0 1]) #(2,)
-    '''
-    cluster = d.argmin(axis=-1)  # 找到平均距离最小值然后映射到列
-    # true
-    # print(cluster == np.argmin(d, axis=1))
-    # print(cluster[:10])  # [一堆0、1、2]
-    # print(cluster.shape) # (1000,)
-    for j in range(k):
-        # print(j) # 0,1,2
-        # 筛选出和第j个集群中心点最近的下标
-        idx = cluster == j  # numpy布尔索引
-        # print(idx)
-        # print(data[idx])
-        # 绘制集群中心点
-        plt.plot(means[j, 0], means[j, 1], 'rx')
-        # data[idx] -> 找出所有cluster==j(与集群中心点j最近)的元素，组成新数组
-        plt.scatter(data[idx, 0], data[idx, 1])
-        # calculate new mean
-        # print('means\n', means[j, :])
-        # print('new:\n', data[idx].mean(axis=0))
-        # 根据当前平均距离最小的点确定新点
-        # 将距离集群中心点j最近的所有点的坐标求平均,得出新点的坐标
-        means[j, :] = data[idx].mean(axis=0)
-        # print(data[idx])
-        # print(means[j, :])
-    plt.show()
+    '''</span>
+    cluster <span class="token operator">=</span> d<span class="token punctuation">.</span>argmin<span class="token punctuation">(</span>axis<span class="token operator">=</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 找到平均距离最小值然后映射到列</span>
+    <span class="token comment" spellcheck="true"># true</span>
+    <span class="token comment" spellcheck="true"># print(cluster == np.argmin(d, axis=1))</span>
+    <span class="token comment" spellcheck="true"># print(cluster[:10])  # [一堆0、1、2]</span>
+    <span class="token comment" spellcheck="true"># print(cluster.shape) # (1000,)</span>
+    <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>k<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># print(j) # 0,1,2</span>
+        <span class="token comment" spellcheck="true"># 筛选出和第j个集群中心点最近的下标</span>
+        idx <span class="token operator">=</span> cluster <span class="token operator">==</span> j  <span class="token comment" spellcheck="true"># numpy布尔索引</span>
+        <span class="token comment" spellcheck="true"># print(idx)</span>
+        <span class="token comment" spellcheck="true"># print(data[idx])</span>
+        <span class="token comment" spellcheck="true"># 绘制集群中心点</span>
+        plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>means<span class="token punctuation">[</span>j<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> means<span class="token punctuation">[</span>j<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">'rx'</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># data[idx] -> 找出所有cluster==j(与集群中心点j最近)的元素，组成新数组</span>
+        plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>data<span class="token punctuation">[</span>idx<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> data<span class="token punctuation">[</span>idx<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># calculate new mean</span>
+        <span class="token comment" spellcheck="true"># print('means\n', means[j, :])</span>
+        <span class="token comment" spellcheck="true"># print('new:\n', data[idx].mean(axis=0))</span>
+        <span class="token comment" spellcheck="true"># 根据当前平均距离最小的点确定新点</span>
+        <span class="token comment" spellcheck="true"># 将距离集群中心点j最近的所有点的坐标求平均,得出新点的坐标</span>
+        means<span class="token punctuation">[</span>j<span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">]</span> <span class="token operator">=</span> data<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">.</span>mean<span class="token punctuation">(</span>axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># print(data[idx])</span>
+        <span class="token comment" spellcheck="true"># print(means[j, :])</span>
+    plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
 </code></pre>
 <h2 id="03-06-Broadcasting"><a href="#03-06-Broadcasting" class="headerlink" title="03.06 Broadcasting"></a>03.06 Broadcasting</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
 np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
@@ -1322,70 +1322,70 @@ weighted_loss<span class="token operator">=</span>loss<span class="token operato
 <blockquote>
 <p>重置版代码</p>
 </blockquote>
-<pre class=" language-py"><code class="language-py">import numpy as np
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
 
-np.random.seed(1)
+np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
 
-a = np.random.rand(3, 2)
-# randint(low, high=None, size=None, dtype=int)
-b = np.random.randint(0, 2, (2,))
-print('a\n', a)
-print('b\n', b)
+a <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>rand<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># randint(low, high=None, size=None, dtype=int)</span>
+b <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randint<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'a\n'</span><span class="token punctuation">,</span> a<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'b\n'</span><span class="token punctuation">,</span> b<span class="token punctuation">)</span>
 
-print(a * b)
-print((a * b).shape)  # (3,2)
+<span class="token keyword">print</span><span class="token punctuation">(</span>a <span class="token operator">*</span> b<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">(</span>a <span class="token operator">*</span> b<span class="token punctuation">)</span><span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3,2)</span>
 
-c = np.random.randint(0, 2, (2, 1))
-print('c\n', c)
-# operands could not be broadcast together with shapes (3,2) (2,1)
-# print(a * c) # 试图用 a[0,0]*c[0,0] a[1,0]*c[1,0] a[2,0]*?
+c <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randint<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'c\n'</span><span class="token punctuation">,</span> c<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># operands could not be broadcast together with shapes (3,2) (2,1)</span>
+<span class="token comment" spellcheck="true"># print(a * c) # 试图用 a[0,0]*c[0,0] a[1,0]*c[1,0] a[2,0]*?</span>
 
-print(c.T)  # [[1,0]]
-print(c.T.shape)  # (1, 2)
-print(a * c.T)
+<span class="token keyword">print</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>T<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># [[1,0]]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>c<span class="token punctuation">.</span>T<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (1, 2)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>a <span class="token operator">*</span> c<span class="token punctuation">.</span>T<span class="token punctuation">)</span>
 
-# tips: 增加维度
-print('shape b\n', b.shape)  # (2,)
-b = b[None, :]  # 增加行维度
-print('shape b\n', b.shape)  # (1, 2)
+<span class="token comment" spellcheck="true"># tips: 增加维度</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'shape b\n'</span><span class="token punctuation">,</span> b<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (2,)</span>
+b <span class="token operator">=</span> b<span class="token punctuation">[</span>None<span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># 增加行维度</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'shape b\n'</span><span class="token punctuation">,</span> b<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (1, 2)</span>
 
-# 猜测,最后一个维度必须匹配才能广播broadcasting
-print(a + b)  # (3,2) + (1,2)
-b2 = b.squeeze()
-print('shape b.squeeze\n', b2.shape)  # (2,)
-# error
-# print(a.T + b)  # (2,3) + (1,2)
-# squeeze减少维度
-print(a + b2)  # (3,2) + (2,)
-print(a + np.array([0]))
-# print(np.array([0]).shape) # (1,)
-# error
-# print(a.T + b2)  # (2,3) + (2,)
+<span class="token comment" spellcheck="true"># 猜测,最后一个维度必须匹配才能广播broadcasting</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>a <span class="token operator">+</span> b<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3,2) + (1,2)</span>
+b2 <span class="token operator">=</span> b<span class="token punctuation">.</span>squeeze<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'shape b.squeeze\n'</span><span class="token punctuation">,</span> b2<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (2,)</span>
+<span class="token comment" spellcheck="true"># error</span>
+<span class="token comment" spellcheck="true"># print(a.T + b)  # (2,3) + (1,2)</span>
+<span class="token comment" spellcheck="true"># squeeze减少维度</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>a <span class="token operator">+</span> b2<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3,2) + (2,)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>a <span class="token operator">+</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># print(np.array([0]).shape) # (1,)</span>
+<span class="token comment" spellcheck="true"># error</span>
+<span class="token comment" spellcheck="true"># print(a.T + b2)  # (2,3) + (2,)</span>
 
-# e.g.
-loss = np.random.randn(3, 1)
-print('shape loss\n', loss.shape)  # (3, 1)
-weight = np.random.randn(3)
-print('shape weight\n', weight.shape)  # (3,)
+<span class="token comment" spellcheck="true"># e.g.</span>
+loss <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'shape loss\n'</span><span class="token punctuation">,</span> loss<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3, 1)</span>
+weight <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'shape weight\n'</span><span class="token punctuation">,</span> weight<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3,)</span>
 
-weighted_loss = loss * weight
-print('wl\n', weighted_loss)
-# 这里广播后,变成 (3,3)
-print('shape wl\n', weighted_loss.shape)  # (3, 3)
+weighted_loss <span class="token operator">=</span> loss <span class="token operator">*</span> weight
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'wl\n'</span><span class="token punctuation">,</span> weighted_loss<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 这里广播后,变成 (3,3)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'shape wl\n'</span><span class="token punctuation">,</span> weighted_loss<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3, 3)</span>
 
-# 我们希望结果是(3,1)
-# 增加列维度
-weight = weight[:, None]
-print('shape weight\n', weight.shape)  # (3, 1)
+<span class="token comment" spellcheck="true"># 我们希望结果是(3,1)</span>
+<span class="token comment" spellcheck="true"># 增加列维度</span>
+weight <span class="token operator">=</span> weight<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> None<span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'shape weight\n'</span><span class="token punctuation">,</span> weight<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3, 1)</span>
 
-weighted_loss = loss * weight
-print('wl\n', weighted_loss)
-print('shape wl\n', weighted_loss.shape)  # (3, 1)
+weighted_loss <span class="token operator">=</span> loss <span class="token operator">*</span> weight
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'wl\n'</span><span class="token punctuation">,</span> weighted_loss<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'shape wl\n'</span><span class="token punctuation">,</span> weighted_loss<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3, 1)</span>
 
-print(weighted_loss.mean())
-print(sum(weighted_loss) / len(weighted_loss))
+<span class="token keyword">print</span><span class="token punctuation">(</span>weighted_loss<span class="token punctuation">.</span>mean<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sum<span class="token punctuation">(</span>weighted_loss<span class="token punctuation">)</span> <span class="token operator">/</span> len<span class="token punctuation">(</span>weighted_loss<span class="token punctuation">)</span><span class="token punctuation">)</span>
 
-# 为了防止广播导致奇怪的bug或结果.最好的办法是让所有东西保持想要的形状(尽量不用(x,)或(,x)这种形状的)
+<span class="token comment" spellcheck="true"># 为了防止广播导致奇怪的bug或结果.最好的办法是让所有东西保持想要的形状(尽量不用(x,)或(,x)这种形状的)</span>
 </code></pre>
 <h2 id="03-07-scikit-learn-into"><a href="#03-07-scikit-learn-into" class="headerlink" title="03.07 scikit learn into"></a>03.07 scikit learn into</h2><blockquote>
 <p>我们今天所见的所有机器学习技术都来源于线性回归统计</p>
@@ -2148,7 +2148,7 @@ What format is data saved in? (in memory and on disk)
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">347.8k</span>
+                <span class="white-color">357.6k</span>
             
 
             
