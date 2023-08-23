@@ -377,14 +377,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        10.7k
+                        12.9k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        49 分
+                        59 分
                     </div>
                     
                 
@@ -2070,7 +2070,325 @@ model<span class="token punctuation">.</span>fit<span class="token punctuation">
 <span class="token comment" spellcheck="true"># 0.9239766081871345</span>
 <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'test score:\n'</span><span class="token punctuation">,</span> model<span class="token punctuation">.</span>score<span class="token punctuation">(</span>Xtest<span class="token punctuation">,</span> Ytest<span class="token punctuation">)</span><span class="token punctuation">)</span>
 </code></pre>
-<h2 id="第八阶段模块二"><a href="#第八阶段模块二" class="headerlink" title="第八阶段模块二"></a>第八阶段模块二</h2><h1 id="9-一线互联网数据分析综合项目实战"><a href="#9-一线互联网数据分析综合项目实战" class="headerlink" title="9. 一线互联网数据分析综合项目实战"></a>9. 一线互联网数据分析综合项目实战</h1><h1 id="10-就业指导-简历指导"><a href="#10-就业指导-简历指导" class="headerlink" title="10. 就业指导 + 简历指导"></a>10. 就业指导 + 简历指导</h1>
+<h2 id="第八阶段模块二"><a href="#第八阶段模块二" class="headerlink" title="第八阶段模块二"></a>第八阶段模块二</h2><h3 id="k-means"><a href="#k-means" class="headerlink" title="k-means"></a>k-means</h3><h4 id="01–基础原理-拉勾教育"><a href="#01–基础原理-拉勾教育" class="headerlink" title="01–基础原理-拉勾教育"></a>01–基础原理-拉勾教育</h4><ul>
+<li>无监督算法<br><img src="20230821053924.png"><br><img src="20230821053939.png"><br><img src="20230821054039.png"></li>
+<li>k-means<br><img src="20230821054058.png"><br><img src="20230821054123.png"><br><img src="20230821054149.png"><br><img src="20230821054211.png"><br><img src="20230821054244.png"><br><img src="20230821054254.png"></li>
+</ul>
+<h4 id="python-实现"><a href="#python-实现" class="headerlink" title="python 实现"></a>python 实现</h4><p><a href="iris.txt">附件 1</a><br><img src="20230821054941.png"><br><img src="20230821055130.png"><br><img src="20230821055138.png"><br><img src="20230821055145.png"><br><img src="20230821055619.png"><br><img src="20230821055632.png"><br><img src="20230821055643.png"><br><img src="20230821055650.png"><br><img src="20230821055705.png"><br><img src="20230821055712.png"><br><img src="20230821055719.png"><br><img src="20230821055725.png"><br><img src="20230821055733.png"><br><img src="20230821055740.png"><br><img src="20230821055747.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
+<span class="token keyword">import</span> matplotlib <span class="token keyword">as</span> mpl
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+
+plt<span class="token punctuation">.</span>switch_backend<span class="token punctuation">(</span><span class="token string">'TkAgg'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %matplotlib inline</span>
+
+<span class="token comment" spellcheck="true"># 导入数据集</span>
+iris <span class="token operator">=</span> pd<span class="token punctuation">.</span>read_csv<span class="token punctuation">(</span><span class="token string">'iris.txt'</span><span class="token punctuation">,</span> header<span class="token operator">=</span>None<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'iris:\n'</span><span class="token punctuation">,</span> iris<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># print(len(iris.columns))</span>
+<span class="token comment" spellcheck="true"># iris = iris.iloc[:, :len(iris.columns) - 1]</span>
+<span class="token comment" spellcheck="true"># print('iris:\n', iris[:3])</span>
+
+
+<span class="token comment" spellcheck="true"># 计算距离</span>
+<span class="token keyword">def</span> <span class="token function">distEclud</span><span class="token punctuation">(</span>arrA<span class="token punctuation">,</span> arrB<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># d = a-b</span>
+    d <span class="token operator">=</span> arrA <span class="token operator">-</span> arrB
+    <span class="token comment" spellcheck="true"># sum(d^2)</span>
+    dist <span class="token operator">=</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>np<span class="token punctuation">.</span>power<span class="token punctuation">(</span>d<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> dist
+
+
+<span class="token comment" spellcheck="true"># 自动生成随机质心</span>
+<span class="token keyword">def</span> <span class="token function">randCent</span><span class="token punctuation">(</span>dataSet<span class="token punctuation">,</span> k<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    n <span class="token operator">=</span> dataSet<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+    <span class="token comment" spellcheck="true"># 取每一列的最大最小值</span>
+    data_max <span class="token operator">=</span> dataSet<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span>n<span class="token number">-1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>max<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    data_min <span class="token operator">=</span> dataSet<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span><span class="token punctuation">:</span>n<span class="token number">-1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>min<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 均匀分布抽样</span>
+    <span class="token comment" spellcheck="true"># numpy.random.uniform(low,high,size)</span>
+    <span class="token comment" spellcheck="true"># 从一个均匀分布[low,high)中随机采样，注意定义域是左闭右开</span>
+    <span class="token comment" spellcheck="true"># size: 输出样本数目，为int或元组(tuple)类型，</span>
+    <span class="token comment" spellcheck="true"># 例如，size=(m,n,k), 则输出 m * n * k 个样本，缺省时输出1个值。</span>
+    data_cent <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>uniform<span class="token punctuation">(</span>data_min<span class="token punctuation">,</span> data_max<span class="token punctuation">,</span> <span class="token punctuation">(</span>k<span class="token punctuation">,</span> n<span class="token number">-1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> data_cent  <span class="token comment" spellcheck="true"># 质心</span>
+
+
+<span class="token comment" spellcheck="true"># 随机生成3个质心</span>
+iris_cent <span class="token operator">=</span> randCent<span class="token punctuation">(</span>iris<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">### ERROR</span>
+<span class="token keyword">def</span> <span class="token function">kMeans</span><span class="token punctuation">(</span>dataSet<span class="token punctuation">,</span> k<span class="token punctuation">,</span> distMeas<span class="token operator">=</span>distEclud<span class="token punctuation">,</span> createCent<span class="token operator">=</span>randCent<span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># iris为150*5</span>
+    m<span class="token punctuation">,</span> n <span class="token operator">=</span> dataSet<span class="token punctuation">.</span>shape  <span class="token comment" spellcheck="true"># m是行数（数据量），n是列数iris为150*5</span>
+    <span class="token comment" spellcheck="true"># 下面生成的centroids，即第一个容器，后面用来存储最新更新的质心</span>
+    centroids <span class="token operator">=</span> createCent<span class="token punctuation">(</span>dataSet<span class="token punctuation">,</span> k<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># centroids为3*4，用三个长度为4的一维数组记载3个质心</span>
+    <span class="token comment" spellcheck="true"># 第一次centroids是随机生成的</span>
+    <span class="token comment" spellcheck="true"># 这段生成的result_set，即第二个容器</span>
+    <span class="token comment" spellcheck="true"># result_set结构： [数据集, 该行到最近质心的距离， 本次迭代中最近质心编号，上次迭代中最近质心编号]</span>
+    clusterAssment <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span>m<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># clusterAssment为150*3的数组</span>
+    clusterAssment<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>inf  <span class="token comment" spellcheck="true"># np.inf为无穷大</span>
+    clusterAssment<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">:</span> <span class="token number">3</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">1</span>  <span class="token comment" spellcheck="true"># 此时clusterAssment为150*3</span>
+    result_set <span class="token operator">=</span> pd<span class="token punctuation">.</span>concat<span class="token punctuation">(</span><span class="token punctuation">[</span>dataSet<span class="token punctuation">,</span> pd<span class="token punctuation">.</span>DataFrame<span class="token punctuation">(</span>clusterAssment<span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                           axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> ignore_index<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># result_set为150*8</span>
+
+    clusterChanged <span class="token operator">=</span> <span class="token boolean">True</span>
+    <span class="token keyword">while</span> clusterChanged<span class="token punctuation">:</span>
+        clusterChanged <span class="token operator">=</span> <span class="token boolean">False</span>
+
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>m<span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># 遍历result_set中每一行，一共m行</span>
+            <span class="token comment" spellcheck="true"># 小心，下面的n为5，而resulit_set的列数已经变成8</span>
+            dist <span class="token operator">=</span> distMeas<span class="token punctuation">(</span>dataSet<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span>i<span class="token punctuation">,</span> <span class="token punctuation">:</span>n<span class="token number">-1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values <span class="token punctuation">,</span> centroids<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 第i行与三个质心的距离,dist为3*1</span>
+            result_set<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span>i<span class="token punctuation">,</span> n<span class="token punctuation">]</span> <span class="token operator">=</span> dist<span class="token punctuation">.</span>min<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># result_set[i,n]记录该行与3个质心的最小距离</span>
+            result_set<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span>i<span class="token punctuation">,</span> n <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>where<span class="token punctuation">(</span>dist <span class="token operator">==</span> dist<span class="token punctuation">.</span>min<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># result_set[i,n]记录最近质心的索引</span>
+            clusterChanged <span class="token operator">=</span> <span class="token operator">not</span> <span class="token punctuation">(</span>result_set<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">==</span> result_set<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>all<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token comment" spellcheck="true"># 只要result_set最后两列不完全相等，意味着本次for循环结束时，m行所有的新质心与上次while循环留下的不完全一样</span>
+        <span class="token comment" spellcheck="true"># 后果：clusterChanged为True，while继续循环</span>
+
+        <span class="token comment" spellcheck="true"># clusterChanged为True，则需要运行下面的if语句代码块，重置第一个容器centroids和第二个容器result_set</span>
+        <span class="token keyword">if</span> clusterChanged<span class="token punctuation">:</span>
+            cent_df <span class="token operator">=</span> result_set<span class="token punctuation">.</span>groupby<span class="token punctuation">(</span>n <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">.</span>mean<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 按照列索引为n+1（质心索引）(第6列)进行分组求均值</span>
+            <span class="token comment" spellcheck="true"># 即：按照最新的簇分类，计算最新3个质心的位置</span>
+            centroids <span class="token operator">=</span> cent_df<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token punctuation">:</span>n <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values  <span class="token comment" spellcheck="true"># 重置centroids，用最新质心位置，替换上次的。3*4</span>
+            result_set<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">=</span> result_set<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">2</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># result_set最后一列，本次的簇分类编码，替换掉上次的</span>
+    <span class="token keyword">return</span> centroids<span class="token punctuation">,</span> result_set
+
+
+iris_cent<span class="token punctuation">,</span> iris_result <span class="token operator">=</span> kMeans<span class="token punctuation">(</span>iris<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>iris_result<span class="token punctuation">.</span>head<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h4 id="sklearn-实现"><a href="#sklearn-实现" class="headerlink" title="sklearn 实现"></a>sklearn 实现</h4><p><img src="20230821070016.png"><br><img src="20230821070027.png"><br><img src="20230821070041.png"><br><img src="20230821070100.png"><br><img src="20230821070114.png"><br><img src="20230821070124.png"><br><img src="20230821070152.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>datasets <span class="token keyword">import</span> make_blobs
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
+<span class="token keyword">import</span> matplotlib <span class="token keyword">as</span> mpl
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+
+plt<span class="token punctuation">.</span>switch_backend<span class="token punctuation">(</span><span class="token string">'TkAgg'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 自己创建数据集</span>
+X<span class="token punctuation">,</span> y <span class="token operator">=</span> make_blobs<span class="token punctuation">(</span>n_samples<span class="token operator">=</span><span class="token number">500</span><span class="token punctuation">,</span> n_features<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> centers<span class="token operator">=</span><span class="token number">4</span><span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> marker<span class="token operator">=</span><span class="token string">'o'</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 点的形状 ,s=8 #点的大小</span>
+
+<span class="token comment" spellcheck="true"># 查看分布</span>
+color <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">"red"</span><span class="token punctuation">,</span> <span class="token string">"pink"</span><span class="token punctuation">,</span> <span class="token string">"orange"</span><span class="token punctuation">,</span> <span class="token string">"gray"</span><span class="token punctuation">]</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>X<span class="token punctuation">[</span>y <span class="token operator">==</span> i<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> X<span class="token punctuation">[</span>y <span class="token operator">==</span> i<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                marker<span class="token operator">=</span><span class="token string">'o'</span><span class="token punctuation">,</span>  <span class="token comment" spellcheck="true"># 点的形状</span>
+                s<span class="token operator">=</span><span class="token number">8</span><span class="token punctuation">,</span>  <span class="token comment" spellcheck="true"># 点的大小</span>
+                c<span class="token operator">=</span>color<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>cluster <span class="token keyword">import</span> KMeans
+
+cluster <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+cluster<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+y_pred <span class="token operator">=</span> cluster<span class="token punctuation">.</span>labels_
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'y_pred:\n'</span><span class="token punctuation">,</span> y_pred<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 该属性使用得比较多</span>
+
+fit_pre <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit_predict<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">(</span>cluster<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>X<span class="token punctuation">)</span> <span class="token operator">==</span> fit_pre<span class="token punctuation">)</span><span class="token punctuation">.</span>sum<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">(</span>fit_pre <span class="token operator">==</span> cluster<span class="token punctuation">.</span>labels_<span class="token punctuation">)</span><span class="token punctuation">.</span>sum<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 当我们数据量非常大的时候，为了提高模型学习效率，我们可以使用部分数据来帮助我们确认质心</span>
+<span class="token comment" spellcheck="true"># 剩下的数据的聚类结果，使用 predict 来调用</span>
+cluster_smallsub <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">200</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+sample_pred <span class="token operator">=</span> cluster_smallsub<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 但这样的结果，肯定与直接 fit 全部数据会不一致。</span>
+<span class="token comment" spellcheck="true"># 有时候，当我们不要求那么精确，或者我们的数据量实在太大，那我们可以使用这样的方法</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>y_pred <span class="token operator">==</span> sample_pred<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 查看质心</span>
+centroid <span class="token operator">=</span> cluster<span class="token punctuation">.</span>cluster_centers_
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'centroid:\n'</span><span class="token punctuation">,</span> centroid<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'centroid.shape:\n'</span><span class="token punctuation">,</span> centroid<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 查看总距离平方和</span>
+inertia <span class="token operator">=</span> cluster<span class="token punctuation">.</span>inertia_
+<span class="token comment" spellcheck="true"># 1903.5607664611764</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'inertia:\n'</span><span class="token punctuation">,</span> inertia<span class="token punctuation">)</span>
+
+n_clusters <span class="token operator">=</span> <span class="token number">4</span>
+cluster_ <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span>n_clusters<span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+inertia <span class="token operator">=</span> cluster_<span class="token punctuation">.</span>inertia_
+<span class="token comment" spellcheck="true"># 908.3855684760615</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'inertia:\n'</span><span class="token punctuation">,</span> inertia<span class="token punctuation">)</span>
+
+n_clusters <span class="token operator">=</span> <span class="token number">5</span>
+cluster_ <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span>n_clusters<span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+inertia_ <span class="token operator">=</span> cluster_<span class="token punctuation">.</span>inertia_
+<span class="token comment" spellcheck="true"># 811.0841324482415</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'inertia:\n'</span><span class="token punctuation">,</span> inertia_<span class="token punctuation">)</span>
+
+n_clusters <span class="token operator">=</span> <span class="token number">6</span>
+cluster_ <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span>n_clusters<span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+inertia_ <span class="token operator">=</span> cluster_<span class="token punctuation">.</span>inertia_
+<span class="token comment" spellcheck="true"># 733.1538350083081</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'inertia:\n'</span><span class="token punctuation">,</span> inertia_<span class="token punctuation">)</span>
+</code></pre>
+<h4 id="评估指标-轮廓系数"><a href="#评估指标-轮廓系数" class="headerlink" title="评估指标: 轮廓系数"></a>评估指标: 轮廓系数</h4><p><img src="20230821071320.png"><br><img src="20230821071336.png"><br><img src="20230821071344.png"><br><img src="20230821071609.png"><br><img src="20230821071616.png"><br><img src="20230821071624.png"><br><img src="20230821071631.png"><br><img src="20230821071638.png"><br><img src="20230821071647.png"><br><img src="20230821071705.png"><br><img src="20230821071714.png"><br><img src="20230821071722.png"><br><img src="20230821071730.png"><br><img src="20230821071744.png"><br><img src="20230821071752.png"><br><img src="20230821071801.png"><br><img src="20230821071809.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>datasets <span class="token keyword">import</span> make_blobs
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
+<span class="token keyword">import</span> matplotlib <span class="token keyword">as</span> mpl
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+
+plt<span class="token punctuation">.</span>switch_backend<span class="token punctuation">(</span><span class="token string">'TkAgg'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 自己创建数据集</span>
+X<span class="token punctuation">,</span> y <span class="token operator">=</span> make_blobs<span class="token punctuation">(</span>n_samples<span class="token operator">=</span><span class="token number">500</span><span class="token punctuation">,</span> n_features<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> centers<span class="token operator">=</span><span class="token number">4</span><span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> marker<span class="token operator">=</span><span class="token string">'o'</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 点的形状 ,s=8 #点的大小</span>
+
+<span class="token comment" spellcheck="true"># 查看分布</span>
+color <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">"red"</span><span class="token punctuation">,</span> <span class="token string">"pink"</span><span class="token punctuation">,</span> <span class="token string">"orange"</span><span class="token punctuation">,</span> <span class="token string">"gray"</span><span class="token punctuation">]</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    plt<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>X<span class="token punctuation">[</span>y <span class="token operator">==</span> i<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> X<span class="token punctuation">[</span>y <span class="token operator">==</span> i<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                marker<span class="token operator">=</span><span class="token string">'o'</span><span class="token punctuation">,</span>  <span class="token comment" spellcheck="true"># 点的形状</span>
+                s<span class="token operator">=</span><span class="token number">8</span><span class="token punctuation">,</span>  <span class="token comment" spellcheck="true"># 点的大小</span>
+                c<span class="token operator">=</span>color<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>cluster <span class="token keyword">import</span> KMeans
+
+cluster <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+cluster<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+y_pred <span class="token operator">=</span> cluster<span class="token punctuation">.</span>labels_
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'y_pred:\n'</span><span class="token punctuation">,</span> y_pred<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 该属性使用得比较多</span>
+
+fit_pre <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit_predict<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">(</span>cluster<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>X<span class="token punctuation">)</span> <span class="token operator">==</span> fit_pre<span class="token punctuation">)</span><span class="token punctuation">.</span>sum<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">(</span>fit_pre <span class="token operator">==</span> cluster<span class="token punctuation">.</span>labels_<span class="token punctuation">)</span><span class="token punctuation">.</span>sum<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 当我们数据量非常大的时候，为了提高模型学习效率，我们可以使用部分数据来帮助我们确认质心</span>
+<span class="token comment" spellcheck="true"># 剩下的数据的聚类结果，使用 predict 来调用</span>
+cluster_smallsub <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">200</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+sample_pred <span class="token operator">=</span> cluster_smallsub<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 但这样的结果，肯定与直接 fit 全部数据会不一致。</span>
+<span class="token comment" spellcheck="true"># 有时候，当我们不要求那么精确，或者我们的数据量实在太大，那我们可以使用这样的方法</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>y_pred <span class="token operator">==</span> sample_pred<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 查看质心</span>
+centroid <span class="token operator">=</span> cluster<span class="token punctuation">.</span>cluster_centers_
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'centroid:\n'</span><span class="token punctuation">,</span> centroid<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'centroid.shape:\n'</span><span class="token punctuation">,</span> centroid<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 查看总距离平方和</span>
+inertia <span class="token operator">=</span> cluster<span class="token punctuation">.</span>inertia_
+<span class="token comment" spellcheck="true"># 1903.5607664611764</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'inertia:\n'</span><span class="token punctuation">,</span> inertia<span class="token punctuation">)</span>
+
+n_clusters <span class="token operator">=</span> <span class="token number">4</span>
+cluster_ <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span>n_clusters<span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+inertia <span class="token operator">=</span> cluster_<span class="token punctuation">.</span>inertia_
+<span class="token comment" spellcheck="true"># 908.3855684760615</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'inertia:\n'</span><span class="token punctuation">,</span> inertia<span class="token punctuation">)</span>
+
+n_clusters <span class="token operator">=</span> <span class="token number">5</span>
+cluster_ <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span>n_clusters<span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+inertia_ <span class="token operator">=</span> cluster_<span class="token punctuation">.</span>inertia_
+<span class="token comment" spellcheck="true"># 811.0841324482415</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'inertia:\n'</span><span class="token punctuation">,</span> inertia_<span class="token punctuation">)</span>
+
+n_clusters <span class="token operator">=</span> <span class="token number">6</span>
+cluster_ <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span>n_clusters<span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+inertia_ <span class="token operator">=</span> cluster_<span class="token punctuation">.</span>inertia_
+<span class="token comment" spellcheck="true"># 733.1538350083081</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'inertia:\n'</span><span class="token punctuation">,</span> inertia_<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 评估指标: 轮廓系数</span>
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>metrics <span class="token keyword">import</span> silhouette_score<span class="token punctuation">,</span> silhouette_samples
+
+<span class="token comment" spellcheck="true"># 计算所有样本的轮廓系数的均值</span>
+score <span class="token operator">=</span> silhouette_score<span class="token punctuation">(</span>X<span class="token punctuation">,</span> y_pred<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 0.5882004012129721</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'score:\n'</span><span class="token punctuation">,</span> score<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 每个样本的轮廓系数</span>
+samples <span class="token operator">=</span> silhouette_samples<span class="token punctuation">(</span>X<span class="token punctuation">,</span> y_pred<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'samples:\n'</span><span class="token punctuation">,</span> samples<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+score <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+<span class="token comment" spellcheck="true"># 将K值从2到20进行实验</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cluster <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span>i<span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+    cluster<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+    score<span class="token punctuation">.</span>append<span class="token punctuation">(</span>silhouette_score<span class="token punctuation">(</span>X<span class="token punctuation">,</span> cluster<span class="token punctuation">.</span>labels_<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>range<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">,</span> score<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 最高点的x=?画虚线</span>
+plt<span class="token punctuation">.</span>axvline<span class="token punctuation">(</span>pd<span class="token punctuation">.</span>DataFrame<span class="token punctuation">(</span>score<span class="token punctuation">)</span><span class="token punctuation">.</span>idxmax<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token number">2</span><span class="token punctuation">,</span> ls<span class="token operator">=</span><span class="token string">':'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 绘制轮廓系数分布图和聚类后的数据分布图来选择最佳n_clusters</span>
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>cluster <span class="token keyword">import</span> KMeans
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>metrics <span class="token keyword">import</span> silhouette_samples<span class="token punctuation">,</span> silhouette_score
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>cm <span class="token keyword">as</span> cm
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># 6个质心的聚合情况，分别画在6张图</span>
+    fig<span class="token punctuation">,</span> <span class="token punctuation">(</span>ax1<span class="token punctuation">,</span> ax2<span class="token punctuation">)</span> <span class="token operator">=</span> plt<span class="token punctuation">.</span>subplots<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 每张图有两幅子图</span>
+    fig<span class="token punctuation">.</span>set_size_inches<span class="token punctuation">(</span><span class="token number">18</span><span class="token punctuation">,</span> <span class="token number">7</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 设置大图尺寸</span>
+    <span class="token comment" spellcheck="true"># 给第一幅子图大小做限定</span>
+    ax1<span class="token punctuation">.</span>set_xlim<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    ax1<span class="token punctuation">.</span>set_ylim<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> X<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token punctuation">(</span>n_clusters <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># 生成模型、簇标签、轮廓系数均值，样本轮廓系数</span>
+    clusterer <span class="token operator">=</span> KMeans<span class="token punctuation">(</span>n_clusters<span class="token operator">=</span>i<span class="token punctuation">,</span> random_state<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 生产KMeans模型</span>
+    cluster_labels <span class="token operator">=</span> clusterer<span class="token punctuation">.</span>labels_  <span class="token comment" spellcheck="true"># 记录聚合结果的所有簇标签</span>
+    silhouette_avg <span class="token operator">=</span> silhouette_score<span class="token punctuation">(</span>X<span class="token punctuation">,</span> cluster_labels<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 全体样本的轮廓系数</span>
+    sample_silhouette_values <span class="token operator">=</span> silhouette_samples<span class="token punctuation">(</span>X<span class="token punctuation">,</span> cluster_labels<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 记录每个样本的轮廓系数</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"簇数 ="</span><span class="token punctuation">,</span> i<span class="token punctuation">,</span>
+          <span class="token string">"\n 轮廓系数均值:"</span><span class="token punctuation">,</span> silhouette_avg<span class="token punctuation">)</span>
+
+    y_lower <span class="token operator">=</span> <span class="token number">10</span>  <span class="token comment" spellcheck="true"># 为后面画图设定一个y轴最低范围</span>
+
+    <span class="token keyword">for</span> j <span class="token keyword">in</span> range<span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        ith_cluster_silhouette_values <span class="token operator">=</span> sample_silhouette_values<span class="token punctuation">[</span>cluster_labels <span class="token operator">==</span> j<span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># 筛选留下簇j类样本的轮廓系数</span>
+        ith_cluster_silhouette_values<span class="token punctuation">.</span>sort<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 对上面的数组结果排序</span>
+        size_cluster_j <span class="token operator">=</span> ith_cluster_silhouette_values<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># size_cluster_i记录第i簇样本个数</span>
+
+        <span class="token comment" spellcheck="true"># 画图</span>
+        y_upper <span class="token operator">=</span> y_lower <span class="token operator">+</span> size_cluster_j  <span class="token comment" spellcheck="true"># 第j簇在y轴的范围上限</span>
+        color <span class="token operator">=</span> cm<span class="token punctuation">.</span>nipy_spectral<span class="token punctuation">(</span>float<span class="token punctuation">(</span>j<span class="token punctuation">)</span> <span class="token operator">/</span> i<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 第j 簇设定颜色</span>
+
+        ax1<span class="token punctuation">.</span>fill_betweenx<span class="token punctuation">(</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>y_lower<span class="token punctuation">,</span> y_upper<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 图形直角在y轴上</span>
+                          <span class="token punctuation">,</span> ith_cluster_silhouette_values  <span class="token comment" spellcheck="true"># 簇j全部样本的轮廓系数，高度映射在x轴</span>
+                          <span class="token punctuation">,</span> facecolor<span class="token operator">=</span>color
+                          <span class="token punctuation">,</span> alpha<span class="token operator">=</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+
+        ax1<span class="token punctuation">.</span>text<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">0.05</span>  <span class="token comment" spellcheck="true"># 添加簇的编号</span>
+                 <span class="token punctuation">,</span> y_lower <span class="token operator">+</span> <span class="token number">0.5</span> <span class="token operator">*</span> size_cluster_j
+                 <span class="token punctuation">,</span> str<span class="token punctuation">(</span>j<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        y_lower <span class="token operator">=</span> y_upper <span class="token operator">+</span> <span class="token number">10</span>  <span class="token comment" spellcheck="true"># 下一簇的图显示的y轴坐标起点往上挪10个单位</span>
+
+    ax1<span class="token punctuation">.</span>set_title<span class="token punctuation">(</span><span class="token string">"不同簇的轮廓图"</span><span class="token punctuation">)</span>
+    ax1<span class="token punctuation">.</span>set_xlabel<span class="token punctuation">(</span><span class="token string">"轮廓系数值"</span><span class="token punctuation">)</span>
+    ax1<span class="token punctuation">.</span>set_ylabel<span class="token punctuation">(</span><span class="token string">"簇类标签"</span><span class="token punctuation">)</span>
+    ax1<span class="token punctuation">.</span>axvline<span class="token punctuation">(</span>x<span class="token operator">=</span>silhouette_avg<span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">"red"</span><span class="token punctuation">,</span> linestyle<span class="token operator">=</span><span class="token string">"--"</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 全样本的轮廓系数</span>
+    ax1<span class="token punctuation">.</span>set_yticks<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    ax1<span class="token punctuation">.</span>set_xticks<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.4</span><span class="token punctuation">,</span> <span class="token number">0.6</span><span class="token punctuation">,</span> <span class="token number">0.8</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># 接下来画出子图2的散点图</span>
+    colors <span class="token operator">=</span> cm<span class="token punctuation">.</span>nipy_spectral<span class="token punctuation">(</span>cluster_labels<span class="token punctuation">.</span>astype<span class="token punctuation">(</span>float<span class="token punctuation">)</span> <span class="token operator">/</span> i<span class="token punctuation">)</span>
+    ax2<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> X<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> marker<span class="token operator">=</span><span class="token string">'o'</span><span class="token punctuation">,</span> s<span class="token operator">=</span><span class="token number">8</span><span class="token punctuation">,</span> c<span class="token operator">=</span>colors<span class="token punctuation">)</span>
+
+    centers <span class="token operator">=</span> clusterer<span class="token punctuation">.</span>cluster_centers_  <span class="token comment" spellcheck="true"># 返回不同簇的质心坐标</span>
+    ax2<span class="token punctuation">.</span>scatter<span class="token punctuation">(</span>centers<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> centers<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> marker<span class="token operator">=</span><span class="token string">'x'</span><span class="token punctuation">,</span> c<span class="token operator">=</span><span class="token string">"red"</span><span class="token punctuation">,</span> s<span class="token operator">=</span><span class="token number">200</span><span class="token punctuation">)</span>
+
+    ax2<span class="token punctuation">.</span>set_title<span class="token punctuation">(</span><span class="token string">"簇群数据可视化"</span><span class="token punctuation">)</span>
+    ax2<span class="token punctuation">.</span>set_xlabel<span class="token punctuation">(</span><span class="token string">"第一特征的特征空间"</span><span class="token punctuation">)</span>
+    ax2<span class="token punctuation">.</span>set_ylabel<span class="token punctuation">(</span><span class="token string">"第二特征的特征空间"</span><span class="token punctuation">)</span>
+
+    plt<span class="token punctuation">.</span>suptitle<span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token string">"样本数据的KMeans轮廓分析--簇数为：%d"</span> <span class="token operator">%</span> i<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                 fontsize<span class="token operator">=</span><span class="token number">14</span><span class="token punctuation">,</span> fontweight<span class="token operator">=</span><span class="token string">'bold'</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="第八阶段模块三"><a href="#第八阶段模块三" class="headerlink" title="第八阶段模块三"></a>第八阶段模块三</h2><h3 id="1–任务一：-金融保险用户分类综合项目"><a href="#1–任务一：-金融保险用户分类综合项目" class="headerlink" title="1–任务一： 金融保险用户分类综合项目"></a>1–任务一： 金融保险用户分类综合项目</h3><h4 id="01–业务背景"><a href="#01–业务背景" class="headerlink" title="01–业务背景"></a>01–业务背景</h4><p><img src="20230821084344.png"><br><img src="20230821084548.png"><br><img src="20230821084554.png"><br><img src="20230821084559.png"><br><img src="20230821085607.png"><br><img src="20230821095028.png"><br><img src="20230821095042.png"><br><img src="20230821095049.png"><br><img src="20230821095056.png"><br><img src="20230821095102.png"><br><img src="20230821095108.png"><br><img src="20230821095536.png"></p>
+<h4 id="02–项目分析流程（1）"><a href="#02–项目分析流程（1）" class="headerlink" title="02–项目分析流程（1）"></a>02–项目分析流程（1）</h4><p><img src="20230821095830.png"><br><img src="20230821095654.png"><br><img src="20230821100338.png"><br><img src="20230821095940.png"><br><img src="20230821095947.png"><br><img src="20230821095955.png"><br><img src="20230821100003.png"><br><img src="20230821100009.png"><br><img src="20230821101101.png"></p>
+<h4 id="04–数据清洗-处理异常字段-2"><a href="#04–数据清洗-处理异常字段-2" class="headerlink" title="04–数据清洗-处理异常字段[2]"></a>04–数据清洗-处理异常字段[2]</h4><h1 id="9-一线互联网数据分析综合项目实战"><a href="#9-一线互联网数据分析综合项目实战" class="headerlink" title="9. 一线互联网数据分析综合项目实战"></a>9. 一线互联网数据分析综合项目实战</h1><h1 id="10-就业指导-简历指导"><a href="#10-就业指导-简历指导" class="headerlink" title="10. 就业指导 + 简历指导"></a>10. 就业指导 + 简历指导</h1>
             </div>
             <hr/>
 
@@ -2761,7 +3079,7 @@ npm i
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">369.3k</span>
+                <span class="white-color">386.4k</span>
             
 
             

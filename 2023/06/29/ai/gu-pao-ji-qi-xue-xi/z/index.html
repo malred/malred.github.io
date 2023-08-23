@@ -371,14 +371,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        775
+                        1.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        2 分
+                        7 分
                     </div>
                     
                 
@@ -491,7 +491,234 @@
 <p>首先准备数据 data，然后进行预处理（归一化、标准化，让维度、数据范围小一些），然后将每个特征 x 对应的 0 求出来</p>
 </blockquote>
 <p><img src="20230814071722.png"><br><img src="20230814071915.png"></p>
-<h2 id="初始化步骤"><a href="#初始化步骤" class="headerlink" title="初始化步骤"></a>初始化步骤</h2>
+<h2 id="初始化步骤"><a href="#初始化步骤" class="headerlink" title="初始化步骤"></a>初始化步骤</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token comment" spellcheck="true"># . -> ./</span>
+<span class="token keyword">from</span> <span class="token punctuation">.</span><span class="token punctuation">.</span>utils<span class="token punctuation">.</span>features <span class="token keyword">import</span> prepare_for_training
+
+
+<span class="token keyword">class</span> <span class="token class-name">LinearRegression</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> data<span class="token punctuation">,</span> labels<span class="token punctuation">,</span> polynomial_degree<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span> sinusoid_degree<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span> normalize_data<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">"""
+        初始化
+        1. 数据预处理
+        2. 得到所有特征个数
+        3. 初始化参数矩阵
+        :param data: 数据
+        :param labels: 标签
+        :param polynomial_degree:
+        :param sinusoid_degree:
+        """</span>
+
+        <span class="token comment" spellcheck="true"># 预处理</span>
+        <span class="token punctuation">(</span>data_processed<span class="token punctuation">,</span> features_mean<span class="token punctuation">,</span> features_deviation<span class="token punctuation">)</span> <span class="token operator">=</span> prepare_for_training<span class="token punctuation">(</span>data<span class="token punctuation">,</span>
+                                                                                   polynomial_degree<span class="token punctuation">,</span>
+                                                                                   sinusoid_degree<span class="token punctuation">,</span>
+                                                                                   normalize_data<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true"># 预处理完的data</span>
+        self<span class="token punctuation">.</span>data <span class="token operator">=</span> data_processed
+        self<span class="token punctuation">.</span>labels <span class="token operator">=</span> labels
+        <span class="token comment" spellcheck="true"># mean</span>
+        self<span class="token punctuation">.</span>features_mean <span class="token operator">=</span> features_mean
+        <span class="token comment" spellcheck="true"># std</span>
+        self<span class="token punctuation">.</span>features_deviation <span class="token operator">=</span> features_deviation
+        self<span class="token punctuation">.</span>polynomial_degree <span class="token operator">=</span> polynomial_degree
+        self<span class="token punctuation">.</span>sinusoid_degree <span class="token operator">=</span> sinusoid_degree
+        self<span class="token punctuation">.</span>normalize_data <span class="token operator">=</span> normalize_data
+
+        <span class="token comment" spellcheck="true"># 算需要求多少个θ</span>
+        num_features <span class="token operator">=</span> self<span class="token punctuation">.</span>data<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># 列数</span>
+        self<span class="token punctuation">.</span>theta <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span>num_features<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="实现梯度下降优化模块"><a href="#实现梯度下降优化模块" class="headerlink" title="实现梯度下降优化模块"></a>实现梯度下降优化模块</h2><p><img src="20230822180203.png"></p>
+<blockquote>
+<p>θ 和 x 的矩阵，θ 转置后，可以实现 θi 和 Xi 对应相乘</p>
+</blockquote>
+<p><img src="20230822180734.png"><br><img src="20230822180856.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">LinearRegression</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> data<span class="token punctuation">,</span> labels<span class="token punctuation">,</span> polynomial_degree<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span> sinusoid_degree<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span> normalize_data<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">"""
+        初始化
+        1. 数据预处理
+        2. 得到所有特征个数
+        3. 初始化参数矩阵
+        :param data: 数据
+        :param labels: 标签
+        :param polynomial_degree:
+        :param sinusoid_degree:
+        """</span>
+
+        <span class="token comment" spellcheck="true"># 预处理</span>
+        <span class="token punctuation">(</span>data_processed<span class="token punctuation">,</span> features_mean<span class="token punctuation">,</span> features_deviation<span class="token punctuation">)</span> <span class="token operator">=</span> prepare_for_training<span class="token punctuation">(</span>data<span class="token punctuation">,</span>
+                                                                                   polynomial_degree<span class="token punctuation">,</span>
+                                                                                   sinusoid_degree<span class="token punctuation">,</span>
+                                                                                   normalize_data<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true"># 预处理完的data</span>
+        self<span class="token punctuation">.</span>data <span class="token operator">=</span> data_processed
+        self<span class="token punctuation">.</span>labels <span class="token operator">=</span> labels
+        <span class="token comment" spellcheck="true"># mean</span>
+        self<span class="token punctuation">.</span>features_mean <span class="token operator">=</span> features_mean
+        <span class="token comment" spellcheck="true"># std</span>
+        self<span class="token punctuation">.</span>features_deviation <span class="token operator">=</span> features_deviation
+        self<span class="token punctuation">.</span>polynomial_degree <span class="token operator">=</span> polynomial_degree
+        self<span class="token punctuation">.</span>sinusoid_degree <span class="token operator">=</span> sinusoid_degree
+        self<span class="token punctuation">.</span>normalize_data <span class="token operator">=</span> normalize_data
+
+        <span class="token comment" spellcheck="true"># 算需要求多少个θ</span>
+        num_features <span class="token operator">=</span> self<span class="token punctuation">.</span>data<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># 列数</span>
+        self<span class="token punctuation">.</span>theta <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span>num_features<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># alpha: 学习率,num_iterations: 迭代次数</span>
+    <span class="token keyword">def</span> <span class="token function">train</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> alpha<span class="token punctuation">,</span> num_iterations<span class="token operator">=</span><span class="token number">500</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+    <span class="token comment" spellcheck="true"># 梯度下降优化步骤</span>
+    <span class="token keyword">def</span> <span class="token function">gradient_step</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> alpha<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 有多少个数据</span>
+        num_examples <span class="token operator">=</span> self<span class="token punctuation">.</span>data<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+        <span class="token comment" spellcheck="true"># 预测值</span>
+        prediction <span class="token operator">=</span> LinearRegression<span class="token punctuation">.</span>hypothesis<span class="token punctuation">(</span>self<span class="token punctuation">.</span>data<span class="token punctuation">,</span> self<span class="token punctuation">.</span>theta<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 预测值 - 真实值</span>
+        delta <span class="token operator">=</span> prediction <span class="token operator">-</span> self<span class="token punctuation">.</span>labels
+        <span class="token comment" spellcheck="true"># 更新参数</span>
+        theta <span class="token operator">=</span> self<span class="token punctuation">.</span>theta
+        <span class="token comment" spellcheck="true"># 不用for循环,而是使用矩阵来实现相乘</span>
+        theta <span class="token operator">=</span> theta <span class="token operator">-</span> alpha <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">/</span> num_examples<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token punctuation">(</span>np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>delta<span class="token punctuation">.</span>T<span class="token punctuation">,</span> self<span class="token punctuation">.</span>data<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>T
+
+    <span class="token comment" spellcheck="true"># 预测</span>
+    @staticmethod  <span class="token comment" spellcheck="true"># 静态方法</span>
+    <span class="token keyword">def</span> <span class="token function">hypothesis</span><span class="token punctuation">(</span>data<span class="token punctuation">,</span> theta<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># θ * x</span>
+        predictions <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>data<span class="token punctuation">,</span> theta<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> predictions
+</code></pre>
+<h2 id="损失与预测模块"><a href="#损失与预测模块" class="headerlink" title="损失与预测模块"></a>损失与预测模块</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token comment" spellcheck="true"># . -> ./</span>
+<span class="token keyword">from</span> <span class="token punctuation">.</span><span class="token punctuation">.</span>utils<span class="token punctuation">.</span>features <span class="token keyword">import</span> prepare_for_training
+
+
+<span class="token keyword">class</span> <span class="token class-name">LinearRegression</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> data<span class="token punctuation">,</span> labels<span class="token punctuation">,</span> polynomial_degree<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span> sinusoid_degree<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">,</span> normalize_data<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">"""
+        初始化
+        1. 数据预处理
+        2. 得到所有特征个数
+        3. 初始化参数矩阵
+        :param data: 数据
+        :param labels: 标签
+        :param polynomial_degree:
+        :param sinusoid_degree:
+        """</span>
+
+        <span class="token comment" spellcheck="true"># 预处理</span>
+        <span class="token punctuation">(</span>data_processed<span class="token punctuation">,</span> features_mean<span class="token punctuation">,</span> features_deviation<span class="token punctuation">)</span> <span class="token operator">=</span> prepare_for_training<span class="token punctuation">(</span>data<span class="token punctuation">,</span>
+                                                                                   polynomial_degree<span class="token punctuation">,</span>
+                                                                                   sinusoid_degree<span class="token punctuation">,</span>
+                                                                                   normalize_data<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 预处理完的data</span>
+        self<span class="token punctuation">.</span>data <span class="token operator">=</span> data_processed
+        self<span class="token punctuation">.</span>labels <span class="token operator">=</span> labels
+        <span class="token comment" spellcheck="true"># mean</span>
+        self<span class="token punctuation">.</span>features_mean <span class="token operator">=</span> features_mean
+        <span class="token comment" spellcheck="true"># std</span>
+        self<span class="token punctuation">.</span>features_deviation <span class="token operator">=</span> features_deviation
+        self<span class="token punctuation">.</span>polynomial_degree <span class="token operator">=</span> polynomial_degree
+        self<span class="token punctuation">.</span>sinusoid_degree <span class="token operator">=</span> sinusoid_degree
+        self<span class="token punctuation">.</span>normalize_data <span class="token operator">=</span> normalize_data
+
+        <span class="token comment" spellcheck="true"># 算需要求多少个θ</span>
+        num_features <span class="token operator">=</span> self<span class="token punctuation">.</span>data<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>  <span class="token comment" spellcheck="true"># 列数</span>
+        self<span class="token punctuation">.</span>theta <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span>num_features<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">train</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> alpha<span class="token punctuation">,</span> num_iterations<span class="token operator">=</span><span class="token number">500</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">'''
+        训练,执行梯度下降
+        :param alpha:
+        :param num_iterations:
+        :return:
+        '''</span>
+        <span class="token comment" spellcheck="true"># alpha: 学习率,num_iterations: 迭代次数</span>
+        cost_history <span class="token operator">=</span> self<span class="token punctuation">.</span>gradient_descent<span class="token punctuation">(</span>alpha<span class="token punctuation">,</span> num_iterations<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>theta<span class="token punctuation">,</span> cost_history
+
+    <span class="token keyword">def</span> <span class="token function">gradient_descent</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> alpha<span class="token punctuation">,</span> num_iterations<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">'''
+        迭代模块,计算误差，更新参数
+        :param alpha: 学习率
+        :param num_iterations: 样本数
+        :return: 历史误差
+        '''</span>
+        cost_history <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>num_iterations<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token comment" spellcheck="true"># 更新参数</span>
+            self<span class="token punctuation">.</span>gradient_step<span class="token punctuation">(</span>alpha<span class="token punctuation">)</span>
+            <span class="token comment" spellcheck="true"># 记录损失</span>
+            cost_history<span class="token punctuation">.</span>append<span class="token punctuation">(</span>self<span class="token punctuation">.</span>cost_function<span class="token punctuation">(</span>self<span class="token punctuation">.</span>data<span class="token punctuation">,</span> self<span class="token punctuation">.</span>labels<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> cost_history
+
+    <span class="token comment" spellcheck="true"># 梯度下降优化步骤</span>
+    <span class="token keyword">def</span> <span class="token function">gradient_step</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> alpha<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">'''
+        梯度下降参数更新计算方法
+        :param alpha: 学习率
+        :return:
+        '''</span>
+        <span class="token comment" spellcheck="true"># 有多少个数据</span>
+        num_examples <span class="token operator">=</span> self<span class="token punctuation">.</span>data<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+        <span class="token comment" spellcheck="true"># 预测值</span>
+        prediction <span class="token operator">=</span> LinearRegression<span class="token punctuation">.</span>hypothesis<span class="token punctuation">(</span>self<span class="token punctuation">.</span>data<span class="token punctuation">,</span> self<span class="token punctuation">.</span>theta<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 预测值 - 真实值</span>
+        delta <span class="token operator">=</span> prediction <span class="token operator">-</span> self<span class="token punctuation">.</span>labels
+        <span class="token comment" spellcheck="true"># 更新参数</span>
+        theta <span class="token operator">=</span> self<span class="token punctuation">.</span>theta
+        <span class="token comment" spellcheck="true"># 不用for循环,而是使用矩阵来实现相乘</span>
+        theta <span class="token operator">=</span> theta <span class="token operator">-</span> alpha <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">/</span> num_examples<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token punctuation">(</span>np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>delta<span class="token punctuation">.</span>T<span class="token punctuation">,</span> self<span class="token punctuation">.</span>data<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>T
+
+    <span class="token comment" spellcheck="true"># 计算损失</span>
+    <span class="token keyword">def</span> <span class="token function">cost_function</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> data<span class="token punctuation">,</span> labels<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">'''
+        损失计算方法
+        :param data:
+        :param labels: 真实值
+        :return:
+        '''</span>
+        <span class="token comment" spellcheck="true"># 样本个数</span>
+        num_example <span class="token operator">=</span> data<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+        <span class="token comment" spellcheck="true"># 预测值 - 真实值</span>
+        loss <span class="token operator">=</span> LinearRegression<span class="token punctuation">.</span>hypothesis<span class="token punctuation">(</span>self<span class="token punctuation">.</span>data<span class="token punctuation">,</span> self<span class="token punctuation">.</span>theta<span class="token punctuation">)</span> <span class="token operator">-</span> labels
+        <span class="token comment" spellcheck="true"># 使用误差算法 -> 可以自己实现其他误差算法</span>
+        <span class="token comment" spellcheck="true"># 矩阵平方 r*r.T</span>
+        cost <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">/</span> <span class="token number">2</span><span class="token punctuation">)</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>loss<span class="token punctuation">.</span>T<span class="token punctuation">,</span> loss<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> cost<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+
+    @staticmethod  <span class="token comment" spellcheck="true"># 静态方法</span>
+    <span class="token keyword">def</span> <span class="token function">hypothesis</span><span class="token punctuation">(</span>data<span class="token punctuation">,</span> theta<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># θ * x</span>
+        predictions <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>data<span class="token punctuation">,</span> theta<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> predictions
+
+    <span class="token keyword">def</span> <span class="token function">get_cost</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> data<span class="token punctuation">,</span> labels<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 预处理</span>
+        data_processed <span class="token operator">=</span> prepare_for_training<span class="token punctuation">(</span>data<span class="token punctuation">,</span>
+                                              self<span class="token punctuation">.</span>polynomial_degree<span class="token punctuation">,</span>
+                                              self<span class="token punctuation">.</span>sinusoid_degree<span class="token punctuation">,</span>
+                                              self<span class="token punctuation">.</span>normalize_data<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+        <span class="token comment" spellcheck="true"># 得到当前损失</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>cost_function<span class="token punctuation">(</span>data_processed<span class="token punctuation">,</span> labels<span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">predict</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> data<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token triple-quoted-string string">'''
+        用训练的参数模型,预测得到回归值结果
+        :param data:
+        :return:
+        '''</span>
+        <span class="token comment" spellcheck="true"># 预处理</span>
+        data_processed <span class="token operator">=</span> prepare_for_training<span class="token punctuation">(</span>data<span class="token punctuation">,</span>
+                                              self<span class="token punctuation">.</span>polynomial_degree<span class="token punctuation">,</span>
+                                              self<span class="token punctuation">.</span>sinusoid_degree<span class="token punctuation">,</span>
+                                              self<span class="token punctuation">.</span>normalize_data<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+        predictions <span class="token operator">=</span> LinearRegression<span class="token punctuation">.</span>hypothesis<span class="token punctuation">(</span>data_processed<span class="token punctuation">,</span> self<span class="token punctuation">.</span>theta<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> predictions
+</code></pre>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
             </div>
             <hr/>
 
@@ -1146,7 +1373,7 @@ Ralph Johnosn 认为,架构是一种主观上的东西,是专家级项目开发�
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">369.3k</span>
+                <span class="white-color">386.4k</span>
             
 
             
