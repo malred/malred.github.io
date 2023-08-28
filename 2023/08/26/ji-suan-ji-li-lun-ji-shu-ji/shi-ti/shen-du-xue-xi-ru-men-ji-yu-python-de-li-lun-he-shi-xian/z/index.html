@@ -368,14 +368,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        5.1k
+                        10.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        19 分
+                        41 分
                     </div>
                     
                 
@@ -730,7 +730,7 @@ np<span class="token punctuation">.</span>sum<span class="token punctuation">(</
 <blockquote>
 <p>实际上，用与非门等低层元件构建计算机的情况下，分阶段地制作所需的零件（模块）会比较自然，即先实现与门和或门，然后实现半加器和全加器，接着实现算数逻辑单元（ALU），然后实现 CPU。使用这种叠加了多层的构造来实现是比较自然的流程。</p>
 </blockquote>
-<h1 id="2-7-小结"><a href="#2-7-小结" class="headerlink" title="2.7 小结"></a>2.7 小结</h1><ul>
+<h2 id="2-7-小结"><a href="#2-7-小结" class="headerlink" title="2.7 小结"></a>2.7 小结</h2><ul>
 <li>感知机是具有输入和输出的算法。给定一个输入后，将输出一个既定的值</li>
 <li>感知机将权重和偏置设定为参数。</li>
 <li>使用感知机可以表示与门和或门等逻辑电路</li>
@@ -873,7 +873,623 @@ plt<span class="token punctuation">.</span>show<span class="token punctuation">(
 <h3 id="3-2-5-sigmoid-函数和阶跃函数的比较"><a href="#3-2-5-sigmoid-函数和阶跃函数的比较" class="headerlink" title="3.2.5 sigmoid 函数和阶跃函数的比较"></a>3.2.5 sigmoid 函数和阶跃函数的比较</h3><blockquote>
 <p>首先，平滑性不同：sigmoid 函数是一条平滑的曲线，输出随着输入发生连续性的变化。而阶跃函数以 0 为界，输出发生急剧性的变化。sigmoid 函数的平滑性对神经网络的学习具有重要意义。</p>
 </blockquote>
+<p><img src="20230827185640.png"></p>
+<blockquote>
+<p>另一个不同点是，阶跃函数只能返回 0 或 1，而 sigmoid 可以返回 0.731…、0.880…等实数。也就是说，感知机中神经元之间流动的是 0 或 1 的二元信号，而神经网络中流动的是连续的实数值信号。</p>
+</blockquote>
+<blockquote>
+<p>虽然它们在平滑性上有差异，但是从宏观视角看，有着相似的形状。它们的结构都是‘输入小时，输出接近 0（为 0）；随着输入增大，输出向 1 靠近（变成 1）’。即，当输入信号为重要信息时，阶跃函数和 sigmoid 函数都会输出较大的值；当输入信号为不重要的信息时，两者都输出较小的值。还有一个共同点，不管输入信号多小或多大，输出信号都在 0 到 1 之间。</p>
+</blockquote>
+<h3 id="3-2-6-非线性函数"><a href="#3-2-6-非线性函数" class="headerlink" title="3.2.6 非线性函数"></a>3.2.6 非线性函数</h3><blockquote>
+<p>还有一个共同点，sigmoid 函数是一条曲线，阶跃函数是一条像阶梯一样的折线。两者都属于<em>非线性函数</em></p>
+</blockquote>
+<ul>
+<li>函数是输入某个值后会返回一个值的转换器。而这个转换器输入某个值后，输出值是输入值的常数倍的函数称为线性函数（h(x)=cx）。因此，线性函数是一条笔直的直线。</li>
+</ul>
+<blockquote>
+<p>神经网络的激活函数必须使用非线性函数。因为使用线性函数的话，加深神经网络的层数就没意义了。</p>
+</blockquote>
+<blockquote>
+<p>线性函数的问题在于，无论如何加深层数，总是存在与之等效的‘无隐藏层的神经网络’。比如线性函数 h(x)=cx 作为激活函数，把 y(x)=h(h(h(x)))的运算对应 3 层神经网络。这个运算会进行 y(x)=c * c * c * x 的乘法运算，但是同样的处理可以由 y(x)=ax (a=c^3) 这一没有隐藏层的神经网络来表示。也就是说，线性函数作为激活函数，无法发挥多层网络带来的优势</p>
+</blockquote>
+<h3 id="3-2-7-ReLU-函数"><a href="#3-2-7-ReLU-函数" class="headerlink" title="3.2.7 ReLU 函数"></a>3.2.7 ReLU 函数</h3><blockquote>
+<p>在神经网络的发展历史上，很早就开始使用 sigmoid 函数了，最近则主要使用 ReLU(Rectified Linear Unit)函数</p>
+</blockquote>
+<blockquote>
+<p>ReLU 函数在输入大于 0 时，直接输出该值；在输入小于等于 0 时，输出 0</p>
+</blockquote>
+<p><img src="20230827194658.png"></p>
+<blockquote>
+<p>ReLU 的代码实现很简单</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">relu</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 大于0输出x,小于0输出0</span>
+    <span class="token keyword">return</span> np<span class="token punctuation">.</span>maximum<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> x<span class="token punctuation">)</span>
+</code></pre>
+<p><img src="20230827194847.png"></p>
+<blockquote>
+<p>这里使用了 numpy 的 maximum 函数，它会从输入的数值中选择较大的那个值进行输出</p>
+</blockquote>
+<h2 id="3-3-多维数组的运算"><a href="#3-3-多维数组的运算" class="headerlink" title="3.3 多维数组的运算"></a>3.3 多维数组的运算</h2><blockquote>
+<p>掌握多维数组的运算，就可以高效地实现神经网络。</p>
+</blockquote>
+<h3 id="3-3-1-多维数组"><a href="#3-3-1-多维数组" class="headerlink" title="3.3.1 多维数组"></a>3.3.1 多维数组</h3><blockquote>
+<p>多维数组就是‘数字的集合’，数字排成一列的集合、排成长方形的集合、排成三维状或（更一般化的）N 维状的集合……</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
 
+A <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [1 2 3 4]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>A<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 1</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>ndim<span class="token punctuation">(</span>A<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 4</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>A<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>数组的维数可以通过 np.ndim()函数获得。此外，数组的形状可以通过实例变量 shape 获得。A.shape 的结果是个元组</p>
+</blockquote>
+<blockquote>
+<p>下面生成二维数组</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">B <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [[1 2]</span>
+<span class="token comment" spellcheck="true">#  [3 4]</span>
+<span class="token comment" spellcheck="true">#  [5 6]]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>B<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 2</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>ndim<span class="token punctuation">(</span>B<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (3, 2)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>B<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>3x2 表示第一个维度有 3 个元素，第二个维度有 2 个元素。第一个维度是第 0 维，第二个维度是第 1 维（索引从 0 开始）。二维数组也称为矩阵（matrix）。数组的横向排列称为行（row），纵向排列称为列（column）。</p>
+</blockquote>
+<h3 id="3-3-2-矩阵乘法"><a href="#3-3-2-矩阵乘法" class="headerlink" title="3.3.2 矩阵乘法"></a>3.3.2 矩阵乘法</h3><p><img src="20230827200414.png"></p>
+<blockquote>
+<p>矩阵的乘积是通过左边矩阵的行（横向）和右边矩阵的列（纵向）以对应元素的方式相乘后再求和而得到的。并且，运算的结果保存为新的多维数组的元素。比如<em>A</em>的第一行和<em>B</em>的第一列的乘积结果是新数组的第一行第一列的元素。</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">A <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (2, 2)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>A<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+B <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">7</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (2, 2)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>B<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [[19 22]</span>
+<span class="token comment" spellcheck="true">#  [43 50]]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>A<span class="token punctuation">,</span> B<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>乘积也叫点积，可以用 np.dot()计算。和一般的运算（+或*等）不同，矩阵的乘积运算中，操作数（A、B）的顺序不同，结果也会不同。</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">A <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (2, 3)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>A<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+B <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (3, 2)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>B<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [[22 28]</span>
+<span class="token comment" spellcheck="true">#  [49 64]]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>A<span class="token punctuation">,</span> B<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>注意矩阵的形状，<em>A</em>的第一维的元素个数（列数）必须和<em>B</em>的第 0 维的元素个数（行数）相等，才能进行乘法计算</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">C <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (2, 2)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>C<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (2, 3)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>A<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#   File "&lt;__array_function__ internals>", line 6, in dot</span>
+<span class="token comment" spellcheck="true"># ValueError: shapes (2,3) and (2,2) not aligned: 3 (dim 1) != 2 (dim 0)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>A<span class="token punctuation">,</span> C<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p><img src="20230827202356.png"></p>
+<blockquote>
+<p>运算结果的形状是由<em>A</em>的行数和<em>B</em>的列数构成的。</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">A <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (3, 2)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>A<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+B <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">7</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (2,)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>B<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [23 53 83]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>A<span class="token punctuation">,</span> B<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<p><img src="20230827202616.png"></p>
+<h3 id="3-3-3-神经网络的内积"><a href="#3-3-3-神经网络的内积" class="headerlink" title="3.3.3 神经网络的内积"></a>3.3.3 神经网络的内积</h3><blockquote>
+<p>我们使用 numpy 矩阵来实现神经网络，这里省略了偏置和激活函数</p>
+</blockquote>
+<p><img src="20230827202650.png"></p>
+<pre class=" language-python"><code class="language-python">X <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (2,)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>X<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+W <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [[1 3 5]</span>
+<span class="token comment" spellcheck="true">#  [2 4 6]]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>W<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (2, 3)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>W<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (1,2) * (2,3) -> (1,3)</span>
+Y <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>X<span class="token punctuation">,</span> W<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [ 5 11 17]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>Y<span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>使用 np.dot 可以一次运算出结果，这种技巧很重要。</p>
+</blockquote>
+<h2 id="3-4-三层神经网络的实现"><a href="#3-4-三层神经网络的实现" class="headerlink" title="3.4 三层神经网络的实现"></a>3.4 三层神经网络的实现</h2><blockquote>
+<p>我们实现从输入到输出的（前向）处理。</p>
+</blockquote>
+<p><img src="20230827203745.png"></p>
+<h3 id="3-4-1-符号确认"><a href="#3-4-1-符号确认" class="headerlink" title="3.4.1 符号确认"></a>3.4.1 符号确认</h3><blockquote>
+<p>我们引入 w12^(1)和 a1^(1)等符号。</p>
+</blockquote>
+<blockquote>
+<p>在下图中，权重和隐藏层的神经元的右上角有一个”(1)”，它表示权重和神经元的层号（即第一层的权重、第一层的神经元）。此外，权重的右下角有两个数字，它们是后一层的神经元和前一层的神经元的索引号。比如 w12^(1)表示前一层的第 2 个神经元 x2 到后一层的第 1 个神经元 a1^(1)的权重。权重右下角按照“后一层的索引号、前一层的索引号”的顺序排列。</p>
+</blockquote>
+<p><img src="20230827204355.png"></p>
+<h3 id="3-4-2-各层间信号传递的实现"><a href="#3-4-2-各层间信号传递的实现" class="headerlink" title="3.4.2 各层间信号传递的实现"></a>3.4.2 各层间信号传递的实现</h3><blockquote>
+<p>看一下从输入层到第 1 层的第 1 个神经元的信号传递过程。</p>
+</blockquote>
+<p><img src="20230827204956.png"></p>
+<blockquote>
+<p>图中新增了表示偏置的神经元”1”。它的右下角的索引号只有一个，因为前一层的偏置神经元（神经元‘1’）只有一个。</p>
+</blockquote>
+<ul>
+<li>任何前一层的偏置神经元‘1’都只有一个。偏置权重的数量取决于后一层的神经元的数量（不包括后一层的偏置神经元‘1’）————译者注</li>
+</ul>
+<blockquote>
+<p>用数学式表示 a1^(1)。通过加权信号和偏置的和按如下方式进行计算</p>
+</blockquote>
+<p><img src="20230827205329.png"></p>
+<blockquote>
+<p>用矩阵的乘法运算，可以间第一层的加权和表示成下面的式</p>
+</blockquote>
+<p><img src="20230827205604.png"></p>
+<pre class=" language-python"><code class="language-python">X <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+W1 <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.3</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.4</span><span class="token punctuation">,</span> <span class="token number">0.6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+B1 <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>W1<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (2, 3)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>X<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (2,)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>B1<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3,)</span>
+
+A1 <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>X<span class="token punctuation">,</span> W1<span class="token punctuation">)</span> <span class="token operator">+</span> B1
+</code></pre>
+<blockquote>
+<p>接下来，隐藏层的加权和（加权信号和偏置的总和）用 a 表示，被激活函数转换后的信号用 z 表示。此外，图中 h()表示激活函数，这里使用的是 sigmoid 行数。</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">Z1 <span class="token operator">=</span> sigmoid<span class="token punctuation">(</span>A1<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>A1<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># [0.3 0.7 1.1]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>Z1<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># [0.57444252 0.66818777 0.75026011]</span>
+</code></pre>
+<p><img src="20230827211607.png"></p>
+<blockquote>
+<p>下面来实现第 1 层到第 2 层的信号传递</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">W2 <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0.3</span><span class="token punctuation">,</span> <span class="token number">0.6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+B2 <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>Z1<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3,)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>W2<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3, 2)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>B2<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (2,)</span>
+
+A2 <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>Z1<span class="token punctuation">,</span> W2<span class="token punctuation">)</span> <span class="token operator">+</span> B2
+Z2 <span class="token operator">=</span> sigmoid<span class="token punctuation">(</span>A2<span class="token punctuation">)</span>
+</code></pre>
+<p><img src="20230827211941.png"></p>
+<blockquote>
+<p>最好是第 2 层到输出层的信号传递。输出层的实现也和之前的实现基本相同。不过，最后的激活函数和之前的隐藏层有所不同</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">identity_function</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> x
+
+
+W3 <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.3</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.4</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+B3 <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+A3 <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>Z2<span class="token punctuation">,</span> W3<span class="token punctuation">)</span> <span class="token operator">+</span> B3
+Y <span class="token operator">=</span> identity_function<span class="token punctuation">(</span>A3<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 或 Y = A3</span>
+</code></pre>
+<blockquote>
+<p>这里定义了 identity_function（也叫恒等函数），会将输入按原样输出，其实没必要定义这个，这里是为了和之前的流程保持统一。输出层的激活函数用 σ()表示（σ 读作 sigma），不同于隐藏层的激活函数 h()</p>
+</blockquote>
+<p><img src="20230827212756.png"></p>
+<ul>
+<li>输出层所用的激活函数要根据求解问题的性质决定。一般地，回归问题可以使用恒等函数，二元分类问题可以使用 sigmoid 函数，多元分类问题可以使用 softmax 函数。</li>
+</ul>
+<h3 id="3-4-3-代码实现小结"><a href="#3-4-3-代码实现小结" class="headerlink" title="3.4.3 代码实现小结"></a>3.4.3 代码实现小结</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">init_network</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    network <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    network<span class="token punctuation">[</span><span class="token string">'W1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.3</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.4</span><span class="token punctuation">,</span> <span class="token number">0.6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    network<span class="token punctuation">[</span><span class="token string">'b1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    network<span class="token punctuation">[</span><span class="token string">'W2'</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.4</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0.3</span><span class="token punctuation">,</span> <span class="token number">0.6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    network<span class="token punctuation">[</span><span class="token string">'b2'</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    network<span class="token punctuation">[</span><span class="token string">'W3'</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.3</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.4</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    network<span class="token punctuation">[</span><span class="token string">'b3'</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> network
+
+
+<span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>network<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    W1<span class="token punctuation">,</span> W2<span class="token punctuation">,</span> W3 <span class="token operator">=</span> network<span class="token punctuation">[</span><span class="token string">'W1'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> network<span class="token punctuation">[</span><span class="token string">'W2'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> network<span class="token punctuation">[</span><span class="token string">'W3'</span><span class="token punctuation">]</span>
+    b1<span class="token punctuation">,</span> b2<span class="token punctuation">,</span> b3 <span class="token operator">=</span> network<span class="token punctuation">[</span><span class="token string">'b1'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> network<span class="token punctuation">[</span><span class="token string">'b2'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> network<span class="token punctuation">[</span><span class="token string">'b3'</span><span class="token punctuation">]</span>
+
+    a1 <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>x<span class="token punctuation">,</span> W1<span class="token punctuation">)</span> <span class="token operator">+</span> b1
+    z1 <span class="token operator">=</span> sigmoid<span class="token punctuation">(</span>a1<span class="token punctuation">)</span>
+    a2 <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>z1<span class="token punctuation">,</span> W2<span class="token punctuation">)</span> <span class="token operator">+</span> b2
+    z2 <span class="token operator">=</span> sigmoid<span class="token punctuation">(</span>a2<span class="token punctuation">)</span>
+    a3 <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>z2<span class="token punctuation">,</span> W3<span class="token punctuation">)</span> <span class="token operator">+</span> b3
+    y <span class="token operator">=</span> identity_function<span class="token punctuation">(</span>a3<span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> y
+
+
+network <span class="token operator">=</span> init_network<span class="token punctuation">(</span><span class="token punctuation">)</span>
+x <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+y <span class="token operator">=</span> forward<span class="token punctuation">(</span>network<span class="token punctuation">,</span> x<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>y<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># [0.31682708 0.69627909]</span>
+</code></pre>
+<h2 id="3-5-输出层的设计"><a href="#3-5-输出层的设计" class="headerlink" title="3.5 输出层的设计"></a>3.5 输出层的设计</h2><blockquote>
+<p>神经网络可以用在分类问题和回归问题上，根据情况改变输出层的激活函数。一般地，回归问题用恒等函数，分类问题用 softmax 函数。</p>
+</blockquote>
+<ul>
+<li>机器学习的问题大致可以分为分类问题和回归问题。分类问题是数据属于哪一个类别的问题。回归问题是根据某个输入预测一个（连续的）数值的问题</li>
+</ul>
+<h3 id="3-5-1-恒等函数和-softmax-函数"><a href="#3-5-1-恒等函数和-softmax-函数" class="headerlink" title="3.5.1 恒等函数和 softmax 函数"></a>3.5.1 恒等函数和 softmax 函数</h3><blockquote>
+<p>恒等函数将输入按原样输出，对于输入的信息，不加任何改动地直接输出。</p>
+</blockquote>
+<p><img src="20230828142714.png"></p>
+<blockquote>
+<p>exp(x)表示 e^x 的指数函数（e 是纳皮尔常数 2.7182···），假设输出层共有 n 个神经元，计算第 k 个神经元的输出 yk。softmax 函数的分字是输入信号 ak 的指数函数，分母是所有输入信号的指数函数的和。</p>
+</blockquote>
+<blockquote>
+<p>用图表示 softmax 函数的话，可以看出，softmax 函数的输出通过箭头与所有输入信号相连。输出层的各个神经元都受到所有输入信号的影响。</p>
+</blockquote>
+<p><img src="20230828143109.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># softmax</span>
+a <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.3</span><span class="token punctuation">,</span> <span class="token number">2.9</span><span class="token punctuation">,</span> <span class="token number">4.0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+exp_a <span class="token operator">=</span> np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span>a<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 指数函数</span>
+<span class="token comment" spellcheck="true"># [ 1.34985881 18.17414537 54.59815003]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>exp_a<span class="token punctuation">)</span>
+
+sum_exp_a <span class="token operator">=</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>exp_a<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 指数函数的和</span>
+<span class="token comment" spellcheck="true"># 74.1221542101633</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>sum_exp_a<span class="token punctuation">)</span>
+
+y <span class="token operator">=</span> exp_a <span class="token operator">/</span> sum_exp_a
+<span class="token comment" spellcheck="true"># [0.01821127 0.24519181 0.73659691]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>y<span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">softmax</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    exp_a <span class="token operator">=</span> np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+    sum_exp_a <span class="token operator">=</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>exp_a<span class="token punctuation">)</span>
+    y <span class="token operator">=</span> exp_a <span class="token operator">/</span> sum_exp_a
+
+    <span class="token keyword">return</span> y
+</code></pre>
+<h3 id="3-5-2-实现-softmax-函数时的注意事项"><a href="#3-5-2-实现-softmax-函数时的注意事项" class="headerlink" title="3.5.2 实现 softmax 函数时的注意事项"></a>3.5.2 实现 softmax 函数时的注意事项</h3><blockquote>
+<p>上面的实现虽然可以表示 softmax，但是会导致溢出问题。因为 softmax 涉及指数运算，而指数运算的值通常很大，比如 e^10 的值超过 20000，e^100 后面带 40 多个 0，e^1000 的结果返回一个表示无穷大的 inf。</p>
+</blockquote>
+<ul>
+<li>计算机在处理‘数’时，数值必须在 4~8 字节的有限数据宽度内。这意味着数存在有效位数，可以表示的数值范围是有限的。因此，会出现超大值无法表示的问题（溢出问题）</li>
+</ul>
+<blockquote>
+<p>可以改进 softmax 函数</p>
+</blockquote>
+<p><img src="20230828143906.png"></p>
+<blockquote>
+<p>在 softmax 函数的分子分母上都乘 C（任意常数），然后把 C 移动到指数函数 exp 中，记为 logC，最后，把 logC 替换为 C’</p>
+</blockquote>
+<blockquote>
+<p>这里的 C’可以是任何值，但是为了防止溢出，一般会使用输入信号中的最大值。</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">a <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1010</span><span class="token punctuation">,</span> <span class="token number">1000</span><span class="token punctuation">,</span> <span class="token number">990</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [nan nan nan]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span>a<span class="token punctuation">)</span> <span class="token operator">/</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># softmax函数的计算</span>
+
+c <span class="token operator">=</span> np<span class="token punctuation">.</span>max<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [  0 -10 -20]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>a <span class="token operator">-</span> c<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># [9.99954600e-01 4.53978686e-05 2.06106005e-09]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span>a <span class="token operator">-</span> c<span class="token punctuation">)</span> <span class="token operator">/</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span>a <span class="token operator">-</span> c<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">softmax</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    c <span class="token operator">=</span> np<span class="token punctuation">.</span>max<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+    exp_a <span class="token operator">=</span> np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span>a <span class="token operator">-</span> c<span class="token punctuation">)</span>
+    sum_exp_a <span class="token operator">=</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>exp_a<span class="token punctuation">)</span>
+    y <span class="token operator">=</span> exp_a <span class="token operator">/</span> sum_exp_a
+
+    <span class="token keyword">return</span> y
+</code></pre>
+<h3 id="3-5-3-softmax-函数的特征"><a href="#3-5-3-softmax-函数的特征" class="headerlink" title="3.5.3 softmax 函数的特征"></a>3.5.3 softmax 函数的特征</h3><pre class=" language-python"><code class="language-python">a <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.3</span><span class="token punctuation">,</span> <span class="token number">2.9</span><span class="token punctuation">,</span> <span class="token number">4.0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+y <span class="token operator">=</span> softmax<span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [0.01821127 0.24519181 0.73659691]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>y<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 1.0</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>y<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>softmax 的输出是 0~1 之间的实数。而且输出值的总和为 1。这是一个重要特性，因为有了这个性质，我们才把 softmax 函数的输出解释为‘概率’</p>
+</blockquote>
+<blockquote>
+<p>需要注意的是，即使用了 softmax 函数，各个元素间的大小关系也不会改变。这是因为指数函数（y=exp(x)）是单调递增函数。</p>
+</blockquote>
+<blockquote>
+<p>一般而言，神经网络只把输出值最大的神经元所对应的类别作为识别结果。并且，即使使用 softmax 函数，输出值最大的神经元的位置也不会变。因此，神经网络进行分类时，输出层的 softmax 函数可以省略。</p>
+</blockquote>
+<ul>
+<li>求解机器学习问题的步骤分为‘学习’和‘推理’两个阶段。推理阶段一般会忽略输出层的 softmax 函数。在输出层使用 softmax 函数是因为它和神经网络的学习有关</li>
+</ul>
+<h3 id="3-5-4-输出层的神经元数量"><a href="#3-5-4-输出层的神经元数量" class="headerlink" title="3.5.4 输出层的神经元数量"></a>3.5.4 输出层的神经元数量</h3><blockquote>
+<p>输出层的神经元数量需要根据待解决的问题来决定。对于分类问题，输出层的神经元数量一般设定为类别的数量。</p>
+</blockquote>
+<p><img src="20230828150820.png"></p>
+<h2 id="3-6-手写数字识别"><a href="#3-6-手写数字识别" class="headerlink" title="3.6 手写数字识别"></a>3.6 手写数字识别</h2><blockquote>
+<p>我们假设学习已经结束，使用学习到的参数，先实现神经网络的‘推理处理’。这个推理处理也称为神经网络的<em>前向传播</em>(forward propagation)</p>
+</blockquote>
+<ul>
+<li>使用神经网络解决问题时，也需要首先使用训练数据（学习数据）进行权重参数的学习；进行推理时，使用刚才学习到的参数，对输入的数据进行分类</li>
+</ul>
+<h3 id="3-6-1-MNIST-数据集"><a href="#3-6-1-MNIST-数据集" class="headerlink" title="3.6.1 MNIST 数据集"></a>3.6.1 MNIST 数据集</h3><blockquote>
+<p>MNIST 数据集是由 0 到 9 的数字图像构成的。训练图像有 6 万多张，测试图像有 1 万多张，这些图像可用于学习和推理。一般使用方法是，先用训练图像进行学习，再用学习到的模型度量能在多大程度上对测试图像进行正确的分类</p>
+</blockquote>
+<p><img src="20230828201330.png"></p>
+<blockquote>
+<p>MNIST 的图像数据是 28x28 像素的灰度图像（1 通道），各个通道的取值在 0 到 255 之间。每个图像数据都相应地标有‘7’、‘2’、‘1’等标签。</p>
+</blockquote>
+<blockquote>
+<p>本书提供了脚本 mnist.py 来下载 MNIST 数据集并进行了转化为 numpy 数组等处理</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># coding: utf-8</span>
+<span class="token keyword">try</span><span class="token punctuation">:</span>
+    <span class="token keyword">import</span> urllib<span class="token punctuation">.</span>request
+<span class="token keyword">except</span> ImportError<span class="token punctuation">:</span>
+    <span class="token keyword">raise</span> ImportError<span class="token punctuation">(</span><span class="token string">'You should use Python 3.x'</span><span class="token punctuation">)</span>
+<span class="token keyword">import</span> os<span class="token punctuation">.</span>path
+<span class="token keyword">import</span> gzip
+<span class="token keyword">import</span> pickle
+<span class="token keyword">import</span> os
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+
+url_base <span class="token operator">=</span> <span class="token string">'http://yann.lecun.com/exdb/mnist/'</span>
+key_file <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token string">'train_img'</span><span class="token punctuation">:</span><span class="token string">'train-images-idx3-ubyte.gz'</span><span class="token punctuation">,</span>
+    <span class="token string">'train_label'</span><span class="token punctuation">:</span><span class="token string">'train-labels-idx1-ubyte.gz'</span><span class="token punctuation">,</span>
+    <span class="token string">'test_img'</span><span class="token punctuation">:</span><span class="token string">'t10k-images-idx3-ubyte.gz'</span><span class="token punctuation">,</span>
+    <span class="token string">'test_label'</span><span class="token punctuation">:</span><span class="token string">'t10k-labels-idx1-ubyte.gz'</span>
+<span class="token punctuation">}</span>
+
+dataset_dir <span class="token operator">=</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>dirname<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>abspath<span class="token punctuation">(</span>__file__<span class="token punctuation">)</span><span class="token punctuation">)</span>
+save_file <span class="token operator">=</span> dataset_dir <span class="token operator">+</span> <span class="token string">"/mnist.pkl"</span>
+
+train_num <span class="token operator">=</span> <span class="token number">60000</span>
+test_num <span class="token operator">=</span> <span class="token number">10000</span>
+img_dim <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">28</span><span class="token punctuation">,</span> <span class="token number">28</span><span class="token punctuation">)</span>
+img_size <span class="token operator">=</span> <span class="token number">784</span>
+
+
+<span class="token keyword">def</span> <span class="token function">_download</span><span class="token punctuation">(</span>file_name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    file_path <span class="token operator">=</span> dataset_dir <span class="token operator">+</span> <span class="token string">"/"</span> <span class="token operator">+</span> file_name
+
+    <span class="token keyword">if</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>exists<span class="token punctuation">(</span>file_path<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span>
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Downloading "</span> <span class="token operator">+</span> file_name <span class="token operator">+</span> <span class="token string">" ... "</span><span class="token punctuation">)</span>
+    urllib<span class="token punctuation">.</span>request<span class="token punctuation">.</span>urlretrieve<span class="token punctuation">(</span>url_base <span class="token operator">+</span> file_name<span class="token punctuation">,</span> file_path<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Done"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">download_mnist</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">for</span> v <span class="token keyword">in</span> key_file<span class="token punctuation">.</span>values<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+       _download<span class="token punctuation">(</span>v<span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">_load_label</span><span class="token punctuation">(</span>file_name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    file_path <span class="token operator">=</span> dataset_dir <span class="token operator">+</span> <span class="token string">"/"</span> <span class="token operator">+</span> file_name
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Converting "</span> <span class="token operator">+</span> file_name <span class="token operator">+</span> <span class="token string">" to NumPy Array ..."</span><span class="token punctuation">)</span>
+    <span class="token keyword">with</span> gzip<span class="token punctuation">.</span>open<span class="token punctuation">(</span>file_path<span class="token punctuation">,</span> <span class="token string">'rb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
+            labels <span class="token operator">=</span> np<span class="token punctuation">.</span>frombuffer<span class="token punctuation">(</span>f<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>uint8<span class="token punctuation">,</span> offset<span class="token operator">=</span><span class="token number">8</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Done"</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> labels
+
+<span class="token keyword">def</span> <span class="token function">_load_img</span><span class="token punctuation">(</span>file_name<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    file_path <span class="token operator">=</span> dataset_dir <span class="token operator">+</span> <span class="token string">"/"</span> <span class="token operator">+</span> file_name
+
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Converting "</span> <span class="token operator">+</span> file_name <span class="token operator">+</span> <span class="token string">" to NumPy Array ..."</span><span class="token punctuation">)</span>
+    <span class="token keyword">with</span> gzip<span class="token punctuation">.</span>open<span class="token punctuation">(</span>file_path<span class="token punctuation">,</span> <span class="token string">'rb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
+            data <span class="token operator">=</span> np<span class="token punctuation">.</span>frombuffer<span class="token punctuation">(</span>f<span class="token punctuation">.</span>read<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>uint8<span class="token punctuation">,</span> offset<span class="token operator">=</span><span class="token number">16</span><span class="token punctuation">)</span>
+    data <span class="token operator">=</span> data<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> img_size<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Done"</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> data
+
+<span class="token keyword">def</span> <span class="token function">_convert_numpy</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    dataset <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    dataset<span class="token punctuation">[</span><span class="token string">'train_img'</span><span class="token punctuation">]</span> <span class="token operator">=</span>  _load_img<span class="token punctuation">(</span>key_file<span class="token punctuation">[</span><span class="token string">'train_img'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    dataset<span class="token punctuation">[</span><span class="token string">'train_label'</span><span class="token punctuation">]</span> <span class="token operator">=</span> _load_label<span class="token punctuation">(</span>key_file<span class="token punctuation">[</span><span class="token string">'train_label'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    dataset<span class="token punctuation">[</span><span class="token string">'test_img'</span><span class="token punctuation">]</span> <span class="token operator">=</span> _load_img<span class="token punctuation">(</span>key_file<span class="token punctuation">[</span><span class="token string">'test_img'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    dataset<span class="token punctuation">[</span><span class="token string">'test_label'</span><span class="token punctuation">]</span> <span class="token operator">=</span> _load_label<span class="token punctuation">(</span>key_file<span class="token punctuation">[</span><span class="token string">'test_label'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> dataset
+
+<span class="token keyword">def</span> <span class="token function">init_mnist</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    download_mnist<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    dataset <span class="token operator">=</span> _convert_numpy<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Creating pickle file ..."</span><span class="token punctuation">)</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span>save_file<span class="token punctuation">,</span> <span class="token string">'wb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
+        pickle<span class="token punctuation">.</span>dump<span class="token punctuation">(</span>dataset<span class="token punctuation">,</span> f<span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Done!"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">_change_one_hot_label</span><span class="token punctuation">(</span>X<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    T <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">(</span>X<span class="token punctuation">.</span>size<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> idx<span class="token punctuation">,</span> row <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>T<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        row<span class="token punctuation">[</span>X<span class="token punctuation">[</span>idx<span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1</span>
+
+    <span class="token keyword">return</span> T
+
+
+<span class="token keyword">def</span> <span class="token function">load_mnist</span><span class="token punctuation">(</span>normalize<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> flatten<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> one_hot_label<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""读入MNIST数据集
+
+    Parameters
+    ----------
+    normalize : 将图像的像素值正规化为0.0~1.0
+    one_hot_label :
+        one_hot_label为True的情况下，标签作为one-hot数组返回
+        one-hot数组是指[0,0,1,0,0,0,0,0,0,0]这样的数组
+    flatten : 是否将图像展开为一维数组
+
+    Returns
+    -------
+    (训练图像, 训练标签), (测试图像, 测试标签)
+    """</span>
+    <span class="token keyword">if</span> <span class="token operator">not</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>exists<span class="token punctuation">(</span>save_file<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        init_mnist<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span>save_file<span class="token punctuation">,</span> <span class="token string">'rb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
+        dataset <span class="token operator">=</span> pickle<span class="token punctuation">.</span>load<span class="token punctuation">(</span>f<span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> normalize<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> key <span class="token keyword">in</span> <span class="token punctuation">(</span><span class="token string">'train_img'</span><span class="token punctuation">,</span> <span class="token string">'test_img'</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            dataset<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> dataset<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+            dataset<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">/=</span> <span class="token number">255.0</span>
+
+    <span class="token keyword">if</span> one_hot_label<span class="token punctuation">:</span>
+        dataset<span class="token punctuation">[</span><span class="token string">'train_label'</span><span class="token punctuation">]</span> <span class="token operator">=</span> _change_one_hot_label<span class="token punctuation">(</span>dataset<span class="token punctuation">[</span><span class="token string">'train_label'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        dataset<span class="token punctuation">[</span><span class="token string">'test_label'</span><span class="token punctuation">]</span> <span class="token operator">=</span> _change_one_hot_label<span class="token punctuation">(</span>dataset<span class="token punctuation">[</span><span class="token string">'test_label'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> <span class="token operator">not</span> flatten<span class="token punctuation">:</span>
+         <span class="token keyword">for</span> key <span class="token keyword">in</span> <span class="token punctuation">(</span><span class="token string">'train_img'</span><span class="token punctuation">,</span> <span class="token string">'test_img'</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            dataset<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">=</span> dataset<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">28</span><span class="token punctuation">,</span> <span class="token number">28</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>dataset<span class="token punctuation">[</span><span class="token string">'train_img'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> dataset<span class="token punctuation">[</span><span class="token string">'train_label'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>dataset<span class="token punctuation">[</span><span class="token string">'test_img'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> dataset<span class="token punctuation">[</span><span class="token string">'test_label'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    init_mnist<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>使用方式</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> sys<span class="token punctuation">,</span> os
+
+sys<span class="token punctuation">.</span>path<span class="token punctuation">.</span>append<span class="token punctuation">(</span>os<span class="token punctuation">.</span>pardir<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 为了导入父目录中的文件而进行的设定</span>
+<span class="token keyword">from</span> dataset<span class="token punctuation">.</span>mnist <span class="token keyword">import</span> load_mnist
+
+<span class="token punctuation">(</span>x_train<span class="token punctuation">,</span> t_train<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>x_test<span class="token punctuation">,</span> t_test<span class="token punctuation">)</span> <span class="token operator">=</span> load_mnist<span class="token punctuation">(</span>flatten<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> normalize<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 输出各个数据的形状</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>x_train<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (60000, 784)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>t_train<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (60000,)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>x_test<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (10000, 784)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>t_test<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (10000,)</span>
+</code></pre>
+<blockquote>
+<p>load_mnist 函数有三个参数，比如 load_mnist(normalize=True, flatten=True, one_hot_label=False)中，</p>
+</blockquote>
+<ul>
+<li>第一个参数 normalize 设置是否将输入图像正规化（正则化）为 0.0<del>1.0 的值。如果为 False，则输入图像的像素会保持原来的 0</del>255。</li>
+<li>第 2 个参数 flatten 设置是否展开输入图像（变成 1 维数组）。如果为 False，则输入图像为 1x28x28 的三位数组，如果为 True，则输入图像会保存为由 784 个元素构成的一维数组。</li>
+<li>第三个参数设置是否将标签保存为 onehot 表示(one-hot representation)。one-hot 表示是仅正确解标签为 1，其余为 0 的数组，如[0,0,1,0,0,0,0,0,0,0]。当 one_hot_label 为 False 时，只是像 7、2 这样简单地保存正确解标签；当为 True 时，则保存为 onehot 表示</li>
+</ul>
+<blockquote>
+<p>python 有 pickle 这个便利的功能。可以将程序运行中的对象保存为文件。如果加载保存过的 pickle 文件，可以立刻复原之前程序运行中的对象。load_mnist 就是利用了这个功能，在第二次读取时快速读取保存在本地的数据集 pkl</p>
+</blockquote>
+<blockquote>
+<p>我们用 PIL(Python Image Library)来显示图像</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> sys<span class="token punctuation">,</span> os
+
+sys<span class="token punctuation">.</span>path<span class="token punctuation">.</span>append<span class="token punctuation">(</span>os<span class="token punctuation">.</span>pardir<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 为了导入父目录中的文件而进行的设定</span>
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> dataset<span class="token punctuation">.</span>mnist <span class="token keyword">import</span> load_mnist
+<span class="token keyword">from</span> PIL <span class="token keyword">import</span> Image
+
+
+<span class="token keyword">def</span> <span class="token function">img_show</span><span class="token punctuation">(</span>img<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    pil_img <span class="token operator">=</span> Image<span class="token punctuation">.</span>fromarray<span class="token punctuation">(</span>np<span class="token punctuation">.</span>uint8<span class="token punctuation">(</span>img<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    pil_img<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token punctuation">(</span>x_train<span class="token punctuation">,</span> t_train<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>x_test<span class="token punctuation">,</span> t_test<span class="token punctuation">)</span> <span class="token operator">=</span> load_mnist<span class="token punctuation">(</span>flatten<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> normalize<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+
+img <span class="token operator">=</span> x_train<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+label <span class="token operator">=</span> t_train<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>label<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 5</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>img<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (784,)</span>
+img <span class="token operator">=</span> img<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">28</span><span class="token punctuation">,</span> <span class="token number">28</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 把图像的形状变成原来的尺寸</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>img<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (28, 28)</span>
+
+img_show<span class="token punctuation">(</span>img<span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>这里使用了 flatten=True，所有读入的是一维数组，在显示图像时需要（通过 reshape）转为原本的尺寸（28x28），而图像被保存为 numpy 数组，所以需要通过 Image.fromarray()来转换为图像</p>
+</blockquote>
+<p><img src="20230828203804.png"></p>
+<h3 id="3-6-2-神经网络的推理处理"><a href="#3-6-2-神经网络的推理处理" class="headerlink" title="3.6.2 神经网络的推理处理"></a>3.6.2 神经网络的推理处理</h3><blockquote>
+<p>接下来实现推理处理。首先，输入层有 784 个神经元（图像大小 28x28=784），输出层有 10 个神经元（0~9，是 10 分类）。此外，这个神经网络有两个隐藏层，第一个隐藏层有 50 个神经元，第二个隐藏层有 100 个神经元。（50 和 100 可以设置为任意值）</p>
+</blockquote>
+<blockquote>
+<p>先定义函数</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">get_data</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token punctuation">(</span>x_train<span class="token punctuation">,</span> t_train<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>x_test<span class="token punctuation">,</span> t_test<span class="token punctuation">)</span> <span class="token operator">=</span> \
+        load_mnist<span class="token punctuation">(</span>flatten<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> normalize<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> one_hot_label<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> x_test<span class="token punctuation">,</span> t_test
+
+
+<span class="token keyword">def</span> <span class="token function">init_network</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span><span class="token string">'sample_weight.pkl'</span><span class="token punctuation">,</span> <span class="token string">'rb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> f<span class="token punctuation">:</span>
+        network <span class="token operator">=</span> pickle<span class="token punctuation">.</span>load<span class="token punctuation">(</span>f<span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> network
+
+
+<span class="token keyword">def</span> <span class="token function">predict</span><span class="token punctuation">(</span>network<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    W1<span class="token punctuation">,</span> W2<span class="token punctuation">,</span> W3 <span class="token operator">=</span> network<span class="token punctuation">[</span><span class="token string">'W1'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> network<span class="token punctuation">[</span><span class="token string">'W2'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> network<span class="token punctuation">[</span><span class="token string">'W3'</span><span class="token punctuation">]</span>
+    b1<span class="token punctuation">,</span> b2<span class="token punctuation">,</span> b3 <span class="token operator">=</span> network<span class="token punctuation">[</span><span class="token string">'b1'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> network<span class="token punctuation">[</span><span class="token string">'b2'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> network<span class="token punctuation">[</span><span class="token string">'b3'</span><span class="token punctuation">]</span>
+
+    a1 <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>x<span class="token punctuation">,</span> W1<span class="token punctuation">)</span> <span class="token operator">+</span> b1
+    z1 <span class="token operator">=</span> sigmoid<span class="token punctuation">(</span>a1<span class="token punctuation">)</span>
+    a2 <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>z1<span class="token punctuation">,</span> W2<span class="token punctuation">)</span> <span class="token operator">+</span> b2
+    z2 <span class="token operator">=</span> sigmoid<span class="token punctuation">(</span>a2<span class="token punctuation">)</span>
+    a3 <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>z2<span class="token punctuation">,</span> W3<span class="token punctuation">)</span> <span class="token operator">+</span> b3
+    y <span class="token operator">=</span> softmax<span class="token punctuation">(</span>a3<span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> y
+</code></pre>
+<blockquote>
+<p>init_network()会读入保存在 pickle 文件 sample_weight.pkl 中的学习到的权重参数。这个文件以字典变量的形式保存了权重和偏置参数。这里假设学习已经完成，所以直接加载 pkl 文件</p>
+</blockquote>
+<blockquote>
+<p>现在我们用这 3 个函数实现神经网络的推理处理。然后，评价它的<em>识别精度</em>(accuracy)，即能在多大程度上正确分类</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">x<span class="token punctuation">,</span> t <span class="token operator">=</span> get_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+network <span class="token operator">=</span> init_network<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+accuracy_cnt <span class="token operator">=</span> <span class="token number">0</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>len<span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    y <span class="token operator">=</span> predict<span class="token punctuation">(</span>network<span class="token punctuation">,</span> x<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    p <span class="token operator">=</span> np<span class="token punctuation">.</span>argmax<span class="token punctuation">(</span>y<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 获取概率最高的元素的索引</span>
+    <span class="token keyword">if</span> p <span class="token operator">==</span> t<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">:</span>
+        accuracy_cnt <span class="token operator">+=</span> <span class="token number">1</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">'Accuracy: {str(float(accuracy_cnt) / len(x))}'</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>我们设置 normalize 为 True 后，函数内部会进行转换，将图像的各个像素除以 255，使得数据的值在 0.0~1.0 之间。先这样把数据限定到某个范围内的处理称为<em>正规化</em>（normalization）。此外，对神经网络的输入数据进行某种既定的转换称为<em>预处理</em>（pre-processing）</p>
+</blockquote>
+<ul>
+<li>预处理很实用。实际上，很多预处理都会考虑到数据的整体分布。比如，利用数据整体的均值或标准差，移动数据，使数据整体以 0 为中心分布，或者进行正规化，把数据延展控制在一定范围内。除此之外，还有将数据整体的分布形状均匀化的方法，即数据<em>白化</em>（whitening）等。</li>
+</ul>
+<h3 id="3-6-3-批处理"><a href="#3-6-3-批处理" class="headerlink" title="3.6.3 批处理"></a>3.6.3 批处理</h3>
             </div>
             <hr/>
 
@@ -1362,49 +1978,44 @@ gitment.render('gitment-content');
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fa fa-dot-circle-o"></i>&nbsp;本篇
-            </div>
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2023/08/26/ji-suan-ji-li-lun-ji-shu-ji/shi-ti/shen-du-xue-xi-ru-men-ji-yu-python-de-li-lun-he-shi-xian/z/">
+                <a href="/2023/08/28/backend/java/lg2088-qu-xue-she-ji-mo-shi-la-gou-zhuan-lan/z/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/3.jpg" class="responsive-img" alt="深度学习入门-基于python的理论与实现">
+                        <img src="/medias/featureimages/23.jpg" class="responsive-img" alt="lg2088_趣学设计模式-拉钩专栏">
                         
-                        <span class="card-title">深度学习入门-基于python的理论与实现</span>
+                        <span class="card-title">lg2088_趣学设计模式-拉钩专栏</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">1. python 入门1.5 Numpy
-深度学习中经常出现数组和矩阵运算，Numpy 的数组类 numpy.array 提供了很多便捷的方法
-
-1.5.1 导入 Numpyimport numpy as np
-
-1.5.2 生成 Num</div>
+                    <div class="summary">01 学习思维：怎样才能学好 Java 设计模式？_6862
+02 组合思维：Unix 哲学到底给现代编程带来哪些重要启示？
+</div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2023-08-26
-                            </span>
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2023-08-28
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/ai/" class="post-category" target="_blank">
-                                    ai
+                            <a href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="post-category" target="_blank">
+                                    设计模式
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/ai/" target="_blank">
-                        <span class="chip bg-color">ai</span>
+                    <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" target="_blank">
+                        <span class="chip bg-color">设计模式</span>
                     </a>
                     
                 </div>
@@ -1546,7 +2157,7 @@ kaggle
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">399.9k</span>
+                <span class="white-color">406.7k</span>
             
 
             
