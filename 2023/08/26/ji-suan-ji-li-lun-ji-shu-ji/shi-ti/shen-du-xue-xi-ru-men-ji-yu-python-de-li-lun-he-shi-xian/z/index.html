@@ -368,14 +368,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        20.9k
+                        23.8k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        84 分
+                        94 分
                     </div>
                     
                 
@@ -2379,7 +2379,240 @@ network <span class="token operator">=</span> TwoLayerNet<span class="token punc
 <blockquote>
 <p>通过计算图来理解误差反向传播法的想法，参考了 AndrejKarpathy 的博客和他与 Fei-Fei Li 教师复杂的斯坦福大学的深度学习课程 CS231n</p>
 </blockquote>
-<h2 id="5-1-计算图"><a href="#5-1-计算图" class="headerlink" title="5.1 计算图"></a>5.1 计算图</h2>
+<h2 id="5-1-计算图"><a href="#5-1-计算图" class="headerlink" title="5.1 计算图"></a>5.1 计算图</h2><blockquote>
+<p>计算题将计算过程用图形表示出来，这里说的图形是数据结构图，通过多个节点和边表示（连接节点的直线称为‘边’）。</p>
+</blockquote>
+<h3 id="5-1-1-用计算图求解"><a href="#5-1-1-用计算图求解" class="headerlink" title="5.1.1 用计算图求解"></a>5.1.1 用计算图求解</h3><ul>
+<li>问题 1：太郎在超市买了 2 个 100 日元一个的苹果，消费税是 10%，请计算支付金额</li>
+</ul>
+<blockquote>
+<p>计算题通过节点和箭头表示计算过程。节点用〇表示，〇中是计算的内容。将计算的中间结果写在箭头的上方，表示各个节点的计算结果从左向右传递。</p>
+</blockquote>
+<p><img src="20230831171049.png"></p>
+<blockquote>
+<p>如图所示，开始时，苹果的 100 日元流到‘x2’节点，变成 200 日元，然后被传递到下一个节点。接着，这个 200 日元流向‘x1.1’节点，变成 220 日元，因此，答案为 220 日元</p>
+</blockquote>
+<blockquote>
+<p>上图吧‘x2’和‘x1.1’等作为一个运算符整体用〇括起来了，不过只用〇表示乘法运算‘x’也是可行的</p>
+</blockquote>
+<p><img src="20230831171426.png"></p>
+<ul>
+<li>问题 2：太郎在超市买了 2 个苹果、3 个橘子。其中，苹果每个 100 日元，橘子每个 150 日元。消费税是 10%，请计算支付金额</li>
+</ul>
+<p><img src="20230831172130.png"></p>
+<blockquote>
+<p>综上，用计算图解题的情况下，需要按如下流程进行：</p>
+</blockquote>
+<ol>
+<li>构建计算图</li>
+<li>在计算图上，从左向右进行计算</li>
+</ol>
+<blockquote>
+<p>‘从左向右进行计算’是一种正方向上的传播，简称为<em>正向传播</em>（forward propagation）。正向传播是从计算图出发点到结束点的传播。自然，也有反方向的传播，_反向传播_（backward propagation），反向传播在接下来的导数计算中发挥重要作用</p>
+</blockquote>
+<h3 id="5-1-2-局部计算"><a href="#5-1-2-局部计算" class="headerlink" title="5.1.2 局部计算"></a>5.1.2 局部计算</h3><blockquote>
+<p>计算图的特征是可以通过传递‘局部计算’获得最终结果。‘局部’是指，‘与自己有关的某个小范围’。局部计算是指，无论全局发生了什么，都能只根据与自己相关的信息输出接下来的结果。</p>
+</blockquote>
+<blockquote>
+<p>比如在超市里买了两个苹果和其他很多东西</p>
+</blockquote>
+<p><img src="20230831183950.png"></p>
+<blockquote>
+<p>假设（经过复杂的计算）购买的其他很多东西总共花费 4000 日元。这里的重点是，各个节点处的计算都是局部计算。也就是说，苹果和其他很多东西的求和计算并不关心 4000 这个数字是怎么来的，只进行求和。换言之，各个节点处只需进行与自己有关的运算，不用考虑全局</p>
+</blockquote>
+<blockquote>
+<p>综上，计算图专注局部计算，各个步骤所要做的就是对象节点的局部计算。通过传递它的计算结果，可以获得全局的复杂计算的结果</p>
+</blockquote>
+<ul>
+<li>组装汽车是一个复杂的工作，通常需要进行‘流水线’作业。每个工人（机器）承担的都是简化了的工作，这个工作的成果会传给下一个工人，直至汽车组装完成。计算图将复杂计算分割成简单的局部计算，和流水线作业一样，将局部计算的结果传递给下一个节点。</li>
+</ul>
+<h3 id="5-1-3-为何用计算图解题"><a href="#5-1-3-为何用计算图解题" class="headerlink" title="5.1.3 为何用计算图解题"></a>5.1.3 为何用计算图解题</h3><blockquote>
+<p>计算图的优点：1. 无论全局计算多么复杂，都可以通过局部计算使各个节点致力于简单的计算，从而简化问题。2. 利用计算图可以将中间的计算结果全部保存起来。3. 最重要的一点，可以通过反向传播高效计算导数。</p>
+</blockquote>
+<blockquote>
+<p>我们思考一下问题 1，假设我们现在的苹果价格的上涨会在多大程度上影响需要支付的金额，即求‘支付金额关于苹果的价格的导数’。设苹果价格为 x，支付金额为 L，则相对于求 əL/əx。这个导数的值表示当苹果价格稍微上涨时，支付金额会增加多少。</p>
+</blockquote>
+<blockquote>
+<p>‘支付金额关于苹果的导数’可以通过计算图的反向传播求出来</p>
+</blockquote>
+<p><img src="20230831185650.png"></p>
+<blockquote>
+<p>这里反向箭头的下方是局部导数。结果是 2.2，也就是说，如果苹果的价格上涨 1 日元，则支付金额会增加 2.2 日元</p>
+</blockquote>
+<blockquote>
+<p>‘支付金额关于消费税的导数’，‘支付金额关于苹果的个数的导数’也可以通过相同的方式求出。并且，计算中途求得的导数的结果（中间传递的导数）可以被共享，从而可以高效地计算多个导数。综上，计算图的优点是，可以通过正向传播和反向传播高效地计算各个变量的导数值</p>
+</blockquote>
+<h2 id="5-2-链式法则"><a href="#5-2-链式法则" class="headerlink" title="5.2 链式法则"></a>5.2 链式法则</h2><h3 id="5-2-1-计算图的反向传播"><a href="#5-2-1-计算图的反向传播" class="headerlink" title="5.2.1 计算图的反向传播"></a>5.2.1 计算图的反向传播</h3><blockquote>
+<p>假设存在 y=f(x)，反向传播如图所示</p>
+</blockquote>
+<p><img src="20230831194853.png"></p>
+<blockquote>
+<p>反向传播的计算顺序是，将信号 E 乘以节点的局部导数(əy/əx)，然后将结果传递给下一个节点。这里的局部导数是指正向传播中 y=f(x)的导数，也就是 y 关于 x 的导数。比如 y=f(x)=x^2，则 əy/əx=2x，把这个导数乘以上游传过来的值（E），然后传递给前面的节点。</p>
+</blockquote>
+<blockquote>
+<p>这就是反向传播的计算顺序。通过这种计算，可以高效求出导数的值，这是反向传播的要点。这是如何实现的？可以通过链式法则的原理进行解释。</p>
+</blockquote>
+<h3 id="5-2-2-什么是链式法则"><a href="#5-2-2-什么是链式法则" class="headerlink" title="5.2.2 什么是链式法则"></a>5.2.2 什么是链式法则</h3><blockquote>
+<p>先从<em>复合函数</em>说起，复合函数是由多个函数构成的函数。比如 z=(x+y)^2</p>
+</blockquote>
+<p><img src="20230831195610.png"></p>
+<blockquote>
+<p>链式法则是关于复合函数的导数的性质</p>
+</blockquote>
+<pre><code>如果某个函数由复合函数表示，则该复合函数的导数可以用构成复合函数的各个函数的导数的乘积表示。
+</code></pre>
+<p><img src="20230831200435.png"></p>
+<h3 id="5-2-3-链式法则和计算图"><a href="#5-2-3-链式法则和计算图" class="headerlink" title="5.2.3 链式法则和计算图"></a>5.2.3 链式法则和计算图</h3><p><img src="20230831200548.png"><br><img src="20230831200754.png"><br><img src="20230831200856.png"></p>
+<h2 id="5-3-反向传播"><a href="#5-3-反向传播" class="headerlink" title="5.3 反向传播"></a>5.3 反向传播</h2><blockquote>
+<p>本节以‘+’和‘x’等计算为例，介绍反向传播的结构。</p>
+</blockquote>
+<h3 id="5-3-1-加法节点的反向传播"><a href="#5-3-1-加法节点的反向传播" class="headerlink" title="5.3.1 加法节点的反向传播"></a>5.3.1 加法节点的反向传播</h3><blockquote>
+<p>这里以 z=x+y 为对象，观察它的反向传播</p>
+</blockquote>
+<p><img src="20230831202343.png"></p>
+<blockquote>
+<p>z=x+y 的导数可以由上面这两个式子计算出来。此时，两式都等于 1。在下图中，反向传播将从上游传过来的导数乘以 1，然后传向下游。因为加法节点的反向传播只乘以 1，所以输入的值会原封不动地流向下一个节点。</p>
+</blockquote>
+<p><img src="20230831202606.png"></p>
+<blockquote>
+<p>另外，本例将上游传来的导数值设为 əL/əx。这是因为，我们假定最终输出值为 L 的大型计算图。z=x+y 的计算位于其中，从上游会传来 əL/əz 的值，并向下游传递 əL/əx 和 əL/əy</p>
+</blockquote>
+<p><img src="20230831202816.png"><br><img src="20230831202928.png"></p>
+<h3 id="5-3-2-乘法节点的反向传播"><a href="#5-3-2-乘法节点的反向传播" class="headerlink" title="5.3.2 乘法节点的反向传播"></a>5.3.2 乘法节点的反向传播</h3><blockquote>
+<p>考虑 z=xy</p>
+</blockquote>
+<p><img src="20230831210742.png"></p>
+<blockquote>
+<p>乘法的反向传播会将上游的值乘以正向传播时的输入信号的‘翻转值’后传递给下游。翻转值表示一种翻转关系，如下图 5-12，正向传播时信号是 x 的话，反向传播时则是 y；正向传播时的信号是 y 的话，反向传播时则是 x。</p>
+</blockquote>
+<p><img src="20230831211007.png"></p>
+<blockquote>
+<p>乘法的反向传播会乘以输入信号的翻转值，而加法的反向传播只是将上游的值传给下游，并不需要正向传播的输入信号。但是，乘法的反向传播需要正向传播时的输入信号值。因此，实现乘法节点的反向传播时，要保证正向传播的输入信号</p>
+</blockquote>
+<h3 id="5-3-3-苹果的例子"><a href="#5-3-3-苹果的例子" class="headerlink" title="5.3.3 苹果的例子"></a>5.3.3 苹果的例子</h3><blockquote>
+<p>最开始苹果的例子（2 个苹果和消费税）。这里要解的问题是苹果的价格、苹果的个数、消费税这 3 个变量各自如何影响最终支付的金额。相对于求‘支付金额关于苹果的价格/苹果的个数/消费税的导数’</p>
+</blockquote>
+<p><img src="20230831212023.png"></p>
+<blockquote>
+<p>乘法节点的反向传播会将输入信号翻转后传给下游。从图 5-14 可知，苹果的价格的导数是 2.2，苹果的个数的导数是 110，消费税的导数是 200。这可以解释为，如果消费税和苹果的价格增加相同的值，则消费税将对最终价格产生 200 倍大小的影响，苹果的价格将产生 2.2 倍大小的影响。不过，这个例子里消费税和苹果的价格的量纲不同，所以才形成了这样的结果（消费税的 1 是 100%，苹果的价格的 1 是 1 日元。</p>
+</blockquote>
+<p><img src="20230831212930.png" alt="小练习"></p>
+<h2 id="5-4-简单层的实现"><a href="#5-4-简单层的实现" class="headerlink" title="5.4 简单层的实现"></a>5.4 简单层的实现</h2><blockquote>
+<p>我们将要实现的计算图的乘法节点称为‘乘法层’（MulLayer），加法节点称为‘加法层’（AddLayer）</p>
+</blockquote>
+<ul>
+<li>下一节中，我们将把构建神经网络的‘层’实现为一个类。这里说的‘层’是神经网络中功能的单位。比如，负责 sigmoid 函数的 sigmoid、负责矩阵乘积的 Affine 等，都以层为单位实现。</li>
+</ul>
+<h3 id="5-4-1-乘法层的实现"><a href="#5-4-1-乘法层的实现" class="headerlink" title="5.4.1 乘法层的实现"></a>5.4.1 乘法层的实现</h3><blockquote>
+<p>层的实现中有两个共通的方法（接口）forward()和 backward()。forward 对应正向传播，backward 对应反向传播</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">MulLayer</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>x <span class="token operator">=</span> None
+        self<span class="token punctuation">.</span>y <span class="token operator">=</span> None
+
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>x <span class="token operator">=</span> x
+        self<span class="token punctuation">.</span>y <span class="token operator">=</span> y
+        out <span class="token operator">=</span> x <span class="token operator">*</span> y
+
+        <span class="token keyword">return</span> out
+
+    <span class="token keyword">def</span> <span class="token function">backward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> dout<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        dx <span class="token operator">=</span> dout <span class="token operator">*</span> self<span class="token punctuation">.</span>y  <span class="token comment" spellcheck="true"># 翻转x和y</span>
+        dy <span class="token operator">=</span> dout <span class="token operator">*</span> self<span class="token punctuation">.</span>x
+
+        <span class="token keyword">return</span> dx<span class="token punctuation">,</span>dy
+</code></pre>
+<blockquote>
+<p>init 方法中初始化实例变量 x 和 y，它们用于保存正向传播时的输入值。forward 接收 x 和 y 两个参数，将它们相乘后输出。backward 将从上游传来的导数（dout）乘以正向传播的翻转值，然后传给下游。</p>
+</blockquote>
+<p><img src="20230831215636.png"></p>
+<blockquote>
+<p>使用这个乘法层实现上图的正向传播</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">apple <span class="token operator">=</span> <span class="token number">100</span>
+apple_num <span class="token operator">=</span> <span class="token number">2</span>
+tax <span class="token operator">=</span> <span class="token number">1.1</span>
+
+<span class="token comment" spellcheck="true"># layer</span>
+mul_apple_layer <span class="token operator">=</span> MulLayer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+mul_tex_layer <span class="token operator">=</span> MulLayer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># forward</span>
+apple_price <span class="token operator">=</span> mul_apple_layer<span class="token punctuation">.</span>forward<span class="token punctuation">(</span>apple<span class="token punctuation">,</span> apple_num<span class="token punctuation">)</span>
+price <span class="token operator">=</span> mul_tex_layer<span class="token punctuation">.</span>forward<span class="token punctuation">(</span>apple_price<span class="token punctuation">,</span> tax<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>price<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 220.00000000000003</span>
+
+<span class="token comment" spellcheck="true"># 各个变量的导数</span>
+<span class="token comment" spellcheck="true"># backward</span>
+dprice <span class="token operator">=</span> <span class="token number">1</span>
+dapple_price<span class="token punctuation">,</span> dtax <span class="token operator">=</span> mul_tex_layer<span class="token punctuation">.</span>backward<span class="token punctuation">(</span>dprice<span class="token punctuation">)</span>
+dapple<span class="token punctuation">,</span> dapple_num <span class="token operator">=</span> mul_apple_layer<span class="token punctuation">.</span>backward<span class="token punctuation">(</span>dapple_price<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 2.2 110.00000000000001 200</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>dapple<span class="token punctuation">,</span> dapple_num<span class="token punctuation">,</span> dtax<span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>调用 backward 的顺序和调用 forward 的顺序相反。此外，backward 的参数中需要输入‘关于正向传播时的输出变量的导数’。比如，mul_apple_layer 乘法层在正向传播时会输出 apple_price，在反向传播时，则会将 apple_price 的导数 dapple_price 设为参数。</p>
+</blockquote>
+<h3 id="5-4-2-加法层的实现"><a href="#5-4-2-加法层的实现" class="headerlink" title="5.4.2 加法层的实现"></a>5.4.2 加法层的实现</h3><pre class=" language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">AddLayer</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">pass</span>
+
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">,</span> y<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        out <span class="token operator">=</span> x <span class="token operator">+</span> y
+        <span class="token keyword">return</span> out
+
+    <span class="token keyword">def</span> <span class="token function">backward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> dout<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        dx <span class="token operator">=</span> dout <span class="token operator">*</span> <span class="token number">1</span>
+        dy <span class="token operator">=</span> dout <span class="token operator">*</span> <span class="token number">1</span>
+        <span class="token keyword">return</span> dx<span class="token punctuation">,</span> dy
+</code></pre>
+<blockquote>
+<p>现在，我们使用乘法层和加法层实现图 5-17 购买 2 个苹果和 3 个橘子的例子</p>
+</blockquote>
+<p><img src="20230831220736.png"></p>
+<pre class=" language-python"><code class="language-python">apple <span class="token operator">=</span> <span class="token number">100</span>
+apple_num <span class="token operator">=</span> <span class="token number">2</span>
+orange <span class="token operator">=</span> <span class="token number">150</span>
+orange_num <span class="token operator">=</span> <span class="token number">3</span>
+tax <span class="token operator">=</span> <span class="token number">1.1</span>
+
+<span class="token comment" spellcheck="true"># layer</span>
+mul_apple_layer <span class="token operator">=</span> MulLayer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+mul_orange_layer <span class="token operator">=</span> MulLayer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+add_apple_orange_layer <span class="token operator">=</span> AddLayer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+mul_tax_layer <span class="token operator">=</span> MulLayer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># forward</span>
+apple_price <span class="token operator">=</span> mul_apple_layer<span class="token punctuation">.</span>forward<span class="token punctuation">(</span>apple<span class="token punctuation">,</span> apple_num<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (1)</span>
+orange_price <span class="token operator">=</span> mul_orange_layer<span class="token punctuation">.</span>forward<span class="token punctuation">(</span>orange<span class="token punctuation">,</span> orange_num<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (2)</span>
+all_price <span class="token operator">=</span> add_apple_orange_layer<span class="token punctuation">.</span>forward<span class="token punctuation">(</span>apple_price<span class="token punctuation">,</span> orange_price<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3)</span>
+price <span class="token operator">=</span> mul_tax_layer<span class="token punctuation">.</span>forward<span class="token punctuation">(</span>all_price<span class="token punctuation">,</span> tax<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (4)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>apple_price<span class="token punctuation">,</span>orange_price<span class="token punctuation">,</span>all_price<span class="token punctuation">,</span>price<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 200 450 650 715</span>
+
+<span class="token comment" spellcheck="true"># backward</span>
+dprice <span class="token operator">=</span> <span class="token number">1</span>
+dall_price<span class="token punctuation">,</span> dtax <span class="token operator">=</span> mul_tax_layer<span class="token punctuation">.</span>backward<span class="token punctuation">(</span>dprice<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (4)</span>
+dapple_price<span class="token punctuation">,</span> dorange_price <span class="token operator">=</span> add_apple_orange_layer<span class="token punctuation">.</span>backward<span class="token punctuation">(</span>dall_price<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3)</span>
+dorange<span class="token punctuation">,</span> dorange_num <span class="token operator">=</span> mul_orange_layer<span class="token punctuation">.</span>backward<span class="token punctuation">(</span>dorange_price<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (2)</span>
+dapple<span class="token punctuation">,</span> dapple_num <span class="token operator">=</span> mul_apple_layer<span class="token punctuation">.</span>backward<span class="token punctuation">(</span>dapple_price<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (1)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>price<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 715</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>dall_price<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 715</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>dapple_num<span class="token punctuation">,</span> dapple<span class="token punctuation">,</span> dorange<span class="token punctuation">,</span> dorange_num<span class="token punctuation">,</span> dtax<span class="token punctuation">)</span><span class="token comment" spellcheck="true"># 110 2.2 3.3 165 650</span>
+</code></pre>
+<h2 id="5-5-激活函数层的实现"><a href="#5-5-激活函数层的实现" class="headerlink" title="5.5 激活函数层的实现"></a>5.5 激活函数层的实现</h2><blockquote>
+<p>我们将计算图的思路应用到神经网络中。这里，我们把构成神经网络的层实现为一个类。先实现激活函数的 ReLU 层和 Sigmoid 层</p>
+</blockquote>
+<h3 id="5-5-1-ReLU-层"><a href="#5-5-1-ReLU-层" class="headerlink" title="5.5.1 ReLU 层"></a>5.5.1 ReLU 层</h3><p><img src="20230831222214.png"></p>
+<blockquote>
+<p>在式子（5.8）中，如果正向传播的输入 x 大于 0，则反向传播会将上游的值原封不动地传给下游。反过来，如果正向传播时 x 小于等于 0，则反向传播中传给下游的信号将停在此处。实现 ReLU 层，其中，假定传入 forward 和 backward 的参数是 numpy 数组</p>
+</blockquote>
+
             </div>
             <hr/>
 
@@ -3047,7 +3280,7 @@ kaggle
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">422.1k</span>
+                <span class="white-color">425k</span>
             
 
             
