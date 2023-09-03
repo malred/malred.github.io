@@ -368,14 +368,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        23.8k
+                        24.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        94 分
+                        98 分
                     </div>
                     
                 
@@ -2612,7 +2612,110 @@ dapple<span class="token punctuation">,</span> dapple_num <span class="token ope
 <blockquote>
 <p>在式子（5.8）中，如果正向传播的输入 x 大于 0，则反向传播会将上游的值原封不动地传给下游。反过来，如果正向传播时 x 小于等于 0，则反向传播中传给下游的信号将停在此处。实现 ReLU 层，其中，假定传入 forward 和 backward 的参数是 numpy 数组</p>
 </blockquote>
+<p><img src="20230901212906.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Relu</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>mask <span class="token operator">=</span> None
 
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>mask <span class="token operator">=</span> <span class="token punctuation">(</span>x <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        out <span class="token operator">=</span> x<span class="token punctuation">.</span>copy<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 小于0的都设为0</span>
+        out<span class="token punctuation">[</span>self<span class="token punctuation">.</span>mask<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+
+    <span class="token keyword">def</span> <span class="token function">backward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> dout<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        dout<span class="token punctuation">[</span>self<span class="token punctuation">.</span>mask<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">0</span>
+        dx <span class="token operator">=</span> dout
+
+        <span class="token keyword">return</span> dx
+
+
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+<span class="token comment" spellcheck="true"># mask</span>
+x <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">0.5</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token operator">-</span><span class="token number">2.0</span><span class="token punctuation">,</span> <span class="token number">3.0</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [[ 1.  -0.5]</span>
+<span class="token comment" spellcheck="true">#  [-2.   3. ]]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+
+mask <span class="token operator">=</span> <span class="token punctuation">(</span>x <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [[False  True]</span>
+<span class="token comment" spellcheck="true">#  [ True False]]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>mask<span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>Relu 类有实例变量 mask。这个变量是 numpy 布尔数组，它会把正向传播时的输入 x 的元素中小于等于 0 的地方保存为 True，大于零的保存为 False。</p>
+</blockquote>
+<blockquote>
+<p>如果正向传播时的输入值小于等于 0，则反向传播的值为 0。因此，反向传播中会使用正向传播时保存的 mask，将从上游传来的 dout 的 mask 中的元素为 True 的地方设为 0。</p>
+</blockquote>
+<ul>
+<li>ReLU 层的作用就像电路开关。正向传播时，有电流通过的话，就将开关设为 ON；没有就设为 OFF。反向传播时，开关为 ON，电流会直接通过；开关为 OFF 则不会有电流通过</li>
+</ul>
+<h3 id="5-5-2-Sigmoid-层"><a href="#5-5-2-Sigmoid-层" class="headerlink" title="5.5.2 Sigmoid 层"></a>5.5.2 Sigmoid 层</h3><p><img src="20230901214117.png"></p>
+<blockquote>
+<p>反向传播步骤</p>
+</blockquote>
+<p><img src="20230901214720.png"><br><img src="20230901214749.png"></p>
+<blockquote>
+<p>反向传播的输出为 əL/əy * y^2 * exp(-x)，这个值会传播给下游的节点。这个结果只根据正向传播时的输入 x 和输出 y 就可以算出来，可以将图 5-20 画成下面的集约化的 sigmoid 节点。</p>
+</blockquote>
+<p><img src="20230901214945.png"></p>
+<blockquote>
+<p>简洁版的计算图可以省略反向传播中的计算过程，计算效率更高。此外，通过对节点进行集约化，可以不用在意 sigmoid 层中琐碎的细节，而只需要专注它的输入输出。</p>
+</blockquote>
+<p><img src="20230901215046.png"><br><img src="20230901215123.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Sigmoid</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>out <span class="token operator">=</span> None
+
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        out <span class="token operator">=</span> <span class="token number">1</span> <span class="token operator">/</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">+</span> np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span><span class="token operator">-</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>out <span class="token operator">=</span> out
+
+        <span class="token keyword">return</span> out
+
+    <span class="token keyword">def</span> <span class="token function">backward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> dout<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        dx <span class="token operator">=</span> dout <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">1.0</span> <span class="token operator">-</span> self<span class="token punctuation">.</span>out<span class="token punctuation">)</span> <span class="token operator">*</span> self<span class="token punctuation">.</span>out
+
+        <span class="token keyword">return</span> dx
+</code></pre>
+<h2 id="5-6-Affine-Softmax-层的实现"><a href="#5-6-Affine-Softmax-层的实现" class="headerlink" title="5.6 Affine/Softmax 层的实现"></a>5.6 Affine/Softmax 层的实现</h2><h3 id="5-6-1-Affine-层"><a href="#5-6-1-Affine-层" class="headerlink" title="5.6.1 Affine 层"></a>5.6.1 Affine 层</h3><blockquote>
+<p>神经网络的正向传播中，为了计算加权信号的总和，使用了矩阵的乘积运算（numpy 中的 np.dot()）</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">X <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>rand<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 输入</span>
+W <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>rand<span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 输入</span>
+B <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>rand<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 输入</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>X<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (2,)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>W<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (2, 3)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>B<span class="token punctuation">.</span>shape<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (3,)</span>
+
+Y <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>X<span class="token punctuation">,</span> W<span class="token punctuation">)</span> <span class="token operator">+</span> B
+</code></pre>
+<blockquote>
+<p>神经元的加权和可以用 Y=np.dot(X,W)+B 计算。然后，Y 经过激活函数转换后，传递给下一层。这就是神经网络正向传播的流程。此外，矩阵乘法计算的要点是使对应维度的元素个数一致。</p>
+</blockquote>
+<p><img src="20230901220450.png"></p>
+<ul>
+<li>神经网络的正向传播中进行的矩阵乘法计算在几何领域称为‘仿射变换’。（几何中，仿射变换包括一次线性变换和一次平移，分别对应神经网络的加权和运算与加偏置运算）。因此，这里将进行仿射变换的处理实现为‘Affine 层’</li>
+</ul>
+<blockquote>
+<p>将求矩阵的乘积与偏置的和的运算用计算图表示出来。</p>
+</blockquote>
+<p><img src="20230901220806.png"></p>
+<blockquote>
+<p>这里，X、W、B 是矩阵（多维数组），而之前的计算图中各个节点间流动的是标量。</p>
+</blockquote>
+<blockquote>
+<p>以矩阵为对象的反向传播，按矩阵的各个元素进行计算时，步骤和以标量为对象的计算图相同</p>
+</blockquote>
+<p><img src="20230901221016.png"></p>
+<blockquote>
+<p>W^T 表示 W 的转置。上面的式子用数学式表示：</p>
+</blockquote>
+<p><img src="20230901221022.png"><br><img src="20230901221304.png"><br><img src="20230901221545.png"></p>
+<h3 id="5-6-2-批处理版本的-Affine-层"><a href="#5-6-2-批处理版本的-Affine-层" class="headerlink" title="5.6.2 批处理版本的 Affine 层"></a>5.6.2 批处理版本的 Affine 层</h3>
             </div>
             <hr/>
 
@@ -3280,7 +3383,7 @@ kaggle
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">425k</span>
+                <span class="white-color">435.4k</span>
             
 
             
