@@ -368,14 +368,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        24.6k
+                        26.4k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        98 分
+                        105 分
                     </div>
                     
                 
@@ -2715,7 +2715,208 @@ Y <span class="token operator">=</span> np<span class="token punctuation">.</spa
 <p>W^T 表示 W 的转置。上面的式子用数学式表示：</p>
 </blockquote>
 <p><img src="20230901221022.png"><br><img src="20230901221304.png"><br><img src="20230901221545.png"></p>
-<h3 id="5-6-2-批处理版本的-Affine-层"><a href="#5-6-2-批处理版本的-Affine-层" class="headerlink" title="5.6.2 批处理版本的 Affine 层"></a>5.6.2 批处理版本的 Affine 层</h3>
+<h3 id="5-6-2-批处理版本的-Affine-层"><a href="#5-6-2-批处理版本的-Affine-层" class="headerlink" title="5.6.2 批处理版本的 Affine 层"></a>5.6.2 批处理版本的 Affine 层</h3><blockquote>
+<p>现在考虑 N 个数据一起进行正向传播的情况</p>
+</blockquote>
+<p><img src="20230908214906.png"></p>
+<blockquote>
+<p>输入 X 的形状是(N,2)</p>
+</blockquote>
+<blockquote>
+<p>正向传播时，偏置被加到 X·W 的各个数据上，设 N=2</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">X_dot_W <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+B <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [[ 1  2  3]</span>
+<span class="token comment" spellcheck="true">#  [11 12 13]]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>X_dot_W <span class="token operator">+</span> B<span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>正向传播时，偏置加到每一个数据上，因此，反向传播时，各个数据的反向传播的值需要汇总为偏置的元素</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">dY <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+dB <span class="token operator">=</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>dY<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># [5 7 9]</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>dB<span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>假定数据有 2 个，偏置的反向传播会对这 2 个元素的导数按元素进行求和。</p>
+</blockquote>
+<blockquote>
+<p>下面是 Affine 函数的实现，common/layers.py 中的函数考虑到输入为张量（四维数据）的的情况，所以有所不同</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">Affine</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__int__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> W<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>W <span class="token operator">=</span> W
+        self<span class="token punctuation">.</span>b <span class="token operator">=</span> b
+        self<span class="token punctuation">.</span>x <span class="token operator">=</span> None
+        self<span class="token punctuation">.</span>dW <span class="token operator">=</span> None
+        self<span class="token punctuation">.</span>db <span class="token operator">=</span> None
+
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>x <span class="token operator">=</span> x
+        out <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>x<span class="token punctuation">,</span> self<span class="token punctuation">.</span>W<span class="token punctuation">)</span> <span class="token operator">+</span> self<span class="token punctuation">.</span>b
+
+        <span class="token keyword">return</span> out
+
+    <span class="token keyword">def</span> <span class="token function">backward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> dout<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        dx <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>dout<span class="token punctuation">,</span> self<span class="token punctuation">.</span>W<span class="token punctuation">.</span>T<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>dW <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>self<span class="token punctuation">.</span>x<span class="token punctuation">.</span>T<span class="token punctuation">,</span> dout<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>db <span class="token operator">=</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>dout<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> dx
+</code></pre>
+<h3 id="5-6-3-Softmax-with-Loss-层"><a href="#5-6-3-Softmax-with-Loss-层" class="headerlink" title="5.6.3 Softmax-with-Loss 层"></a>5.6.3 Softmax-with-Loss 层</h3><blockquote>
+<p>softmax 函数会将输入值正规化后再输出。比如手写数字识别时，softmax 层的输出如下</p>
+</blockquote>
+<p><img src="20230908220441.png"></p>
+<blockquote>
+<p>图中，softmax 层将输入值正规化（将输出值的和调整为 1）之后再输出。另外，因为手写数字识别要 10 分类，所以向 softmax 层的输入也有 10 个。</p>
+</blockquote>
+<ul>
+<li>神经网络中有<em>推理</em>（inference）和<em>学习</em>两个阶段。神经网络的推理通常不使用 Softmax 层，比如刚才那个例子，会将 Affine 层的输出作为识别结果。神经网络中未被正规化的输出结果有时称为‘得分’，也就是说，神经网络的推理只需要一个答案的情况下，因为此时只对得分最大值感兴趣，所以不需要 Softmax 层。不过，神经网络的学习阶段需要 Softmax 层。</li>
+</ul>
+<blockquote>
+<p>下面实现 Softmax 层。这里也包含作为损失函数的交叉熵误差（cross entropy error），所以称为‘Softmax-with-Loss’层</p>
+</blockquote>
+<p><img src="20230908221034.png"></p>
+<blockquote>
+<p>这里假设要进行 3 分类，Softmax 层从前面的层接收 3 个输入（得分）。将输入(a1,a2,a3)正规化，输出(y1,y2,y3)。Cross Entropy Error 层接收 Softmax 层的输出(y1,y2,y3)和监督标签(t1,t2,t3)，从这些数据中输出损失 L</p>
+</blockquote>
+<p><img src="20230908221317.png"></p>
+<blockquote>
+<p>注意图中反向传播的结果。Softmax 层的反向传播得到了(y1-t1, y2-t2, y3-t3)这样‘漂亮’的结果，(y1, y2, y3)是 Softmax 层的输出，(t1, t2, t3)是监督数据，所以该结果表示 Softmax 层的输出和监督标签的差分。神经网络的反向传播会把这个差分表示的误差传递给前面的层，这是神经网络学习中的重要性质。</p>
+</blockquote>
+<blockquote>
+<p>神经网络学习的目的就是通过调整权重参数，使神经网络的输出（Softmax 的输出）接近监督标签。因此，必须将神经网络的输出和监督标签的误差高效地传递给前面的层。(y1-t1, y2-t2, y3-t3)则直截了当地表示了当前神经网络的输出与监督标签的误差。</p>
+</blockquote>
+<blockquote>
+<p>假设监督标签是(0,1,0)，Softmax 层输出是(0.3,0.2,0.5)，因为正确解标签处的概率是 0.2（20%），这个时候神经网络未能正确识别。此时，Softmax 层的反向传播传递的是(0.3,-0.8,0.5)这样一个大误差。并传给前面的层，它们将从中学习‘大’的内容。</p>
+</blockquote>
+<ul>
+<li>使用交叉熵误差作为 softmax 函数的损失函数得到漂亮的输出结果不是偶然，而是为了得到这样的结果特意设计的交叉熵误差函数。同理，回归问题中输出层使用‘恒等函数’，损失函数使用‘平方和误差’也是出于同样的理由。</li>
+</ul>
+<blockquote>
+<p>假设监督标签(0,1,0)，Softmax 层的输出是(0.01,0.99,0)，此时，Softmax 层反向传播传递的是(0.01,-0.01,0)，这样小的误差，前面的层也学习到‘小’的内容。</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">class</span> <span class="token class-name">SoftmaxWithLoss</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>loss <span class="token operator">=</span> None  <span class="token comment" spellcheck="true"># 损失</span>
+        self<span class="token punctuation">.</span>y <span class="token operator">=</span> None  <span class="token comment" spellcheck="true"># softmax的输出</span>
+        self<span class="token punctuation">.</span>t <span class="token operator">=</span> None  <span class="token comment" spellcheck="true"># 监督数据(ont-hot vector)</span>
+
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        self<span class="token punctuation">.</span>t <span class="token operator">=</span> t
+        self<span class="token punctuation">.</span>y <span class="token operator">=</span> softmax<span class="token punctuation">(</span>x<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 3.5.2 实现</span>
+        self<span class="token punctuation">.</span>loss <span class="token operator">=</span> cross_entropy_error<span class="token punctuation">(</span>self<span class="token punctuation">.</span>y<span class="token punctuation">,</span> self<span class="token punctuation">.</span>t<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># 4.2.4 实现</span>
+
+    <span class="token keyword">def</span> <span class="token function">backward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> dout<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        batch_size <span class="token operator">=</span> self<span class="token punctuation">.</span>t<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+        dx <span class="token operator">=</span> <span class="token punctuation">(</span>self<span class="token punctuation">.</span>y <span class="token operator">-</span> self<span class="token punctuation">.</span>t<span class="token punctuation">)</span> <span class="token operator">/</span> batch_size
+
+        <span class="token keyword">return</span> dx
+</code></pre>
+<blockquote>
+<p>注意这里的反向传播的值，将要传播的值除以批大小(batch_size)后，传递给前面的是单个数据的误差</p>
+</blockquote>
+<h2 id="5-7-误差反向传播法的实现"><a href="#5-7-误差反向传播法的实现" class="headerlink" title="5.7 误差反向传播法的实现"></a>5.7 误差反向传播法的实现</h2><h3 id="5-7-1-神经网络学习的全貌图"><a href="#5-7-1-神经网络学习的全貌图" class="headerlink" title="5.7.1 神经网络学习的全貌图"></a>5.7.1 神经网络学习的全貌图</h3><ul>
+<li>前提<br>神经网络中有合适的权重和偏置，调整权重和偏置以便拟合训练数据的过程称为学习。分为以下 4 个步骤</li>
+<li>步骤 1（mini-batch）<br>从训练数据中随机选择一部分数据</li>
+<li>步骤 2（计算梯度）<br>计算损失函数关于各个权重参数的梯度</li>
+<li>步骤 3（更新参数）<br>将权重参数沿梯度方向进行微小的更新</li>
+<li>步骤 4（重复）<br>重复步骤 1、2、3</li>
+</ul>
+<blockquote>
+<p>之前，我们通过数值微分来计算梯度，数值微分实现简单，但是计算需要耗费很多时间，而误差反向传播法可以快速高效地计算梯度</p>
+</blockquote>
+<h3 id="5-7-2-对应误差反向传播法的神经网络的实现"><a href="#5-7-2-对应误差反向传播法的神经网络的实现" class="headerlink" title="5.7.2 对应误差反向传播法的神经网络的实现"></a>5.7.2 对应误差反向传播法的神经网络的实现</h3><p><img src="20230908224743.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> sys<span class="token punctuation">,</span> os
+
+sys<span class="token punctuation">.</span>path<span class="token punctuation">.</span>append<span class="token punctuation">(</span>os<span class="token punctuation">.</span>pardir<span class="token punctuation">)</span>
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> <span class="token punctuation">.</span><span class="token punctuation">.</span>common<span class="token punctuation">.</span>layers <span class="token keyword">import</span> <span class="token operator">*</span>
+<span class="token keyword">from</span> <span class="token punctuation">.</span><span class="token punctuation">.</span>common<span class="token punctuation">.</span>gradient <span class="token keyword">import</span> numerical_gradient
+<span class="token keyword">from</span> collections <span class="token keyword">import</span> OrderedDict
+
+
+<span class="token keyword">class</span> <span class="token class-name">TwoLayerNet</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> input_size<span class="token punctuation">,</span> hidden_size<span class="token punctuation">,</span> output_size<span class="token punctuation">,</span>
+                 weight_init_std<span class="token operator">=</span><span class="token number">0.01</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 初始化权重</span>
+        self<span class="token punctuation">.</span>params <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+        self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'W1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> weight_init_std <span class="token operator">*</span> \
+                            np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>input_size<span class="token punctuation">,</span> hidden_size<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'b1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span>hidden_size<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'W2'</span><span class="token punctuation">]</span> <span class="token operator">=</span> weight_init_std <span class="token operator">*</span> \
+                            np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>hidden_size<span class="token punctuation">,</span> output_size<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'b2'</span><span class="token punctuation">]</span> <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span>output_size<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># 生成层</span>
+        self<span class="token punctuation">.</span>layers <span class="token operator">=</span> OrderedDict<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>layers<span class="token punctuation">[</span><span class="token string">'Affine1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> \
+            Affine<span class="token punctuation">(</span>self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'W1'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'b1'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>layers<span class="token punctuation">[</span><span class="token string">'Relu1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> Relu<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>layers<span class="token punctuation">[</span><span class="token string">'Affine2'</span><span class="token punctuation">]</span> <span class="token operator">=</span> \
+            Affine<span class="token punctuation">(</span>self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'W2'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'b1'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>lastLayer <span class="token operator">=</span> SoftmaxWithLoss<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">predict</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">for</span> layer <span class="token keyword">in</span> self<span class="token punctuation">.</span>layers<span class="token punctuation">.</span>values<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            x <span class="token operator">=</span> layer<span class="token punctuation">.</span>forward<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> x
+
+    <span class="token comment" spellcheck="true"># x: 输入数据，t: 监督数据</span>
+    <span class="token keyword">def</span> <span class="token function">loss</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        y <span class="token operator">=</span> self<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>lastLayer<span class="token punctuation">.</span>forward<span class="token punctuation">(</span>y<span class="token punctuation">,</span> t<span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">accuracy</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        y <span class="token operator">=</span> self<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># 预测结果（概率最大的列）</span>
+        y <span class="token operator">=</span> np<span class="token punctuation">.</span>argmax<span class="token punctuation">(</span>y<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> t<span class="token punctuation">.</span>ndim <span class="token operator">!=</span> <span class="token number">1</span><span class="token punctuation">:</span> t <span class="token operator">=</span> np<span class="token punctuation">.</span>argmax<span class="token punctuation">(</span>t<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+        accuracy <span class="token operator">=</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>y <span class="token operator">==</span> t<span class="token punctuation">)</span> <span class="token operator">/</span> float<span class="token punctuation">(</span>x<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> accuracy
+
+    <span class="token comment" spellcheck="true"># x: 输入数据，t: 监督数据</span>
+    <span class="token keyword">def</span> <span class="token function">numerical_gradient</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        loss_W <span class="token operator">=</span> <span class="token keyword">lambda</span> W<span class="token punctuation">:</span> self<span class="token punctuation">.</span>loss<span class="token punctuation">(</span>x<span class="token punctuation">,</span> t<span class="token punctuation">)</span>
+
+        grads <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+        grads<span class="token punctuation">[</span><span class="token string">'W1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> numerical_gradient<span class="token punctuation">(</span>loss_W<span class="token punctuation">,</span> self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'W1'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        grads<span class="token punctuation">[</span><span class="token string">'b1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> numerical_gradient<span class="token punctuation">(</span>loss_W<span class="token punctuation">,</span> self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'b1'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        grads<span class="token punctuation">[</span><span class="token string">'W2'</span><span class="token punctuation">]</span> <span class="token operator">=</span> numerical_gradient<span class="token punctuation">(</span>loss_W<span class="token punctuation">,</span> self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'W2'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        grads<span class="token punctuation">[</span><span class="token string">'b2'</span><span class="token punctuation">]</span> <span class="token operator">=</span> numerical_gradient<span class="token punctuation">(</span>loss_W<span class="token punctuation">,</span> self<span class="token punctuation">.</span>params<span class="token punctuation">[</span><span class="token string">'b2'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> grads
+
+    <span class="token keyword">def</span> <span class="token function">gradient</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">,</span> t<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># forward</span>
+        self<span class="token punctuation">.</span>loss<span class="token punctuation">(</span>x<span class="token punctuation">,</span> t<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># backward</span>
+        dout <span class="token operator">=</span> <span class="token number">1</span>
+        dout <span class="token operator">=</span> self<span class="token punctuation">.</span>lastLayer<span class="token punctuation">.</span>backward<span class="token punctuation">(</span>dout<span class="token punctuation">)</span>
+
+        layers <span class="token operator">=</span> list<span class="token punctuation">(</span>self<span class="token punctuation">.</span>layers<span class="token punctuation">.</span>values<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        layers<span class="token punctuation">.</span>reverse<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">for</span> layer <span class="token keyword">in</span> layers<span class="token punctuation">:</span>
+            dout <span class="token operator">=</span> layer<span class="token punctuation">.</span>backward<span class="token punctuation">(</span>dout<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># 设定</span>
+        grads <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+        grads<span class="token punctuation">[</span><span class="token string">'W1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> self<span class="token punctuation">.</span>layers<span class="token punctuation">[</span><span class="token string">'Affine1'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>dW
+        grads<span class="token punctuation">[</span><span class="token string">'b1'</span><span class="token punctuation">]</span> <span class="token operator">=</span> self<span class="token punctuation">.</span>layers<span class="token punctuation">[</span><span class="token string">'Affine1'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>db
+        grads<span class="token punctuation">[</span><span class="token string">'W2'</span><span class="token punctuation">]</span> <span class="token operator">=</span> self<span class="token punctuation">.</span>layers<span class="token punctuation">[</span><span class="token string">'Affine2'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>dW
+        grads<span class="token punctuation">[</span><span class="token string">'b2'</span><span class="token punctuation">]</span> <span class="token operator">=</span> self<span class="token punctuation">.</span>layers<span class="token punctuation">[</span><span class="token string">'Affine2'</span><span class="token punctuation">]</span><span class="token punctuation">.</span>db
+
+        <span class="token keyword">return</span> grads
+</code></pre>
+<blockquote>
+<p>将神经网络的层保存为有序字典很重要，这样一来，神经网络的正向传播只需要按照添加元素的顺序调用各层的 forward 方法，而反向传播则按照相反的顺序调用各层即可。像这样模块化地构建神经网络，非常简单快捷。</p>
+</blockquote>
+
             </div>
             <hr/>
 
@@ -3383,7 +3584,7 @@ kaggle
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">446.9k</span>
+                <span class="white-color">467.5k</span>
             
 
             
