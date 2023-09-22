@@ -367,14 +367,14 @@ import &#34;github.com/beego/beego/v2/serve">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        3k
+                        5.4k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        15 分
+                        28 分
                     </div>
                     
                 
@@ -1373,7 +1373,775 @@ import &#34;github.com/beego/beego/v2/serve">
     n<span class="token punctuation">.</span><span class="token function">handler</span><span class="token punctuation">(</span>ctx<span class="token punctuation">)</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2 id="13-路由树：通配符匹配之路由注册【更多-IT-资料加微信-djy136928775638】"><a href="#13-路由树：通配符匹配之路由注册【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="13. 路由树：通配符匹配之路由注册【更多 IT 资料加微信 djy136928775638】"></a>13. 路由树：通配符匹配之路由注册【更多 IT 资料加微信 djy136928775638】</h2>
+<h2 id="13-路由树：通配符匹配之路由注册【更多-IT-资料加微信-djy136928775638】"><a href="#13-路由树：通配符匹配之路由注册【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="13. 路由树：通配符匹配之路由注册【更多 IT 资料加微信 djy136928775638】"></a>13. 路由树：通配符匹配之路由注册【更多 IT 资料加微信 djy136928775638】</h2><p><img src="20230917213639.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router_test.go</span>
+<span class="token keyword">package</span> web
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"net/http"</span>
+    <span class="token string">"reflect"</span>
+    <span class="token string">"testing"</span>
+
+    <span class="token string">"github.com/stretchr/testify/assert"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestRouter_addRoute</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 1. 构造路由树</span>
+    testRoutes <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        method <span class="token builtin">string</span>
+        path   <span class="token builtin">string</span>
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// {</span>
+        <span class="token comment" spellcheck="true">//     method: http.MethodGet,</span>
+        <span class="token comment" spellcheck="true">//     path:   "</span><span class="token comment" spellcheck="true">/*",
+        // },
+        // {
+        //     method: http.MethodGet,
+        //     path:   "/*/</span><span class="token operator">*</span>"<span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">// },</span>
+        <span class="token comment" spellcheck="true">// {</span>
+        <span class="token comment" spellcheck="true">//     method: http.MethodGet,</span>
+        <span class="token comment" spellcheck="true">//     path:   "</span><span class="token comment" spellcheck="true">/*/abc/*",
+        // },
+        // {
+        //     method: http.MethodGet,
+        //     path:   "/*/</span>abc"<span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">// },</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span>
+            method<span class="token punctuation">:</span> http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>   <span class="token string">"/order/*"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">var</span> mockHandler HandleFunc <span class="token operator">=</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    r <span class="token operator">:=</span> <span class="token function">newRouter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> route <span class="token operator">:=</span> <span class="token keyword">range</span> testRoutes <span class="token punctuation">{</span>
+        r<span class="token punctuation">.</span><span class="token function">addRoute</span><span class="token punctuation">(</span>route<span class="token punctuation">.</span>method<span class="token punctuation">,</span> route<span class="token punctuation">.</span>path<span class="token punctuation">,</span> mockHandler<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 2. 验证路由树</span>
+    wantRouter <span class="token operator">:=</span> <span class="token operator">&amp;</span>router<span class="token punctuation">{</span>
+        trees<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node<span class="token punctuation">{</span>
+            http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                path<span class="token punctuation">:</span>    <span class="token string">"/"</span><span class="token punctuation">,</span>
+                handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                children<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node<span class="token punctuation">{</span>
+                    <span class="token string">"user"</span><span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                        path<span class="token punctuation">:</span>    <span class="token string">"user"</span><span class="token punctuation">,</span>
+                        handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                        children<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node<span class="token punctuation">{</span>
+                            <span class="token string">"home"</span><span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                                path<span class="token punctuation">:</span>    <span class="token string">"home"</span><span class="token punctuation">,</span>
+                                handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token string">"order"</span><span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                        path<span class="token punctuation">:</span> <span class="token string">"order"</span><span class="token punctuation">,</span>
+                        children<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node<span class="token punctuation">{</span>
+                            <span class="token string">"detail"</span><span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                                path<span class="token punctuation">:</span>    <span class="token string">"detail"</span><span class="token punctuation">,</span>
+                                handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                        starChild<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                            path<span class="token punctuation">:</span>    <span class="token string">"*"</span><span class="token punctuation">,</span>
+                            handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            http<span class="token punctuation">.</span>MethodPost<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// ...</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>n <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token function">equal</span><span class="token punctuation">(</span>y <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> n<span class="token punctuation">.</span>path <span class="token operator">!=</span> y<span class="token punctuation">.</span>path <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"节点路径不匹配"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>n<span class="token punctuation">.</span>children<span class="token punctuation">)</span> <span class="token operator">!=</span> <span class="token function">len</span><span class="token punctuation">(</span>y<span class="token punctuation">.</span>children<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"子节点数量不相等"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">if</span> n<span class="token punctuation">.</span>starChild <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        msg<span class="token punctuation">,</span> ok <span class="token operator">:=</span> n<span class="token punctuation">.</span>starChild<span class="token punctuation">.</span><span class="token function">equal</span><span class="token punctuation">(</span>y<span class="token punctuation">.</span>starChild<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> msg<span class="token punctuation">,</span> ok
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">return</span> <span class="token string">""</span><span class="token punctuation">,</span> <span class="token boolean">true</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>n <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token function">childOrCreate</span><span class="token punctuation">(</span>seg <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">*</span>node <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 通配符</span>
+    <span class="token keyword">if</span> seg <span class="token operator">==</span> <span class="token string">"*"</span> <span class="token punctuation">{</span>
+        n<span class="token punctuation">.</span>starChild <span class="token operator">=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+            path<span class="token punctuation">:</span> seg<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>starChild
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> node <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    path <span class="token builtin">string</span>
+    <span class="token comment" spellcheck="true">// 静态匹配的节点</span>
+    <span class="token comment" spellcheck="true">// path => 子节点</span>
+    children <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node
+    <span class="token comment" spellcheck="true">// 通配符(/*)匹配的节点</span>
+    starChild <span class="token operator">*</span>node
+    <span class="token comment" spellcheck="true">// 需要一个代表用户注册的业务逻辑</span>
+    handler HandleFunc
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="14-路由树：通配符匹配之路由查找与测试【更多-IT-资料加微信-djy136928775638】"><a href="#14-路由树：通配符匹配之路由查找与测试【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="14. 路由树：通配符匹配之路由查找与测试【更多 IT 资料加微信 djy136928775638】"></a>14. 路由树：通配符匹配之路由查找与测试【更多 IT 资料加微信 djy136928775638】</h2><p><img src="20230917220359.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>n <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token function">childOf</span><span class="token punctuation">(</span>path <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>node<span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 优先考虑静态匹配，匹配不上再考虑通配符</span>
+    <span class="token keyword">if</span> n<span class="token punctuation">.</span>children <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// return nil, false</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>starChild<span class="token punctuation">,</span> n<span class="token punctuation">.</span>starChild <span class="token operator">!=</span> <span class="token boolean">nil</span>
+    <span class="token punctuation">}</span>
+    child<span class="token punctuation">,</span> ok <span class="token operator">:=</span> n<span class="token punctuation">.</span>children<span class="token punctuation">[</span>path<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>starChild<span class="token punctuation">,</span> n<span class="token punctuation">.</span>starChild <span class="token operator">!=</span> <span class="token boolean">nil</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> child<span class="token punctuation">,</span> ok
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestRouter_findRoute</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    testRoutes <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        method <span class="token builtin">string</span>
+        path   <span class="token builtin">string</span>
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span>
+            method<span class="token punctuation">:</span> http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>   <span class="token string">"/order/detail"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            method<span class="token punctuation">:</span> http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>   <span class="token string">"/order/*"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    r <span class="token operator">:=</span> <span class="token function">newRouter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">var</span> mockHandler HandleFunc <span class="token operator">=</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> route <span class="token operator">:=</span> <span class="token keyword">range</span> testRoutes <span class="token punctuation">{</span>
+        r<span class="token punctuation">.</span><span class="token function">addRoute</span><span class="token punctuation">(</span>route<span class="token punctuation">.</span>method<span class="token punctuation">,</span> route<span class="token punctuation">.</span>path<span class="token punctuation">,</span> mockHandler<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    testCases <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        name <span class="token builtin">string</span>
+
+        method <span class="token builtin">string</span>
+        path   <span class="token builtin">string</span>
+
+        wantFound <span class="token builtin">bool</span>
+        wantNode  <span class="token operator">*</span>node
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 完全命中</span>
+            name<span class="token punctuation">:</span>      <span class="token string">"order detail"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span>    http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>      <span class="token string">"/order/detail"</span><span class="token punctuation">,</span>
+            wantFound<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            wantNode<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                path<span class="token punctuation">:</span>    <span class="token string">"detail"</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 完全命中</span>
+            name<span class="token punctuation">:</span>      <span class="token string">"order star"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span>    http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>      <span class="token string">"/order/abc"</span><span class="token punctuation">,</span>
+            wantFound<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            wantNode<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                path<span class="token punctuation">:</span>    <span class="token string">"*"</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// server_test.go</span>
+<span class="token keyword">package</span> web
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token boolean">_</span> <span class="token string">"net/http"</span>
+    <span class="token string">"testing"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestServer</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// h := &amp;HTTPServer{} // NewServer</span>
+    h <span class="token operator">:=</span> <span class="token function">NewHTTPServer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    h<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">"/order/detail"</span><span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">"hello order detail"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+    h<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token string">"/order/*"</span><span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span>fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"hello, %s"</span><span class="token punctuation">,</span> ctx<span class="token punctuation">.</span>Req<span class="token punctuation">.</span>URL<span class="token punctuation">.</span>Path<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+    h<span class="token punctuation">.</span><span class="token function">Start</span><span class="token punctuation">(</span><span class="token string">":8081"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="20230917221221.png"></p>
+<h2 id="15-路由树：参数路径之基本注册和查找【更多-IT-资料加微信-djy136928775638】"><a href="#15-路由树：参数路径之基本注册和查找【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="15. 路由树：参数路径之基本注册和查找【更多 IT 资料加微信 djy136928775638】"></a>15. 路由树：参数路径之基本注册和查找【更多 IT 资料加微信 djy136928775638】</h2><p><img src="20230919082501.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router_test.go</span>
+<span class="token keyword">package</span> web
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"net/http"</span>
+    <span class="token string">"reflect"</span>
+    <span class="token string">"testing"</span>
+
+    <span class="token string">"github.com/stretchr/testify/assert"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestRouter_addRoute</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 1. 构造路由树</span>
+    testRoutes <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        method <span class="token builtin">string</span>
+        path   <span class="token builtin">string</span>
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token comment" spellcheck="true">// 路径参数</span>
+        <span class="token punctuation">{</span>
+            method<span class="token punctuation">:</span> http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>   <span class="token string">"/order/detail/:id"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">var</span> mockHandler HandleFunc <span class="token operator">=</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    r <span class="token operator">:=</span> <span class="token function">newRouter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> route <span class="token operator">:=</span> <span class="token keyword">range</span> testRoutes <span class="token punctuation">{</span>
+        r<span class="token punctuation">.</span><span class="token function">addRoute</span><span class="token punctuation">(</span>route<span class="token punctuation">.</span>method<span class="token punctuation">,</span> route<span class="token punctuation">.</span>path<span class="token punctuation">,</span> mockHandler<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 2. 验证路由树</span>
+    wantRouter <span class="token operator">:=</span> <span class="token operator">&amp;</span>router<span class="token punctuation">{</span>
+        trees<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node<span class="token punctuation">{</span>
+            http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                path<span class="token punctuation">:</span>    <span class="token string">"/"</span><span class="token punctuation">,</span>
+                handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                children<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node<span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">// ...</span>
+                    <span class="token string">"order"</span><span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                        path<span class="token punctuation">:</span> <span class="token string">"order"</span><span class="token punctuation">,</span>
+                        children<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node<span class="token punctuation">{</span>
+                            <span class="token string">"detail"</span><span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                                path<span class="token punctuation">:</span>    <span class="token string">"detail"</span><span class="token punctuation">,</span>
+                                handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                                paramChild<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                                    path<span class="token punctuation">:</span>    <span class="token string">":id"</span><span class="token punctuation">,</span>
+                                    handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                        starChild<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                            path<span class="token punctuation">:</span>    <span class="token string">"*"</span><span class="token punctuation">,</span>
+                            handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            http<span class="token punctuation">.</span>MethodPost<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// ...</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">TestRouter_findRoute</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    testRoutes <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        method <span class="token builtin">string</span>
+        path   <span class="token builtin">string</span>
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span>
+            method<span class="token punctuation">:</span> http<span class="token punctuation">.</span>MethodPost<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>   <span class="token string">"/login/:username"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    r <span class="token operator">:=</span> <span class="token function">newRouter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">var</span> mockHandler HandleFunc <span class="token operator">=</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> route <span class="token operator">:=</span> <span class="token keyword">range</span> testRoutes <span class="token punctuation">{</span>
+        r<span class="token punctuation">.</span><span class="token function">addRoute</span><span class="token punctuation">(</span>route<span class="token punctuation">.</span>method<span class="token punctuation">,</span> route<span class="token punctuation">.</span>path<span class="token punctuation">,</span> mockHandler<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    testCases <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        name <span class="token builtin">string</span>
+
+        method <span class="token builtin">string</span>
+        path   <span class="token builtin">string</span>
+
+        wantFound <span class="token builtin">bool</span>
+        wantNode  <span class="token operator">*</span>node
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 路径参数匹配</span>
+            name<span class="token punctuation">:</span>      <span class="token string">"login username"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span>    http<span class="token punctuation">.</span>MethodPost<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>      <span class="token string">"/login/wuif"</span><span class="token punctuation">,</span>
+            wantFound<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            wantNode<span class="token punctuation">:</span>  <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>path<span class="token punctuation">:</span> <span class="token string">":username"</span><span class="token punctuation">,</span> handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router.go</span>
+
+<span class="token keyword">type</span> node <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    path <span class="token builtin">string</span>
+    <span class="token comment" spellcheck="true">// 静态匹配的节点</span>
+    <span class="token comment" spellcheck="true">// path => 子节点</span>
+    children <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node
+    <span class="token comment" spellcheck="true">// 通配符(/*)匹配的节点</span>
+    starChild <span class="token operator">*</span>node
+    <span class="token comment" spellcheck="true">// 路径参数</span>
+    paramChild <span class="token operator">*</span>node
+    <span class="token comment" spellcheck="true">// 需要一个代表用户注册的业务逻辑</span>
+    handler HandleFunc
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>n <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token function">childOf</span><span class="token punctuation">(</span>path <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>node<span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 优先考虑静态匹配，匹配不上再考虑通配符</span>
+    <span class="token keyword">if</span> n<span class="token punctuation">.</span>children <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> n<span class="token punctuation">.</span>paramChild <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> n<span class="token punctuation">.</span>paramChild<span class="token punctuation">,</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// return nil, false</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>starChild<span class="token punctuation">,</span> n<span class="token punctuation">.</span>starChild <span class="token operator">!=</span> <span class="token boolean">nil</span>
+    <span class="token punctuation">}</span>
+    child<span class="token punctuation">,</span> ok <span class="token operator">:=</span> n<span class="token punctuation">.</span>children<span class="token punctuation">[</span>path<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> n<span class="token punctuation">.</span>paramChild <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> n<span class="token punctuation">.</span>paramChild<span class="token punctuation">,</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>starChild<span class="token punctuation">,</span> n<span class="token punctuation">.</span>starChild <span class="token operator">!=</span> <span class="token boolean">nil</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> child<span class="token punctuation">,</span> ok
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>n <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token function">childOrCreate</span><span class="token punctuation">(</span>seg <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">*</span>node <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> seg<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token string">':'</span> <span class="token punctuation">{</span>
+        n<span class="token punctuation">.</span>paramChild <span class="token operator">=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+            path<span class="token punctuation">:</span> seg<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>paramChild
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="16-路由树：参数路径之校验【更多-IT-资料加微信-djy136928775638】"><a href="#16-路由树：参数路径之校验【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="16. 路由树：参数路径之校验【更多 IT 资料加微信 djy136928775638】"></a>16. 路由树：参数路径之校验【更多 IT 资料加微信 djy136928775638】</h2><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router_test.go</span>
+    r <span class="token operator">=</span> <span class="token function">newRouter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    r<span class="token punctuation">.</span><span class="token function">addRoute</span><span class="token punctuation">(</span>http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span> <span class="token string">"/a/*"</span><span class="token punctuation">,</span> mockHandler<span class="token punctuation">)</span>
+    assert<span class="token punctuation">.</span><span class="token function">Panics</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        r<span class="token punctuation">.</span><span class="token function">addRoute</span><span class="token punctuation">(</span>http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span> <span class="token string">"/a/:b"</span><span class="token punctuation">,</span> mockHandler<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token string">"web: 不允许同时注册路径参数和通配符路径, 已经注册通配符路径"</span><span class="token punctuation">)</span>
+
+    r <span class="token operator">=</span> <span class="token function">newRouter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    r<span class="token punctuation">.</span><span class="token function">addRoute</span><span class="token punctuation">(</span>http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span> <span class="token string">"/a/:b"</span><span class="token punctuation">,</span> mockHandler<span class="token punctuation">)</span>
+    assert<span class="token punctuation">.</span><span class="token function">Panics</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        r<span class="token punctuation">.</span><span class="token function">addRoute</span><span class="token punctuation">(</span>http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span> <span class="token string">"/a/*"</span><span class="token punctuation">,</span> mockHandler<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token string">"web: 不允许同时注册路径参数和通配符路径, 已经注册路径参数"</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>n <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token function">childOrCreate</span><span class="token punctuation">(</span>seg <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">*</span>node <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> seg<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token string">':'</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> n<span class="token punctuation">.</span>starChild <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"web: 不允许同时注册路径参数和通配符路径, 已经注册通配符路径"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        n<span class="token punctuation">.</span>paramChild <span class="token operator">=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+            path<span class="token punctuation">:</span> seg<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>paramChild
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 通配符</span>
+    <span class="token keyword">if</span> seg <span class="token operator">==</span> <span class="token string">"*"</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> n<span class="token punctuation">.</span>paramChild <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"web: 不允许同时注册路径参数和通配符路径, 已经注册路径参数"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        n<span class="token punctuation">.</span>starChild <span class="token operator">=</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+            path<span class="token punctuation">:</span> seg<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>starChild
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token keyword">return</span> res
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="17-路由树：参数路径之参数值【更多-IT-资料加微信-djy136928775638】"><a href="#17-路由树：参数路径之参数值【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="17. 路由树：参数路径之参数值【更多 IT 资料加微信 djy136928775638】"></a>17. 路由树：参数路径之参数值【更多 IT 资料加微信 djy136928775638】</h2><blockquote>
+<p>用户希望直接获取路径参数，我们将 node 和路径参数封装到一个对象并返回</p>
+</blockquote>
+<p><img src="20230919091729.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router.go</span>
+<span class="token keyword">type</span> matchInfo <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    n          <span class="token operator">*</span>node
+    pathParams <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token builtin">string</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>router<span class="token punctuation">)</span> <span class="token function">findRoute</span><span class="token punctuation">(</span>method <span class="token builtin">string</span><span class="token punctuation">,</span> path <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>matchInfo<span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// 按照 / 切割</span>
+    segs <span class="token operator">:=</span> strings<span class="token punctuation">.</span><span class="token function">Split</span><span class="token punctuation">(</span>path<span class="token punctuation">,</span> <span class="token string">"/"</span><span class="token punctuation">)</span>
+    <span class="token keyword">var</span> pathParams <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token builtin">string</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> seg <span class="token operator">:=</span> <span class="token keyword">range</span> segs <span class="token punctuation">{</span>
+        child<span class="token punctuation">,</span> paramChild<span class="token punctuation">,</span> found <span class="token operator">:=</span> root<span class="token punctuation">.</span><span class="token function">childOf</span><span class="token punctuation">(</span>seg<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token operator">!</span>found <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">//命中了路径参数</span>
+        <span class="token keyword">if</span> paramChild <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> pathParams <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                pathParams <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            <span class="token comment" spellcheck="true">// path 是 :id 这种形式</span>
+            pathParams<span class="token punctuation">[</span>child<span class="token punctuation">.</span>path<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">]</span> <span class="token operator">=</span> seg
+        <span class="token punctuation">}</span>
+        root <span class="token operator">=</span> child
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 表示有该节点，但是不一定有handler</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>matchInfo<span class="token punctuation">{</span>n<span class="token punctuation">:</span> root<span class="token punctuation">,</span> pathParams<span class="token punctuation">:</span> pathParams<span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">true</span>
+    <span class="token comment" spellcheck="true">// return root, root.handler != nil</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 找到对应child</span>
+<span class="token comment" spellcheck="true">// 参数1：找到的子节点</span>
+<span class="token comment" spellcheck="true">// 参数2：找到的child是不是路径参数</span>
+<span class="token comment" spellcheck="true">// 参数3：是否找到</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>n <span class="token operator">*</span>node<span class="token punctuation">)</span> <span class="token function">childOf</span><span class="token punctuation">(</span>path <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>node<span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">,</span> <span class="token builtin">bool</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 优先考虑静态匹配，匹配不上再考虑通配符</span>
+    <span class="token keyword">if</span> n<span class="token punctuation">.</span>children <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> n<span class="token punctuation">.</span>paramChild <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> n<span class="token punctuation">.</span>paramChild<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// return nil, false</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>starChild<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> n<span class="token punctuation">.</span>starChild <span class="token operator">!=</span> <span class="token boolean">nil</span>
+    <span class="token punctuation">}</span>
+    child<span class="token punctuation">,</span> ok <span class="token operator">:=</span> n<span class="token punctuation">.</span>children<span class="token punctuation">[</span>path<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> n<span class="token punctuation">.</span>paramChild <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> n<span class="token punctuation">.</span>paramChild<span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> n<span class="token punctuation">.</span>starChild<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> n<span class="token punctuation">.</span>starChild <span class="token operator">!=</span> <span class="token boolean">nil</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> child<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">,</span> ok
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// router_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestRouter_findRoute</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    testRoutes <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        method <span class="token builtin">string</span>
+        path   <span class="token builtin">string</span>
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+
+    r <span class="token operator">:=</span> <span class="token function">newRouter</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">var</span> mockHandler HandleFunc <span class="token operator">=</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> route <span class="token operator">:=</span> <span class="token keyword">range</span> testRoutes <span class="token punctuation">{</span>
+        r<span class="token punctuation">.</span><span class="token function">addRoute</span><span class="token punctuation">(</span>route<span class="token punctuation">.</span>method<span class="token punctuation">,</span> route<span class="token punctuation">.</span>path<span class="token punctuation">,</span> mockHandler<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    testCases <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        name <span class="token builtin">string</span>
+
+        method <span class="token builtin">string</span>
+        path   <span class="token builtin">string</span>
+
+        wantFound <span class="token builtin">bool</span>
+        info      <span class="token operator">*</span>matchInfo
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// method不存在</span>
+            name<span class="token punctuation">:</span>   <span class="token string">"method not found"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span> http<span class="token punctuation">.</span>MethodOptions<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>   <span class="token string">"/order/detail"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 完全命中</span>
+            name<span class="token punctuation">:</span>      <span class="token string">"order detail"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span>    http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>      <span class="token string">"/order/detail"</span><span class="token punctuation">,</span>
+            wantFound<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            info<span class="token punctuation">:</span> <span class="token operator">&amp;</span>matchInfo<span class="token punctuation">{</span>
+                n<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                    handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                    path<span class="token punctuation">:</span>    <span class="token string">"detail"</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 完全命中</span>
+            name<span class="token punctuation">:</span>      <span class="token string">"order star"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span>    http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>      <span class="token string">"/order/abc"</span><span class="token punctuation">,</span>
+            wantFound<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            info<span class="token punctuation">:</span> <span class="token operator">&amp;</span>matchInfo<span class="token punctuation">{</span>
+                n<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                    handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                    path<span class="token punctuation">:</span>    <span class="token string">"*"</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 命中了，但是没有handler</span>
+            name<span class="token punctuation">:</span>      <span class="token string">"order"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span>    http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>      <span class="token string">"/order"</span><span class="token punctuation">,</span>
+            wantFound<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            info<span class="token punctuation">:</span> <span class="token operator">&amp;</span>matchInfo<span class="token punctuation">{</span>
+                n<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                    path<span class="token punctuation">:</span> <span class="token string">"order"</span><span class="token punctuation">,</span>
+                    <span class="token comment" spellcheck="true">// order/detail注册的child -> detail</span>
+                    children<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token operator">*</span>node<span class="token punctuation">{</span>
+                        <span class="token string">"detail"</span><span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                            handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                            path<span class="token punctuation">:</span>    <span class="token string">"detail"</span><span class="token punctuation">,</span>
+                        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 根节点</span>
+            name<span class="token punctuation">:</span>      <span class="token string">"root"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span>    http<span class="token punctuation">.</span>MethodDelete<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>      <span class="token string">"/"</span><span class="token punctuation">,</span>
+            wantFound<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            info<span class="token punctuation">:</span> <span class="token operator">&amp;</span>matchInfo<span class="token punctuation">{</span>
+                n<span class="token punctuation">:</span> <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>
+                    path<span class="token punctuation">:</span>    <span class="token string">"/"</span><span class="token punctuation">,</span>
+                    handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            name<span class="token punctuation">:</span>   <span class="token string">"path not found"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span> http<span class="token punctuation">.</span>MethodGet<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>   <span class="token string">"/404"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 路径参数匹配</span>
+            name<span class="token punctuation">:</span>      <span class="token string">"login username"</span><span class="token punctuation">,</span>
+            method<span class="token punctuation">:</span>    http<span class="token punctuation">.</span>MethodPost<span class="token punctuation">,</span>
+            path<span class="token punctuation">:</span>      <span class="token string">"/login/wuif"</span><span class="token punctuation">,</span>
+            wantFound<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+            info<span class="token punctuation">:</span> <span class="token operator">&amp;</span>matchInfo<span class="token punctuation">{</span>
+                n<span class="token punctuation">:</span>          <span class="token operator">&amp;</span>node<span class="token punctuation">{</span>path<span class="token punctuation">:</span> <span class="token string">":username"</span><span class="token punctuation">,</span> handler<span class="token punctuation">:</span> mockHandler<span class="token punctuation">}</span><span class="token punctuation">,</span>
+                pathParams<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">{</span><span class="token string">"username"</span><span class="token punctuation">:</span> <span class="token string">"wuif"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> tc <span class="token operator">:=</span> <span class="token keyword">range</span> testCases <span class="token punctuation">{</span>
+        t<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span>tc<span class="token punctuation">.</span>name<span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            info<span class="token punctuation">,</span> found <span class="token operator">:=</span> r<span class="token punctuation">.</span><span class="token function">findRoute</span><span class="token punctuation">(</span>tc<span class="token punctuation">.</span>method<span class="token punctuation">,</span> tc<span class="token punctuation">.</span>path<span class="token punctuation">)</span>
+            assert<span class="token punctuation">.</span><span class="token function">Equal</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> tc<span class="token punctuation">.</span>wantFound<span class="token punctuation">,</span> found<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span>found <span class="token punctuation">{</span>
+                <span class="token keyword">return</span>
+            <span class="token punctuation">}</span>
+            assert<span class="token punctuation">.</span><span class="token function">Equal</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> tc<span class="token punctuation">.</span>info<span class="token punctuation">.</span>pathParams<span class="token punctuation">,</span> info<span class="token punctuation">.</span>pathParams<span class="token punctuation">)</span>
+            msg<span class="token punctuation">,</span> ok <span class="token operator">:=</span> tc<span class="token punctuation">.</span>info<span class="token punctuation">.</span>n<span class="token punctuation">.</span><span class="token function">equal</span><span class="token punctuation">(</span>info<span class="token punctuation">.</span>n<span class="token punctuation">)</span>
+            assert<span class="token punctuation">.</span><span class="token function">True</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> ok<span class="token punctuation">,</span> msg<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// context.go</span>
+<span class="token keyword">package</span> web
+
+<span class="token keyword">import</span> <span class="token string">"net/http"</span>
+
+<span class="token keyword">type</span> Context <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Req        <span class="token operator">*</span>http<span class="token punctuation">.</span>Request
+    Resp       http<span class="token punctuation">.</span>ResponseWriter
+    PathParams <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">string</span><span class="token punctuation">]</span><span class="token builtin">string</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// server.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>h <span class="token operator">*</span>HTTPServer<span class="token punctuation">)</span> <span class="token function">serve</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    info<span class="token punctuation">,</span> ok <span class="token operator">:=</span> h<span class="token punctuation">.</span><span class="token function">findRoute</span><span class="token punctuation">(</span>ctx<span class="token punctuation">.</span>Req<span class="token punctuation">.</span>Method<span class="token punctuation">,</span> ctx<span class="token punctuation">.</span>Req<span class="token punctuation">.</span>URL<span class="token punctuation">.</span>Path<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token operator">||</span> info<span class="token punctuation">.</span>n<span class="token punctuation">.</span>handler <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 路由没命中，404</span>
+        ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">WriteHeader</span><span class="token punctuation">(</span><span class="token number">404</span><span class="token punctuation">)</span>
+        ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">"NOT FOUND"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">}</span>
+    ctx<span class="token punctuation">.</span>PathParams <span class="token operator">=</span> info<span class="token punctuation">.</span>pathParams
+    info<span class="token punctuation">.</span>n<span class="token punctuation">.</span><span class="token function">handler</span><span class="token punctuation">(</span>ctx<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="18-路由树总结与面试要点【更多-IT-资料加微信-djy136928775638】"><a href="#18-路由树总结与面试要点【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="18. 路由树总结与面试要点【更多 IT 资料加微信 djy136928775638】"></a>18. 路由树总结与面试要点【更多 IT 资料加微信 djy136928775638】</h2><p><img src="20230919104202.png"><br><img src="20230919104226.png"><br><img src="20230919104527.png"><br><img src="20230919104639.png"><br><img src="20230919104910.png"></p>
+<blockquote>
+<p>如果注册了非常多的路由，最长公共前缀（gin）的实现性能高一点，但是实现很麻烦</p>
+</blockquote>
+<p><img src="20230919105024.png"><br><img src="20230919105225.png"></p>
+<h2 id="20-第一周作业：实现一棵路由树-选学-【更多-IT-资料加微信-djy136928775638】"><a href="#20-第一周作业：实现一棵路由树-选学-【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="20.第一周作业：实现一棵路由树[选学]【更多 IT 资料加微信 djy136928775638】"></a>20.第一周作业：实现一棵路由树[选学]【更多 IT 资料加微信 djy136928775638】</h2><p><img src="20230919105351.png"><br><img src="20230919105429.png"><br><img src="20230919105628.png"><br><img src="20230919110010.png"><br><img src="20230919110055.png"><br><img src="20230919110110.png"><br><img src="20230919110129.png"><br><img src="20230919110139.png"><br><img src="20230919110159.png"><br><img src="20230919110215.png"><br><img src="20230919110228.png"><br><img src="20230919110237.png"></p>
+<h2 id="21-第一周路由树作业讲解-选学-【更多-IT-资料加微信-djy136928775638】"><a href="#21-第一周路由树作业讲解-选学-【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="21.第一周路由树作业讲解[选学]【更多 IT 资料加微信 djy136928775638】"></a>21.第一周路由树作业讲解[选学]【更多 IT 资料加微信 djy136928775638】</h2><blockquote>
+<p>它设置了 nodeType，如果查找路由时，所有的都找不到，还加一个判断是否有通配符</p>
+</blockquote>
+<p><img src="20230919111638.png"><br><img src="20230919111844.png"><br><img src="20230919112226.png"></p>
+<p><img src="20230919112234.png"><br><img src="20230919112254.png"><br><img src="20230919112319.png"><br><img src="20230919112342.png"><br><img src="20230919112403.png"></p>
+<p><img src="20230919112656.png"></p>
+<blockquote>
+<p>name(正则表达式)</p>
+</blockquote>
+<p><img src="20230919112827.png"></p>
+<h1 id="08-第二周：Web-框架之-Context-与-AOP-方案"><a href="#08-第二周：Web-框架之-Context-与-AOP-方案" class="headerlink" title="08 第二周：Web 框架之 Context 与 AOP 方案"></a>08 第二周：Web 框架之 Context 与 AOP 方案</h1><h2 id="context"><a href="#context" class="headerlink" title="context"></a>context</h2><h3 id="1-Context-简介【更多-IT-资料加微信-djy136928775638】"><a href="#1-Context-简介【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="1. Context 简介【更多 IT 资料加微信 djy136928775638】"></a>1. Context 简介【更多 IT 资料加微信 djy136928775638】</h3><p><img src="20230919114432.png"><br><img src="20230919114443.png"><br><img src="z/20230919170440.png"><br><img src="z/20230919170629.png"><br><img src="z/20230919170712.png"><br><img src="z/20230919170805.png"><br><img src="z/20230919171028.png"></p>
+<blockquote>
+<p>parseForm 可以多次调用，只会解析一次</p>
+</blockquote>
+<p><img src="z/20230919171112.png"></p>
+<h3 id="2-Context：Beego-Context-设计分析【更多-IT-资料加微信-djy136928775638】"><a href="#2-Context：Beego-Context-设计分析【更多-IT-资料加微信-djy136928775638】" class="headerlink" title="2. Context：Beego Context 设计分析【更多 IT 资料加微信 djy136928775638】"></a>2. Context：Beego Context 设计分析【更多 IT 资料加微信 djy136928775638】</h3><p><img src="z/80e3d0e8.png"><img src="z/ad4d6b71.png"><img src="z/579251e4.png"></p>
+<h3 id="3-Context：Gin-Context-设计分析"><a href="#3-Context：Gin-Context-设计分析" class="headerlink" title="3. Context：Gin Context 设计分析"></a>3. Context：Gin Context 设计分析</h3><p><img src="z/997dd358.png"><img src="z/4f85e00b.png"><img src="z/531628bb.png"></p>
+<h3 id="4-Context：Echo-和-Iris-的-Context-设计分析"><a href="#4-Context：Echo-和-Iris-的-Context-设计分析" class="headerlink" title="4. Context：Echo 和 Iris 的 Context 设计分析"></a>4. Context：Echo 和 Iris 的 Context 设计分析</h3><p><img src="z/b388ea4c.png"><img src="z/d366e542.png"><img src="z/d80bbee7.png"><img src="z/cc6e09ef.png"></p>
+<h3 id="5-Context：处理输入输出总结"><a href="#5-Context：处理输入输出总结" class="headerlink" title="5. Context：处理输入输出总结"></a>5. Context：处理输入输出总结</h3><p><img src="z/d7596c06.png"><img src="z/0751c7ba.png"></p>
+<h3 id="6-Context：处理输入之-Body-输入"><a href="#6-Context：处理输入之-Body-输入" class="headerlink" title="6. Context：处理输入之 Body 输入"></a>6. Context：处理输入之 Body 输入</h3><blockquote>
+<p>如果引入小众需求会影响框架的复杂度，或者导致性能等受挫，就不要考虑</p>
+</blockquote>
+<p><img src="z/14768230.png"><img src="z/a92660ee.png"><img src="z/f790ba19.png"><img src="z/62c3a20f.png"><img src="z/bf09637b.png"></p>
+<h3 id="7-Context：处理输入之表单输入"><a href="#7-Context：处理输入之表单输入" class="headerlink" title="7. Context：处理输入之表单输入"></a>7. Context：处理输入之表单输入</h3><p><img src="z/5785620b.png"></p>
+<blockquote>
+<p>parseForm只解析表单数据</p>
+</blockquote>
+<p><img src="z/3fe81696.png"><img src="z/9ebf4c30.png"><img src="z/808cde24.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// context.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token function">FormValue</span><span class="token punctuation">(</span>key <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    err <span class="token operator">:=</span> c<span class="token punctuation">.</span>Req<span class="token punctuation">.</span><span class="token function">ParseForm</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token string">""</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">//vals, ok := c.Req.Form[key]</span>
+    <span class="token comment" spellcheck="true">//if !ok {</span>
+    <span class="token comment" spellcheck="true">//    return "", errors.New("web: key 不存在")</span>
+    <span class="token comment" spellcheck="true">//}</span>
+    <span class="token comment" spellcheck="true">//return vals[0], nil</span>
+    <span class="token keyword">return</span> c<span class="token punctuation">.</span>Req<span class="token punctuation">.</span><span class="token function">FormValue</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="z/d6992a63.png"><img src="z/6daa9165.png"><img src="z/29bc8580.png"></p>
+<h3 id="8-Context：处理输入之查询参数、路径参数和-StringValue"><a href="#8-Context：处理输入之查询参数、路径参数和-StringValue" class="headerlink" title="8. Context：处理输入之查询参数、路径参数和 StringValue"></a>8. Context：处理输入之查询参数、路径参数和 StringValue</h3><p><img src="z/0c3654ef.png"><img src="z/8e972054.png"><img src="z/32b50282.png"><img src="z/5ff806ce.png"><br><img src="z/40c76e98.png"><img src="z/02acf97d.png"><img src="z/28219f6d.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token function">QueryValue</span><span class="token punctuation">(</span>key <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> c<span class="token punctuation">.</span>queryValues <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Query每次会调用parseQuery,而form只调用一次,所以query需要缓存</span>
+        <span class="token comment" spellcheck="true">// 缓存</span>
+        c<span class="token punctuation">.</span>queryValues <span class="token operator">=</span> c<span class="token punctuation">.</span>Req<span class="token punctuation">.</span>URL<span class="token punctuation">.</span><span class="token function">Query</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    vals<span class="token punctuation">,</span> ok <span class="token operator">:=</span> c<span class="token punctuation">.</span>queryValues<span class="token punctuation">[</span>key<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token string">""</span><span class="token punctuation">,</span> errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"web: key 不存在"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> vals<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token function">QueryValueV1</span><span class="token punctuation">(</span>key <span class="token builtin">string</span><span class="token punctuation">)</span> StringValue <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> c<span class="token punctuation">.</span>queryValues <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Query每次会调用parseQuery,而form只调用一次,所以query需要缓存</span>
+        <span class="token comment" spellcheck="true">// 缓存</span>
+        c<span class="token punctuation">.</span>queryValues <span class="token operator">=</span> c<span class="token punctuation">.</span>Req<span class="token punctuation">.</span>URL<span class="token punctuation">.</span><span class="token function">Query</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    vals<span class="token punctuation">,</span> ok <span class="token operator">:=</span> c<span class="token punctuation">.</span>queryValues<span class="token punctuation">[</span>key<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> StringValue<span class="token punctuation">{</span>
+            err<span class="token punctuation">:</span> errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"web: key 不存在"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> StringValue<span class="token punctuation">{</span>
+        val<span class="token punctuation">:</span> vals<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token function">PathValue</span><span class="token punctuation">(</span>key <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    val<span class="token punctuation">,</span> ok <span class="token operator">:=</span> c<span class="token punctuation">.</span>PathParams<span class="token punctuation">[</span>key<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token string">""</span><span class="token punctuation">,</span> errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"web: key 不存在"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> val<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>c <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token function">PathValueV1</span><span class="token punctuation">(</span>key <span class="token builtin">string</span><span class="token punctuation">)</span> StringValue <span class="token punctuation">{</span>
+    val<span class="token punctuation">,</span> ok <span class="token operator">:=</span> c<span class="token punctuation">.</span>PathParams<span class="token punctuation">[</span>key<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> StringValue<span class="token punctuation">{</span>
+            err<span class="token punctuation">:</span> errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"web: key 不存在"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> StringValue<span class="token punctuation">{</span>val<span class="token punctuation">:</span> val<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> StringValue <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    val <span class="token builtin">string</span>
+    err <span class="token builtin">error</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s StringValue<span class="token punctuation">)</span> <span class="token function">AsInt64</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int64</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> s<span class="token punctuation">.</span>err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">,</span> s<span class="token punctuation">.</span>err
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> strconv<span class="token punctuation">.</span><span class="token function">ParseInt</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>val<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">64</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// server_test.go</span>
+    h<span class="token punctuation">.</span><span class="token function">Post</span><span class="token punctuation">(</span><span class="token string">"/values/v1/:id"</span><span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 这种就比较方便</span>
+        id<span class="token punctuation">,</span> err <span class="token operator">:=</span> ctx<span class="token punctuation">.</span><span class="token function">PathValueV1</span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">AsInt64</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">WriteHeader</span><span class="token punctuation">(</span><span class="token number">400</span><span class="token punctuation">)</span>
+            ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">"id 输入错误"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+        ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span>fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"hello, %d"</span><span class="token punctuation">,</span> id<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+    h<span class="token punctuation">.</span><span class="token function">Post</span><span class="token punctuation">(</span><span class="token string">"/values/:id"</span><span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx <span class="token operator">*</span>Context<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        idStr<span class="token punctuation">,</span> err <span class="token operator">:=</span> ctx<span class="token punctuation">.</span><span class="token function">PathValue</span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">WriteHeader</span><span class="token punctuation">(</span><span class="token number">400</span><span class="token punctuation">)</span>
+            ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">"id 输入错误"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+        id<span class="token punctuation">,</span> err <span class="token operator">:=</span> strconv<span class="token punctuation">.</span><span class="token function">ParseInt</span><span class="token punctuation">(</span>idStr<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">64</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">WriteHeader</span><span class="token punctuation">(</span><span class="token number">400</span><span class="token punctuation">)</span>
+            ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span><span class="token string">"id 输入错误"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+        ctx<span class="token punctuation">.</span>Resp<span class="token punctuation">.</span><span class="token function">Write</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token function">byte</span><span class="token punctuation">(</span>fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"hello, %d"</span><span class="token punctuation">,</span> id<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</code></pre>
+<h3 id="9-Context：处理输出"><a href="#9-Context：处理输出" class="headerlink" title="9. Context：处理输出"></a>9. Context：处理输出</h3><p><img src="z/9f36d96f.png"><img src="z/fdda597d.png"><img src="z/4596daea.png"><img src="z/85e75565.png"><img src="z/890c40f7.png"><img src="z/1efde49d.png"></p>
+<h3 id="10-Context-总结与面试要点"><a href="#10-Context-总结与面试要点" class="headerlink" title="10. Context 总结与面试要点"></a>10. Context 总结与面试要点</h3><p><img src="z/d0d4412c.png" alt="用户自己通过装饰器模式来实现线程安全"><img src="z/18a48c75.png"><img src="z/67bacca4.png"><img src="z/5400baad.png"></p>
+<blockquote>
+<p>go的泛型功能比较有限</p>
+</blockquote>
+<p><img src="z/5fcae41d.png"><img src="z/4e33c117.png"><img src="z/c7289621.png"></p>
+<h2 id="aop"><a href="#aop" class="headerlink" title="aop"></a>aop</h2><h3 id="11-AOP-简介与不同框架设计概览"><a href="#11-AOP-简介与不同框架设计概览" class="headerlink" title="11. AOP 简介与不同框架设计概览"></a>11. AOP 简介与不同框架设计概览</h3><p><img src="z/b3121863.png"><img src="z/a04fb3f7.png"><img src="z/b8fa6bab.png"><img src="z/27f96262.png"><img src="z/fa3602f1.png"><img src="z/7bf65752.png"><br><img src="z/58775e9e.png"><img src="z/9086966c.png"></p>
+<h3 id="12-AOP-设计方案：Middleware"><a href="#12-AOP-设计方案：Middleware" class="headerlink" title="12. AOP 设计方案：Middleware"></a>12. AOP 设计方案：Middleware</h3>
             </div>
             <hr/>
 
@@ -1912,17 +2680,23 @@ webpack(202011)(架构)(全)任务 1：1.201122.webpack 的核心概念_【海�
                 下一篇&nbsp;<i class="fa fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2023/08/29/frontend/android/jin-zhi-wei-android-gong-cheng-shi/z/">
+                <a href="/2023/08/29/frontend/android/android-proxy/android-proxy/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/8.jpg" class="responsive-img" alt="金职位_Android工程师">
+                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="安卓项目下载问题解决">
                         
-                        <span class="card-title">金职位_Android工程师</span>
+                        <span class="card-title">安卓项目下载问题解决</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">01 Android 零基础入门01 步骤一：java 基础语法02 步骤二：java 面向对象03 步骤三：Java 常用工具类04 步骤四：UI 基础入门01 Android 入门02 AS 使用指南03 Android 线性与相对布局</div>
+                    <div class="summary">
+在项目的 settings.gradle 里加入
+
+pluginManagement {
+    repositories {
+        // 就是这个
+        maven { url 'https://maven.aliy</div>
                     <div class="publish-info">
                             <span class="publish-date">
                                 <i class="fa fa-clock-o fa-fw icon-date"></i>2023-08-29
@@ -2017,7 +2791,7 @@ webpack(202011)(架构)(全)任务 1：1.201122.webpack 的核心概念_【海�
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">488.6k</span>
+                <span class="white-color">505.2k</span>
             
 
             
