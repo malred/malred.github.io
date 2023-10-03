@@ -367,14 +367,14 @@ import &#34;github.com/beego/beego/v2/serve">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        19k
+                        19.7k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        104 分
+                        108 分
                     </div>
                     
                 
@@ -6656,7 +6656,190 @@ CREATE TABLE IF NOT EXISTS test_model(
 <p>可以用这种方法给字段加解密，因为是在代码层面上，不会给数据库造成什么压力（如果是让数据库加密就会）</p>
 </blockquote>
 <p><img src="z/75ba7979.png"><img src="z/9db28fd7.png"></p>
-<h3 id="9-SQL-编程：事务与隔离级别"><a href="#9-SQL-编程：事务与隔离级别" class="headerlink" title="9. SQL 编程：事务与隔离级别"></a>9. SQL 编程：事务与隔离级别</h3>
+<h3 id="9-SQL-编程：事务与隔离级别"><a href="#9-SQL-编程：事务与隔离级别" class="headerlink" title="9. SQL 编程：事务与隔离级别"></a>9. SQL 编程：事务与隔离级别</h3><p><img src="z/75218373.png"><img src="z/fc063368.png"><img src="z/ae5770d8.png"><img src="z/35148b92.png"><img src="z/57986b7d.png"><br><img src="z/e10c8804.png"><img src="z/803bfab6.png"><img src="z/a260236c.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// crud_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestTranslation</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    db<span class="token punctuation">,</span> err <span class="token operator">:=</span> sql<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span><span class="token string">"mysql"</span><span class="token punctuation">,</span> <span class="token string">"root:123456@tcp(127.0.0.1:3307)/mybatis"</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> db<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    err <span class="token operator">=</span> db<span class="token punctuation">.</span><span class="token function">Ping</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">}</span>
+    ctx<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithTimeout</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> <span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    tx<span class="token punctuation">,</span> err <span class="token operator">:=</span> db<span class="token punctuation">.</span><span class="token function">BeginTx</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> <span class="token operator">&amp;</span>sql<span class="token punctuation">.</span>TxOptions<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+
+    res<span class="token punctuation">,</span> err <span class="token operator">:=</span> tx<span class="token punctuation">.</span><span class="token function">ExecContext</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> <span class="token string">"INSERT INTO test_model(`first_name`,`age`,`last_name`) VALUES (?,?,?)"</span><span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">//1, "Tom", 18, "Jerry")</span>
+        <span class="token string">"Tom"</span><span class="token punctuation">,</span> <span class="token number">18</span><span class="token punctuation">,</span> <span class="token string">"Jerry"</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 回滚</span>
+        err <span class="token operator">:=</span> tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            log<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+            <span class="token keyword">return</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 提交事务</span>
+    err <span class="token operator">=</span> tx<span class="token punctuation">.</span><span class="token function">Commit</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+
+    affected<span class="token punctuation">,</span> err <span class="token operator">:=</span> res<span class="token punctuation">.</span><span class="token function">RowsAffected</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    log<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"受影响行数: "</span><span class="token punctuation">,</span> affected<span class="token punctuation">)</span>
+
+    lastId<span class="token punctuation">,</span> err <span class="token operator">:=</span> res<span class="token punctuation">.</span><span class="token function">LastInsertId</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// auto_increment才会返回正确的值,如果不是主键自增或者插入失败就会返回0</span>
+    log<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"最后插入的id: "</span><span class="token punctuation">,</span> lastId<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="10-SQL-编程：Prepare-Statement"><a href="#10-SQL-编程：Prepare-Statement" class="headerlink" title="10. SQL 编程：Prepare Statement"></a>10. SQL 编程：Prepare Statement</h3><p><img src="z/19280e11.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// crud_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestPS</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    db<span class="token punctuation">,</span> err <span class="token operator">:=</span> sql<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span><span class="token string">"mysql"</span><span class="token punctuation">,</span> <span class="token string">"root:123456@tcp(127.0.0.1:3307)/mybatis"</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> db<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    err <span class="token operator">=</span> db<span class="token punctuation">.</span><span class="token function">Ping</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span>
+    <span class="token punctuation">}</span>
+    ctx<span class="token punctuation">,</span> cancel <span class="token operator">:=</span> context<span class="token punctuation">.</span><span class="token function">WithTimeout</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> <span class="token function">cancel</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    stmt<span class="token punctuation">,</span> err <span class="token operator">:=</span> db<span class="token punctuation">.</span><span class="token function">PrepareContext</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> <span class="token string">"SELECT * FROM  `test_model` WHERE `id`=?"</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    rows<span class="token punctuation">,</span> err <span class="token operator">:=</span> stmt<span class="token punctuation">.</span><span class="token function">QueryContext</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> rows<span class="token punctuation">.</span><span class="token function">Next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        tm <span class="token operator">:=</span> TestModel<span class="token punctuation">{</span><span class="token punctuation">}</span>
+        err <span class="token operator">=</span> rows<span class="token punctuation">.</span><span class="token function">Scan</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>tm<span class="token punctuation">.</span>Id<span class="token punctuation">,</span> <span class="token operator">&amp;</span>tm<span class="token punctuation">.</span>FirstName<span class="token punctuation">,</span> <span class="token operator">&amp;</span>tm<span class="token punctuation">.</span>Age<span class="token punctuation">,</span> <span class="token operator">&amp;</span>tm<span class="token punctuation">.</span>LastName<span class="token punctuation">)</span>
+        require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+        log<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>tm<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 如果是in,就无法复用</span>
+    <span class="token comment" spellcheck="true">// 如果定义很多个prepareStatement,到达数据库上限会报错</span>
+    <span class="token comment" spellcheck="true">//stmt, err  = db.PrepareContext(ctx, "SELECT * FROM  `test_model` WHERE `id` in (?,?)")</span>
+    <span class="token comment" spellcheck="true">//stmt, err  = db.PrepareContext(ctx, "SELECT * FROM  `test_model` WHERE `id` in (?,?,?)")</span>
+    <span class="token comment" spellcheck="true">// 整个应用关闭的时候调用</span>
+    <span class="token comment" spellcheck="true">// 什么时候可以被关?有可能正在使用 -> 1.引用计数 2.一次性ps</span>
+    stmt<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="11-SQL-编程：sqlmock-入门、SQL-编程面试要点"><a href="#11-SQL-编程：sqlmock-入门、SQL-编程面试要点" class="headerlink" title="11. SQL 编程：sqlmock 入门、SQL 编程面试要点"></a>11. SQL 编程：sqlmock 入门、SQL 编程面试要点</h3><p><img src="z/753a5a19.png"><img src="z/68a1683b.png"><img src="z/a24f6da1.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// sqlmock_test.go</span>
+<span class="token keyword">package</span> sql_demo
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"errors"</span>
+    <span class="token string">"github.com/DATA-DOG/go-sqlmock"</span>
+    <span class="token string">"github.com/stretchr/testify/require"</span>
+    <span class="token string">"log"</span>
+    <span class="token string">"testing"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">TestSQLMock</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    db<span class="token punctuation">,</span> mock<span class="token punctuation">,</span> err <span class="token operator">:=</span> sqlmock<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">defer</span> db<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+
+    mockRows <span class="token operator">:=</span> sqlmock<span class="token punctuation">.</span><span class="token function">NewRows</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">{</span><span class="token string">"id"</span><span class="token punctuation">,</span> <span class="token string">"first_name"</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    mockRows<span class="token punctuation">.</span><span class="token function">AddRow</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"Tom"</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 准备数据</span>
+    <span class="token comment" spellcheck="true">// 正则表达式</span>
+    mock<span class="token punctuation">.</span><span class="token function">ExpectQuery</span><span class="token punctuation">(</span><span class="token string">"SELECT id,first_name FROM `user`.*"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">WillReturnRows</span><span class="token punctuation">(</span>mockRows<span class="token punctuation">)</span>
+    mock<span class="token punctuation">.</span><span class="token function">ExpectQuery</span><span class="token punctuation">(</span><span class="token string">"SELECT id FROM `user`.*"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">WillReturnError</span><span class="token punctuation">(</span>errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"mock error"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// mock准备的顺序和执行的顺序要一致  一一对应</span>
+    rows<span class="token punctuation">,</span> err <span class="token operator">:=</span> db<span class="token punctuation">.</span><span class="token function">QueryContext</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token string">"SELECT id,first_name FROM `user` WHERE id=?"</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> rows<span class="token punctuation">.</span><span class="token function">Next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        tm <span class="token operator">:=</span> TestModel<span class="token punctuation">{</span><span class="token punctuation">}</span>
+        err <span class="token operator">=</span> rows<span class="token punctuation">.</span><span class="token function">Scan</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>tm<span class="token punctuation">.</span>Id<span class="token punctuation">,</span> <span class="token operator">&amp;</span>tm<span class="token punctuation">.</span>FirstName<span class="token punctuation">)</span>
+        require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+        log<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>tm<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token boolean">_</span><span class="token punctuation">,</span> err <span class="token operator">=</span> db<span class="token punctuation">.</span><span class="token function">QueryContext</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token string">"SELECT id FROM `user` WHERE id=?"</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">Error</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="结果集"><a href="#结果集" class="headerlink" title="结果集"></a>结果集</h2><h3 id="12-结果集处理：Open-与-OpenDB"><a href="#12-结果集处理：Open-与-OpenDB" class="headerlink" title="12. 结果集处理：Open 与 OpenDB"></a>12. 结果集处理：Open 与 OpenDB</h3><p><img src="z/0655bf71.png"><img src="z/df60140a.png"><img src="z/b6dbd1ca.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// db.go</span>
+<span class="token keyword">package</span> orm
+
+<span class="token keyword">import</span> <span class="token string">"database/sql"</span>
+
+<span class="token keyword">type</span> DBOption <span class="token keyword">func</span><span class="token punctuation">(</span>db <span class="token operator">*</span>DB<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// DB 是一个sql.DB的装饰器</span>
+<span class="token keyword">type</span> DB <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    r  <span class="token operator">*</span>registry
+    db <span class="token operator">*</span>sql<span class="token punctuation">.</span>DB
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">Open</span><span class="token punctuation">(</span>driver <span class="token builtin">string</span><span class="token punctuation">,</span> dataSoruceName <span class="token builtin">string</span><span class="token punctuation">,</span> opts <span class="token operator">...</span>DBOption<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>DB<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    db<span class="token punctuation">,</span> err <span class="token operator">:=</span> sql<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span>driver<span class="token punctuation">,</span> dataSoruceName<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token function">OpenDB</span><span class="token punctuation">(</span>db<span class="token punctuation">,</span> opts<span class="token operator">...</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">OpenDB</span><span class="token punctuation">(</span>db <span class="token operator">*</span>sql<span class="token punctuation">.</span>DB<span class="token punctuation">,</span> opts <span class="token operator">...</span>DBOption<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>DB<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    res <span class="token operator">:=</span> <span class="token operator">&amp;</span>DB<span class="token punctuation">{</span>
+        r<span class="token punctuation">:</span>  <span class="token function">newRegistry</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        db<span class="token punctuation">:</span> db<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> opt <span class="token operator">:=</span> <span class="token keyword">range</span> opts <span class="token punctuation">{</span>
+        <span class="token function">opt</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> res<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">MustOpen</span><span class="token punctuation">(</span>driver <span class="token builtin">string</span><span class="token punctuation">,</span> dataSoruceName <span class="token builtin">string</span><span class="token punctuation">,</span> opts <span class="token operator">...</span>DBOption<span class="token punctuation">)</span> <span class="token operator">*</span>DB <span class="token punctuation">{</span>
+    res<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">Open</span><span class="token punctuation">(</span>driver<span class="token punctuation">,</span> dataSoruceName<span class="token punctuation">,</span> opts<span class="token operator">...</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> res
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// select.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Selector<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">Get</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>T<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    q<span class="token punctuation">,</span> err <span class="token operator">:=</span> s<span class="token punctuation">.</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+
+    db <span class="token operator">:=</span> s<span class="token punctuation">.</span>db<span class="token punctuation">.</span>db
+    <span class="token comment" spellcheck="true">// 发起查询,并处理结果集</span>
+    rows<span class="token punctuation">,</span> err <span class="token operator">:=</span> db<span class="token punctuation">.</span><span class="token function">QueryContext</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> q<span class="token punctuation">.</span>SQL<span class="token punctuation">,</span> q<span class="token punctuation">.</span>Args<span class="token operator">...</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Selector<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">GetMulti</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>T<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    q<span class="token punctuation">,</span> err <span class="token operator">:=</span> s<span class="token punctuation">.</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+
+    db <span class="token operator">:=</span> s<span class="token punctuation">.</span>db<span class="token punctuation">.</span>db
+    <span class="token comment" spellcheck="true">// 发起查询,并处理结果集</span>
+    rows<span class="token punctuation">,</span> err <span class="token operator">:=</span> db<span class="token punctuation">.</span><span class="token function">QueryContext</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> q<span class="token punctuation">.</span>SQL<span class="token punctuation">,</span> q<span class="token punctuation">.</span>Args<span class="token operator">...</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> rows<span class="token punctuation">.</span><span class="token function">Next</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id=""><a href="#" class="headerlink" title=""></a></h3>
             </div>
             <hr/>
 
@@ -7306,7 +7489,7 @@ pluginManagement {
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">531.4k</span>
+                <span class="white-color">532.7k</span>
             
 
             
