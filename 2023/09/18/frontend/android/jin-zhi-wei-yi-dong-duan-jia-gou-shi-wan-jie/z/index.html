@@ -365,14 +365,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        1.9k
+                        3.5k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        11 分
+                        20 分
                     </div>
                     
                 
@@ -992,7 +992,520 @@
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h5 id="6-5、基于HiLogPrinter实现日志可视化模块"><a href="#6-5、基于HiLogPrinter实现日志可视化模块" class="headerlink" title="6-5、基于HiLogPrinter实现日志可视化模块"></a>6-5、基于HiLogPrinter实现日志可视化模块</h5>
+<h5 id="6-5、基于HiLogPrinter实现日志可视化模块"><a href="#6-5、基于HiLogPrinter实现日志可视化模块" class="headerlink" title="6-5、基于HiLogPrinter实现日志可视化模块"></a>6-5、基于HiLogPrinter实现日志可视化模块</h5><p><img src="z/450f1a84.png"></p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>log<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>text<span class="token punctuation">.</span>SimpleDateFormat<span class="token punctuation">;</span>
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>Locale<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">HiLogMo</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> <span class="token keyword">static</span> SimpleDateFormat sdf <span class="token operator">=</span>
+            <span class="token keyword">new</span> <span class="token class-name">SimpleDateFormat</span><span class="token punctuation">(</span><span class="token string">"yy-MM-dd HH:mm:ss"</span><span class="token punctuation">,</span> Locale<span class="token punctuation">.</span>CHINA<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">public</span> <span class="token keyword">long</span> timeMillis<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> <span class="token keyword">int</span> level<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> String tag<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> String log<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">HiLogMo</span><span class="token punctuation">(</span><span class="token keyword">long</span> timeMillis<span class="token punctuation">,</span> <span class="token keyword">int</span> level<span class="token punctuation">,</span> String tag<span class="token punctuation">,</span> String log<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>timeMillis <span class="token operator">=</span> timeMillis<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>level <span class="token operator">=</span> level<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>tag <span class="token operator">=</span> tag<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>log <span class="token operator">=</span> log<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> String <span class="token function">flattenedLog</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token function">getFlattened</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">"\n"</span> <span class="token operator">+</span> log<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> String <span class="token function">getFlattened</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token function">format</span><span class="token punctuation">(</span>timeMillis<span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">'|'</span> <span class="token operator">+</span> level <span class="token operator">+</span> <span class="token string">'|'</span> <span class="token operator">+</span> tag <span class="token operator">+</span> <span class="token string">"|:"</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> String <span class="token function">format</span><span class="token punctuation">(</span><span class="token keyword">long</span> timeMillis<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> sdf<span class="token punctuation">.</span><span class="token function">format</span><span class="token punctuation">(</span>timeMillis<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>util<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>content<span class="token punctuation">.</span>Context<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>content<span class="token punctuation">.</span>res<span class="token punctuation">.</span>Resources<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>graphics<span class="token punctuation">.</span>Point<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>util<span class="token punctuation">.</span>TypedValue<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>Display<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>Window<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>WindowManager<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>annotation<span class="token punctuation">.</span>NonNull<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">HiDisplayUtil</span> <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">dp2px</span><span class="token punctuation">(</span><span class="token keyword">float</span> dp<span class="token punctuation">,</span> Resources resources<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span> TypedValue<span class="token punctuation">.</span><span class="token function">applyDimension</span><span class="token punctuation">(</span>TypedValue<span class="token punctuation">.</span>COMPLEX_UNIT_DIP<span class="token punctuation">,</span> dp<span class="token punctuation">,</span> resources<span class="token punctuation">.</span><span class="token function">getDisplayMetrics</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 获取屏幕宽度
+     *
+     * @param context
+     * @return
+     */</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">getDisplayWidthInPx</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> Context context<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        WindowManager wm <span class="token operator">=</span> <span class="token punctuation">(</span>WindowManager<span class="token punctuation">)</span> context<span class="token punctuation">.</span><span class="token function">getSystemService</span><span class="token punctuation">(</span>Context<span class="token punctuation">.</span>WINDOW_SERVICE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>wm <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            Display display <span class="token operator">=</span> wm<span class="token punctuation">.</span><span class="token function">getDefaultDisplay</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            Point size <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Point</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            display<span class="token punctuation">.</span><span class="token function">getSize</span><span class="token punctuation">(</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> size<span class="token punctuation">.</span>x<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 获取屏幕高度
+     *
+     * @param context
+     * @return
+     */</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">int</span> <span class="token function">getDisplayHeightInPx</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> Context context<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        WindowManager wm <span class="token operator">=</span> <span class="token punctuation">(</span>WindowManager<span class="token punctuation">)</span> context<span class="token punctuation">.</span><span class="token function">getSystemService</span><span class="token punctuation">(</span>Context<span class="token punctuation">.</span>WINDOW_SERVICE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>wm <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            Display display <span class="token operator">=</span> wm<span class="token punctuation">.</span><span class="token function">getDefaultDisplay</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            Point size <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Point</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            display<span class="token punctuation">.</span><span class="token function">getSize</span><span class="token punctuation">(</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> size<span class="token punctuation">.</span>y<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>log<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>graphics<span class="token punctuation">.</span>Color<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>Gravity<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>View<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>ViewGroup<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>widget<span class="token punctuation">.</span>FrameLayout<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>widget<span class="token punctuation">.</span>TextView<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>recyclerview<span class="token punctuation">.</span>widget<span class="token punctuation">.</span>RecyclerView<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>util<span class="token punctuation">.</span>HiDisplayUtil<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">HiViewPrinterProvider</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> FrameLayout rootView<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> View floatingView<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">boolean</span> isOpen<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> FrameLayout logView<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> RecyclerView recyclerView<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">HiViewPrinterProvider</span><span class="token punctuation">(</span>FrameLayout rootView<span class="token punctuation">,</span> RecyclerView recyclerView<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>rootView <span class="token operator">=</span> rootView<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>recyclerView <span class="token operator">=</span> recyclerView<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> String TAG_FLOATING_VIEW <span class="token operator">=</span> <span class="token string">"TAG_FLOATING_VIEW"</span><span class="token punctuation">;</span>
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">final</span> String TAG_LOG_VIEW <span class="token operator">=</span> <span class="token string">"TAG_LOG_VIEW"</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">showFloatingView</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 已经添加了悬浮窗</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rootView<span class="token punctuation">.</span><span class="token function">findViewWithTag</span><span class="token punctuation">(</span>TAG_FLOATING_VIEW<span class="token punctuation">)</span> <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        FrameLayout<span class="token punctuation">.</span>LayoutParams params <span class="token operator">=</span>
+                <span class="token keyword">new</span> <span class="token class-name">FrameLayout<span class="token punctuation">.</span>LayoutParams</span><span class="token punctuation">(</span>
+                        ViewGroup<span class="token punctuation">.</span>LayoutParams<span class="token punctuation">.</span>WRAP_CONTENT<span class="token punctuation">,</span>
+                        ViewGroup<span class="token punctuation">.</span>LayoutParams<span class="token punctuation">.</span>WRAP_CONTENT
+                <span class="token punctuation">)</span><span class="token punctuation">;</span>
+        params<span class="token punctuation">.</span>gravity <span class="token operator">=</span> Gravity<span class="token punctuation">.</span>BOTTOM <span class="token operator">|</span> Gravity<span class="token punctuation">.</span>END<span class="token punctuation">;</span>
+        View floatingView <span class="token operator">=</span> <span class="token function">genFloatingView</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        floatingView<span class="token punctuation">.</span><span class="token function">setTag</span><span class="token punctuation">(</span>TAG_FLOATING_VIEW<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        floatingView<span class="token punctuation">.</span><span class="token function">setBackgroundColor</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>BLACK<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        floatingView<span class="token punctuation">.</span><span class="token function">setAlpha</span><span class="token punctuation">(</span><span class="token number">0.8f</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 透明度</span>
+        params<span class="token punctuation">.</span>bottomMargin <span class="token operator">=</span> HiDisplayUtil<span class="token punctuation">.</span><span class="token function">dp2px</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">,</span> recyclerView<span class="token punctuation">.</span><span class="token function">getResources</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        rootView<span class="token punctuation">.</span><span class="token function">addView</span><span class="token punctuation">(</span><span class="token function">genFloatingView</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> params<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 展示log 悬浮按钮
+     */</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">closeFloatingView</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        rootView<span class="token punctuation">.</span><span class="token function">removeView</span><span class="token punctuation">(</span><span class="token function">genFloatingView</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 生成floatView
+     *
+     * @return
+     */</span>
+    <span class="token keyword">private</span> View <span class="token function">genFloatingView</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>floatingView <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> floatingView<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        TextView tv <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">TextView</span><span class="token punctuation">(</span>rootView<span class="token punctuation">.</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        tv<span class="token punctuation">.</span><span class="token function">setOnClickListener</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">View<span class="token punctuation">.</span>OnClickListener</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token annotation punctuation">@Override</span>
+            <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">onClick</span><span class="token punctuation">(</span>View v<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// 没有展开log</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>isOpen<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    <span class="token function">showLogView</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        tv<span class="token punctuation">.</span><span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">"HiLog"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        tv<span class="token punctuation">.</span><span class="token function">setTextColor</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>WHITE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> floatingView <span class="token operator">=</span> tv<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">showLogView</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rootView<span class="token punctuation">.</span><span class="token function">findViewWithTag</span><span class="token punctuation">(</span>TAG_LOG_VIEW<span class="token punctuation">)</span> <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        FrameLayout<span class="token punctuation">.</span>LayoutParams params <span class="token operator">=</span>
+                <span class="token keyword">new</span> <span class="token class-name">FrameLayout<span class="token punctuation">.</span>LayoutParams</span><span class="token punctuation">(</span>
+                        ViewGroup<span class="token punctuation">.</span>LayoutParams<span class="token punctuation">.</span>MATCH_PARENT<span class="token punctuation">,</span>
+                        HiDisplayUtil<span class="token punctuation">.</span><span class="token function">dp2px</span><span class="token punctuation">(</span><span class="token number">160</span><span class="token punctuation">,</span> rootView<span class="token punctuation">.</span><span class="token function">getResources</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">)</span><span class="token punctuation">;</span>
+        params<span class="token punctuation">.</span>gravity <span class="token operator">=</span> Gravity<span class="token punctuation">.</span>BOTTOM<span class="token punctuation">;</span>
+        View logView <span class="token operator">=</span> <span class="token function">genLogView</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        logView<span class="token punctuation">.</span><span class="token function">setTag</span><span class="token punctuation">(</span>TAG_LOG_VIEW<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        rootView<span class="token punctuation">.</span><span class="token function">addView</span><span class="token punctuation">(</span><span class="token function">genLogView</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> params<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        isOpen <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> View <span class="token function">genLogView</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>logView <span class="token operator">!=</span> null<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> logView<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        FrameLayout logView <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">FrameLayout</span><span class="token punctuation">(</span>rootView<span class="token punctuation">.</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        logView<span class="token punctuation">.</span><span class="token function">setBackgroundColor</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>BLACK<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        logView<span class="token punctuation">.</span><span class="token function">addView</span><span class="token punctuation">(</span>recyclerView<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        FrameLayout<span class="token punctuation">.</span>LayoutParams params <span class="token operator">=</span>
+                <span class="token keyword">new</span> <span class="token class-name">FrameLayout<span class="token punctuation">.</span>LayoutParams</span><span class="token punctuation">(</span>
+                        ViewGroup<span class="token punctuation">.</span>LayoutParams<span class="token punctuation">.</span>WRAP_CONTENT<span class="token punctuation">,</span>
+                        ViewGroup<span class="token punctuation">.</span>LayoutParams<span class="token punctuation">.</span>WRAP_CONTENT
+                <span class="token punctuation">)</span><span class="token punctuation">;</span>
+        params<span class="token punctuation">.</span>gravity <span class="token operator">=</span> Gravity<span class="token punctuation">.</span>END<span class="token punctuation">;</span>
+        TextView closeView <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">TextView</span><span class="token punctuation">(</span>rootView<span class="token punctuation">.</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        closeView<span class="token punctuation">.</span><span class="token function">setOnClickListener</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">View<span class="token punctuation">.</span>OnClickListener</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token annotation punctuation">@Override</span>
+            <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">onClick</span><span class="token punctuation">(</span>View v<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// 关闭logview</span>
+                <span class="token function">closeLogView</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        closeView<span class="token punctuation">.</span><span class="token function">setText</span><span class="token punctuation">(</span><span class="token string">"Close"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        closeView<span class="token punctuation">.</span><span class="token function">setTextColor</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>WHITE<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// </span>
+        logView<span class="token punctuation">.</span><span class="token function">addView</span><span class="token punctuation">(</span>closeView<span class="token punctuation">,</span> params<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>logView <span class="token operator">=</span> logView<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 关闭logview
+     */</span>
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">closeLogView</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        isOpen <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+        rootView<span class="token punctuation">.</span><span class="token function">removeView</span><span class="token punctuation">(</span><span class="token function">genLogView</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>log<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>app<span class="token punctuation">.</span>Activity<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>LayoutInflater<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>View<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>ViewGroup<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>widget<span class="token punctuation">.</span>FrameLayout<span class="token punctuation">;</span>
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>widget<span class="token punctuation">.</span>TextView<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>annotation<span class="token punctuation">.</span>NonNull<span class="token punctuation">;</span>
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>recyclerview<span class="token punctuation">.</span>widget<span class="token punctuation">.</span>LinearLayoutManager<span class="token punctuation">;</span>
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>recyclerview<span class="token punctuation">.</span>widget<span class="token punctuation">.</span>RecyclerView<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>R<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>ArrayList<span class="token punctuation">;</span>
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>List<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">HiViewPrinter</span> <span class="token keyword">implements</span> <span class="token class-name">HiLogPrinter</span> <span class="token punctuation">{</span>
+    <span class="token keyword">private</span> RecyclerView recyclerView<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> LogAdapter adapter<span class="token punctuation">;</span>
+    <span class="token keyword">private</span> HiViewPrinterProvider viewProvider<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> HiViewPrinterProvider <span class="token function">getViewProvider</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> viewProvider<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token function">HiViewPrinter</span><span class="token punctuation">(</span>Activity activity<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        FrameLayout rootView <span class="token operator">=</span> activity<span class="token punctuation">.</span><span class="token function">findViewById</span><span class="token punctuation">(</span>android<span class="token punctuation">.</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>content<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        recyclerView <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">RecyclerView</span><span class="token punctuation">(</span>activity<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        adapter <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">LogAdapter</span><span class="token punctuation">(</span>LayoutInflater<span class="token punctuation">.</span><span class="token function">from</span><span class="token punctuation">(</span>recyclerView<span class="token punctuation">.</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        LinearLayoutManager manager <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">LinearLayoutManager</span><span class="token punctuation">(</span>recyclerView<span class="token punctuation">.</span><span class="token function">getContext</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        recyclerView<span class="token punctuation">.</span><span class="token function">setLayoutManager</span><span class="token punctuation">(</span>manager<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        recyclerView<span class="token punctuation">.</span><span class="token function">setAdapter</span><span class="token punctuation">(</span>adapter<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        viewProvider <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">HiViewPrinterProvider</span><span class="token punctuation">(</span>rootView<span class="token punctuation">,</span> recyclerView<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">print</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> HiLogConfig config<span class="token punctuation">,</span> <span class="token keyword">int</span> level<span class="token punctuation">,</span> String tag<span class="token punctuation">,</span> <span class="token annotation punctuation">@NonNull</span> String printString<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">class</span> <span class="token class-name">LogViewHolder</span> <span class="token keyword">extends</span> <span class="token class-name">RecyclerView<span class="token punctuation">.</span>ViewHolder</span> <span class="token punctuation">{</span>
+        TextView tagView<span class="token punctuation">;</span>
+        TextView messageView<span class="token punctuation">;</span>
+
+        <span class="token keyword">public</span> <span class="token function">LogViewHolder</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> View itemView<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">super</span><span class="token punctuation">(</span>itemView<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            tagView <span class="token operator">=</span> itemView<span class="token punctuation">.</span><span class="token function">findViewById</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>tag<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            messageView <span class="token operator">=</span> itemView<span class="token punctuation">.</span><span class="token function">findViewById</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>message<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">class</span> <span class="token class-name">LogAdapter</span> <span class="token keyword">extends</span> <span class="token class-name">RecyclerView<span class="token punctuation">.</span>Adapter</span><span class="token operator">&lt;</span>LogViewHolder<span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token keyword">private</span> LayoutInflater inflater<span class="token punctuation">;</span>
+        <span class="token keyword">private</span> List<span class="token operator">&lt;</span>HiLogMo<span class="token operator">></span> logs <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">ArrayList</span><span class="token operator">&lt;</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">void</span> <span class="token function">addItem</span><span class="token punctuation">(</span>HiLogMo logItem<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            logs<span class="token punctuation">.</span><span class="token function">add</span><span class="token punctuation">(</span>logItem<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">// 通知刷新</span>
+            <span class="token comment" spellcheck="true">// 列表position位置添加一条数据时可以调用，伴有动画效果</span>
+            <span class="token comment" spellcheck="true">// RecyclerView.Adapter中为我们提供了很多自带酷炫的增加删除动画，包括局部刷新的方法。</span>
+            <span class="token function">notifyItemInserted</span><span class="token punctuation">(</span>logs<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">public</span> <span class="token function">LogAdapter</span><span class="token punctuation">(</span>LayoutInflater inflater<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>inflater <span class="token operator">=</span> inflater<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token annotation punctuation">@NonNull</span>
+        <span class="token annotation punctuation">@Override</span>
+        <span class="token keyword">public</span> LogViewHolder <span class="token function">onCreateViewHolder</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> ViewGroup parent<span class="token punctuation">,</span> <span class="token keyword">int</span> viewType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            View item <span class="token operator">=</span> inflater<span class="token punctuation">.</span><span class="token function">inflate</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>layout<span class="token punctuation">.</span>hilog_item<span class="token punctuation">,</span> parent<span class="token punctuation">,</span> <span class="token boolean">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">LogViewHolder</span><span class="token punctuation">(</span>item<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token annotation punctuation">@Override</span>
+        <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">onBindViewHolder</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> LogViewHolder holder<span class="token punctuation">,</span> <span class="token keyword">int</span> position<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            HiLogMo logItem <span class="token operator">=</span> logs<span class="token punctuation">.</span><span class="token function">get</span><span class="token punctuation">(</span>position<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token keyword">int</span> color <span class="token operator">=</span> <span class="token function">getHighlightColor</span><span class="token punctuation">(</span>logItem<span class="token punctuation">.</span>level<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            holder<span class="token punctuation">.</span>tagView<span class="token punctuation">.</span><span class="token function">setTextColor</span><span class="token punctuation">(</span>color<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            holder<span class="token punctuation">.</span>messageView<span class="token punctuation">.</span><span class="token function">setTextColor</span><span class="token punctuation">(</span>color<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            holder<span class="token punctuation">.</span>tagView<span class="token punctuation">.</span><span class="token function">setText</span><span class="token punctuation">(</span>logItem<span class="token punctuation">.</span><span class="token function">getFlattened</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            holder<span class="token punctuation">.</span>messageView<span class="token punctuation">.</span><span class="token function">setText</span><span class="token punctuation">(</span>logItem<span class="token punctuation">.</span>log<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">/**
+         * 根据不同log级别获取不同颜色
+         *
+         * @param logLevel
+         * @return
+         */</span>
+        <span class="token keyword">private</span> <span class="token keyword">int</span> <span class="token function">getHighlightColor</span><span class="token punctuation">(</span><span class="token keyword">int</span> logLevel<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">int</span> highlight<span class="token punctuation">;</span>
+            <span class="token keyword">switch</span> <span class="token punctuation">(</span>logLevel<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">case</span> HiLogType<span class="token punctuation">.</span>V<span class="token operator">:</span>
+                    highlight <span class="token operator">=</span> <span class="token number">0xffbbbbbb</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token keyword">case</span> HiLogType<span class="token punctuation">.</span>D<span class="token operator">:</span>
+                    highlight <span class="token operator">=</span> <span class="token number">0xffffffff</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token keyword">case</span> HiLogType<span class="token punctuation">.</span>I<span class="token operator">:</span>
+                    highlight <span class="token operator">=</span> <span class="token number">0xff6a8759</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token keyword">case</span> HiLogType<span class="token punctuation">.</span>W<span class="token operator">:</span>
+                    highlight <span class="token operator">=</span> <span class="token number">0xffbbb529</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token keyword">case</span> HiLogType<span class="token punctuation">.</span>E<span class="token operator">:</span>
+                    highlight <span class="token operator">=</span> <span class="token number">0xffff6b68</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+                <span class="token keyword">default</span><span class="token operator">:</span>
+                    highlight <span class="token operator">=</span> <span class="token number">0xffffff00</span><span class="token punctuation">;</span>
+                    <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">return</span> highlight<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token annotation punctuation">@Override</span>
+        <span class="token keyword">public</span> <span class="token keyword">int</span> <span class="token function">getItemCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> logs<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span>
+</code></pre>
+<blockquote>
+<p>hilog_item.xml</p>
+</blockquote>
+<pre class=" language-xml"><code class="language-xml"><span class="token prolog">&lt;?xml version="1.0" encoding="utf-8"?></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>LinearLayout</span> <span class="token attr-name"><span class="token namespace">xmlns:</span>android</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>http://schemas.android.com/apk/res/android<span class="token punctuation">"</span></span>
+              <span class="token attr-name"><span class="token namespace">android:</span>layout_width</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>match_parent<span class="token punctuation">"</span></span>
+              <span class="token attr-name"><span class="token namespace">android:</span>layout_height</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>wrap_content<span class="token punctuation">"</span></span>
+              <span class="token attr-name"><span class="token namespace">xmlns:</span>tools</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>http://schemas.android.com/tools<span class="token punctuation">"</span></span>
+              <span class="token attr-name"><span class="token namespace">android:</span>orientation</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>vertical<span class="token punctuation">"</span></span>
+              <span class="token attr-name"><span class="token namespace">android:</span>theme</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>@style/Theme.Hilibrary<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>TextView</span>
+            <span class="token attr-name"><span class="token namespace">android:</span>id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>@+id/tag<span class="token punctuation">"</span></span>
+            <span class="token attr-name"><span class="token namespace">android:</span>layout_width</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>wrap_content<span class="token punctuation">"</span></span>
+            <span class="token attr-name"><span class="token namespace">tools:</span>text</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>dfadfnhsdjnhf<span class="token punctuation">"</span></span>
+            <span class="token attr-name"><span class="token namespace">android:</span>layout_height</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>wrap_content<span class="token punctuation">"</span></span><span class="token punctuation">/></span></span>
+
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>TextView</span>
+            <span class="token attr-name"><span class="token namespace">android:</span>id</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>@+id/message<span class="token punctuation">"</span></span>
+            <span class="token attr-name"><span class="token namespace">android:</span>layout_width</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>wrap_content<span class="token punctuation">"</span></span>
+            <span class="token attr-name"><span class="token namespace">android:</span>layout_height</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>wrap_content<span class="token punctuation">"</span></span><span class="token punctuation">/></span></span>
+
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>LinearLayout</span><span class="token punctuation">></span></span>
+</code></pre>
+<pre class=" language-kotlin"><code class="language-kotlin"><span class="token keyword">package</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hi_library<span class="token punctuation">.</span>demo
+
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>os<span class="token punctuation">.</span>Bundle
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>View
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>activity<span class="token punctuation">.</span>ComponentActivity
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hi_library<span class="token punctuation">.</span>R
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>log<span class="token punctuation">.</span>HiLog
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>log<span class="token punctuation">.</span>HiLogConfig
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>log<span class="token punctuation">.</span>HiLogType
+<span class="token keyword">import</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hilibrary<span class="token punctuation">.</span>log<span class="token punctuation">.</span>HiViewPrinter
+
+<span class="token comment" spellcheck="true">// ComponentActivity而不是AppCompatActivity</span>
+<span class="token comment" spellcheck="true">// 否则报错</span>
+<span class="token comment" spellcheck="true">/*
+    Unable to start activity
+    ComponentInfo{org.malred.hi_library/org.malred.hi_library.demo.HiLogDemoActivity}:
+    java.lang.IllegalStateException:
+    You need to use a Theme.AppCompat theme (or descendant) with this activity.
+ */</span>
+<span class="token keyword">class</span> HiLogDemoActivity <span class="token operator">:</span> <span class="token function">ComponentActivity</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> viewPrinter<span class="token operator">:</span> HiViewPrinter<span class="token operator">?</span> <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">onCreate</span><span class="token punctuation">(</span>savedInstanceState<span class="token operator">:</span> Bundle<span class="token operator">?</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token punctuation">.</span><span class="token function">onCreate</span><span class="token punctuation">(</span>savedInstanceState<span class="token punctuation">)</span>
+        <span class="token function">setContentView</span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>layout<span class="token punctuation">.</span>activity_hi_log_demo<span class="token punctuation">)</span>
+        viewPrinter <span class="token operator">=</span> <span class="token function">HiViewPrinter</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// 这里用了lambda</span>
+        findViewById<span class="token operator">&lt;</span>View<span class="token operator">></span><span class="token punctuation">(</span>R<span class="token punctuation">.</span>id<span class="token punctuation">.</span>btn_log<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">setOnClickListener</span> <span class="token punctuation">{</span>
+            <span class="token function">printLog</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        viewPrinter<span class="token operator">!!</span><span class="token punctuation">.</span>viewProvider<span class="token punctuation">.</span><span class="token function">showFloatingView</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">fun</span> <span class="token function">printLog</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h5 id="6-6、HiLogPrinter日志可视化测试"><a href="#6-6、HiLogPrinter日志可视化测试" class="headerlink" title="6-6、HiLogPrinter日志可视化测试"></a>6-6、HiLogPrinter日志可视化测试</h5><pre class=" language-java"><code class="language-java">    <span class="token comment" spellcheck="true">// HiViewPrinter.java</span>
+    <span class="token annotation punctuation">@Override</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">print</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> HiLogConfig config<span class="token punctuation">,</span> <span class="token keyword">int</span> level<span class="token punctuation">,</span> String tag<span class="token punctuation">,</span> <span class="token annotation punctuation">@NonNull</span> String printString<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 将log展示添加到recycleview</span>
+        adapter<span class="token punctuation">.</span><span class="token function">addItem</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">HiLogMo</span><span class="token punctuation">(</span>System<span class="token punctuation">.</span><span class="token function">currentTimeMillis</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> level<span class="token punctuation">,</span> tag<span class="token punctuation">,</span> printString<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// 添加到对应位置</span>
+        recyclerView<span class="token punctuation">.</span><span class="token function">smoothScrollToPosition</span><span class="token punctuation">(</span>adapter<span class="token punctuation">.</span><span class="token function">getItemCount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<h3 id="02-通用UI组件开发与基础框架设计"><a href="#02-通用UI组件开发与基础框架设计" class="headerlink" title="02 通用UI组件开发与基础框架设计"></a>02 通用UI组件开发与基础框架设计</h3><h4 id="1-1-本周目标-免费IT课程加11-2"><a href="#1-1-本周目标-免费IT课程加11-2" class="headerlink" title="1-1 本周目标_免费IT课程加11[2]"></a>1-1 本周目标_免费IT课程加11[2]</h4><p><img src="z/c0df2e54.png"><img src="z/12a30060.png"><img src="z/3c005640.png"></p>
+<h4 id="2-1-HiTabBottom组件疑难点分析与架构设计-免费IT课程加11-2"><a href="#2-1-HiTabBottom组件疑难点分析与架构设计-免费IT课程加11-2" class="headerlink" title="2-1 HiTabBottom组件疑难点分析与架构设计_免费IT课程加11[2]"></a>2-1 HiTabBottom组件疑难点分析与架构设计_免费IT课程加11[2]</h4><p><img src="z/a346ec88.png"><img src="z/4d3de6c1.png"><img src="z/7cef963c.png"><img src="z/dfb6e552.png"><img src="z/b16339d1.png"><br><img src="z/ac933451.png"><img src="z/5301c4c3.png"></p>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hiui<span class="token punctuation">.</span>tab<span class="token punctuation">.</span>bottom<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>graphics<span class="token punctuation">.</span>Bitmap<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>fragment<span class="token punctuation">.</span>app<span class="token punctuation">.</span>Fragment<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">HiTabBottomInfo</span><span class="token operator">&lt;</span>Color<span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// tab类型</span>
+    <span class="token keyword">public</span> <span class="token keyword">enum</span> TabType <span class="token punctuation">{</span>
+        BITMAP<span class="token punctuation">,</span> ICON
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// tab对应的页面</span>
+    <span class="token keyword">public</span> Class<span class="token operator">&lt;</span><span class="token operator">?</span> <span class="token keyword">extends</span> <span class="token class-name">Fragment</span><span class="token operator">></span> fragment<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> String name<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 默认图标</span>
+    <span class="token keyword">public</span> Bitmap defaultBitmap<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 选中状态的图标</span>
+    <span class="token keyword">public</span> Bitmap selectedBitmap<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> String iconFont<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">/**
+     * Tips: java代码中直接设置iconfont字符串无效,需要定义在string.xml
+     */</span>
+    <span class="token keyword">public</span> String defaultIconName<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> String selectedIconName<span class="token punctuation">;</span>
+    <span class="token comment" spellcheck="true">// 可以是int或string类型color</span>
+    <span class="token keyword">public</span> Color defaultColor<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> Color tintColor<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> TabType tabType<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token function">HiTabBottomInfo</span><span class="token punctuation">(</span>String name<span class="token punctuation">,</span> Bitmap defaultBitmap<span class="token punctuation">,</span> Bitmap selectedBitmap<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>defaultBitmap <span class="token operator">=</span> defaultBitmap<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>selectedBitmap <span class="token operator">=</span> selectedBitmap<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token function">HiTabBottomInfo</span><span class="token punctuation">(</span>String name<span class="token punctuation">,</span> String iconFont<span class="token punctuation">,</span> String defaultIconName<span class="token punctuation">,</span>
+                           String selectedIconName<span class="token punctuation">,</span> Color defaultColor<span class="token punctuation">,</span> Color tintColor<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>iconFont <span class="token operator">=</span> iconFont<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>defaultIconName <span class="token operator">=</span> defaultIconName<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>selectedIconName <span class="token operator">=</span> selectedIconName<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>defaultColor <span class="token operator">=</span> defaultColor<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>tintColor <span class="token operator">=</span> tintColor<span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>tabType <span class="token operator">=</span> TabType<span class="token punctuation">.</span>ICON<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hiui<span class="token punctuation">.</span>tab<span class="token punctuation">.</span>common<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>annotation<span class="token punctuation">.</span>NonNull<span class="token punctuation">;</span>
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>annotation<span class="token punctuation">.</span>Px<span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">/**
+ * HiTab对外接口
+ */</span>
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">IHiTab</span><span class="token operator">&lt;</span>D<span class="token operator">></span> <span class="token keyword">extends</span> <span class="token class-name">IHiTabLayout<span class="token punctuation">.</span>OnTabSelectedListener</span><span class="token operator">&lt;</span>D<span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">void</span> <span class="token function">setHiTabInfo</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> D data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 动态修改某个item的大小
+     *
+     * @param height
+     */</span>
+    <span class="token keyword">void</span> <span class="token function">resetHeight</span><span class="token punctuation">(</span><span class="token annotation punctuation">@Px</span> <span class="token keyword">int</span> height<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-java"><code class="language-java"><span class="token keyword">package</span> org<span class="token punctuation">.</span>malred<span class="token punctuation">.</span>hiui<span class="token punctuation">.</span>tab<span class="token punctuation">.</span>common<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> android<span class="token punctuation">.</span>view<span class="token punctuation">.</span>ViewGroup<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>annotation<span class="token punctuation">.</span>NonNull<span class="token punctuation">;</span>
+<span class="token keyword">import</span> androidx<span class="token punctuation">.</span>annotation<span class="token punctuation">.</span>Nullable<span class="token punctuation">;</span>
+
+<span class="token keyword">import</span> java<span class="token punctuation">.</span>util<span class="token punctuation">.</span>List<span class="token punctuation">;</span>
+
+
+<span class="token keyword">public</span> <span class="token keyword">interface</span> <span class="token class-name">IHiTabLayout</span><span class="token operator">&lt;</span>Tab <span class="token keyword">extends</span> <span class="token class-name">ViewGroup</span><span class="token punctuation">,</span> D<span class="token operator">></span> <span class="token punctuation">{</span>
+    Tab <span class="token function">findTab</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> D data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">addTabSelectedChangeListener</span><span class="token punctuation">(</span>OnTabSelectedListener<span class="token operator">&lt;</span>D<span class="token operator">></span> listener<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">defaultSelected</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> D defaultInfo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">void</span> <span class="token function">inflateInfo</span><span class="token punctuation">(</span><span class="token annotation punctuation">@NonNull</span> List<span class="token operator">&lt;</span>D<span class="token operator">></span> infoList<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">interface</span> <span class="token class-name">OnTabSelectedListener</span><span class="token operator">&lt;</span>D<span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">/**
+         * tab被选中时触发
+         *
+         * @param index    被选中的tab的索引
+         * @param prevInfo
+         * @param nextInfo
+         */</span>
+        <span class="token keyword">void</span> <span class="token function">onTabSelectedChange</span><span class="token punctuation">(</span><span class="token keyword">int</span> index<span class="token punctuation">,</span> <span class="token annotation punctuation">@Nullable</span> D prevInfo<span class="token punctuation">,</span> <span class="token annotation punctuation">@NonNull</span> D nextInfo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="2-2-HiTabBottom的单Tab组件封装-免费IT课程加11-2"><a href="#2-2-HiTabBottom的单Tab组件封装-免费IT课程加11-2" class="headerlink" title="2-2 HiTabBottom的单Tab组件封装_免费IT课程加11[2]"></a>2-2 HiTabBottom的单Tab组件封装_免费IT课程加11[2]</h4>
             </div>
             <hr/>
 
@@ -1647,7 +2160,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">545.5k</span>
+                <span class="white-color">549.5k</span>
             
 
             
