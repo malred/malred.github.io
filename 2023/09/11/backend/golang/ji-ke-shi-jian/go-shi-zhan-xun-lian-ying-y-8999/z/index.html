@@ -367,14 +367,14 @@ import &#34;github.com/beego/beego/v2/serve">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        26.7k
+                        29k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        149 分
+                        163 分
                     </div>
                     
                 
@@ -9372,7 +9372,766 @@ CREATE TABLE IF NOT EXISTS test_model(
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h3 id="14-INSERT：方言抽象-Dialect"><a href="#14-INSERT：方言抽象-Dialect" class="headerlink" title="14. INSERT：方言抽象 Dialect"></a>14. INSERT：方言抽象 Dialect</h3>
+<h3 id="14-INSERT：方言抽象-Dialect"><a href="#14-INSERT：方言抽象-Dialect" class="headerlink" title="14. INSERT：方言抽象 Dialect"></a>14. INSERT：方言抽象 Dialect</h3><p><img src="z/0ec59668.png"><img src="z/41188968.png"><img src="z/5d4113d2.png"><img src="z/de7ad698.png"><img src="z/3c16d4bb.png"><img src="z/2ed34148.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// dialect.go</span>
+<span class="token keyword">package</span> orm
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"my_framework/orm/internal/errs"</span>
+    <span class="token string">"strings"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> Dialect <span class="token keyword">interface</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// quoter 就是为了解决引号问题</span>
+    <span class="token comment" spellcheck="true">// Mysql</span>
+    <span class="token function">quoter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">byte</span>
+
+    <span class="token function">buildOnDuplicateKey</span><span class="token punctuation">(</span>sb strings<span class="token punctuation">.</span>Builder<span class="token punctuation">,</span> odk <span class="token operator">*</span>OnDuplicateKey<span class="token punctuation">)</span> <span class="token builtin">error</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> standardSQL <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s standardSQL<span class="token punctuation">)</span> <span class="token function">quoter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">byte</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//TODO implement me</span>
+    <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"implement me"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s standardSQL<span class="token punctuation">)</span> <span class="token function">buildOnDuplicateKey</span><span class="token punctuation">(</span>sb strings<span class="token punctuation">.</span>Builder<span class="token punctuation">,</span> odk <span class="token operator">*</span>OnDuplicateKey<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//TODO implement me</span>
+    <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"implement me"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> mysqlDialect <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    standardSQL
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>m mysqlDialect<span class="token punctuation">)</span> <span class="token function">quoter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">byte</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token string">'`'</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>m mysqlDialect<span class="token punctuation">)</span> <span class="token function">buildOnDuplicateKey</span><span class="token punctuation">(</span>sb strings<span class="token punctuation">.</span>Builder<span class="token punctuation">,</span> odk <span class="token operator">*</span>OnDuplicateKey<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> sqliteDialect <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    standardSQL
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> postgreDialect <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    standardSQL
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="15-INSERT：builder-抽象与重构"><a href="#15-INSERT：builder-抽象与重构" class="headerlink" title="15. INSERT：builder 抽象与重构"></a>15. INSERT：builder 抽象与重构</h3><p><img src="z/f1fa1b34.png"><img src="z/60bf1454.png"><img src="z/47e29280.png"><img src="z/07c6ea80.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// build.go</span>
+<span class="token keyword">package</span> orm
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"my_framework/orm/internal/errs"</span>
+    <span class="token string">"my_framework/orm/model"</span>
+    <span class="token string">"strings"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> builder <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    sb    <span class="token operator">*</span>strings<span class="token punctuation">.</span>Builder
+    model <span class="token operator">*</span>model<span class="token punctuation">.</span>Model
+    args  <span class="token punctuation">[</span><span class="token punctuation">]</span>any
+
+    dialect Dialect
+    quoter  <span class="token builtin">byte</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>b <span class="token operator">*</span>builder<span class="token punctuation">)</span> <span class="token function">quote</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span>b<span class="token punctuation">.</span>quoter<span class="token punctuation">)</span>
+    b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+    b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span>b<span class="token punctuation">.</span>quoter<span class="token punctuation">)</span>
+<span class="token punctuation">}</span> 
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>builder<span class="token punctuation">)</span> <span class="token function">buildExpression</span><span class="token punctuation">(</span>expr Expression<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">switch</span> exp <span class="token operator">:=</span> expr<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">case</span> <span class="token boolean">nil</span><span class="token punctuation">:</span>
+    <span class="token keyword">case</span> Predicate<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true">// 处理p</span>
+        <span class="token boolean">_</span><span class="token punctuation">,</span> ok <span class="token operator">:=</span> exp<span class="token punctuation">.</span>left<span class="token punctuation">.</span><span class="token punctuation">(</span>Predicate<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> ok <span class="token punctuation">{</span>
+            s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'('</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> err <span class="token operator">:=</span> s<span class="token punctuation">.</span><span class="token function">buildExpression</span><span class="token punctuation">(</span>exp<span class="token punctuation">.</span>left<span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> ok <span class="token punctuation">{</span>
+            s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">')'</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> exp<span class="token punctuation">.</span>op <span class="token operator">!=</span> <span class="token string">""</span> <span class="token punctuation">{</span>
+            s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span>
+            s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>exp<span class="token punctuation">.</span>op<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">' '</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token boolean">_</span><span class="token punctuation">,</span> ok <span class="token operator">=</span> exp<span class="token punctuation">.</span>right<span class="token punctuation">.</span><span class="token punctuation">(</span>Predicate<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> ok <span class="token punctuation">{</span>
+            s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'('</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> err <span class="token operator">:=</span> s<span class="token punctuation">.</span><span class="token function">buildExpression</span><span class="token punctuation">(</span>exp<span class="token punctuation">.</span>right<span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+        <span class="token keyword">if</span> ok <span class="token punctuation">{</span>
+            s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">')'</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token keyword">case</span> Column<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true">// 防止where加as</span>
+        exp<span class="token punctuation">.</span>alias <span class="token operator">=</span> <span class="token string">""</span>
+        <span class="token keyword">return</span> s<span class="token punctuation">.</span><span class="token function">buildColumn</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span>
+    <span class="token keyword">case</span> value<span class="token punctuation">:</span>
+        s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'?'</span><span class="token punctuation">)</span>
+        s<span class="token punctuation">.</span><span class="token function">addArg</span><span class="token punctuation">(</span>exp<span class="token punctuation">.</span>val<span class="token punctuation">)</span>
+    <span class="token keyword">case</span> RawExpr<span class="token punctuation">:</span>
+        s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'('</span><span class="token punctuation">)</span>
+        s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>exp<span class="token punctuation">.</span>raw<span class="token punctuation">)</span>
+        s<span class="token punctuation">.</span><span class="token function">addArg</span><span class="token punctuation">(</span>exp<span class="token punctuation">.</span>args<span class="token operator">...</span><span class="token punctuation">)</span>
+        s<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">')'</span><span class="token punctuation">)</span>
+    <span class="token keyword">default</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnsupportedExpression</span><span class="token punctuation">(</span>expr<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span> 
+
+<span class="token comment" spellcheck="true">// ...</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// insert.go</span>
+<span class="token keyword">type</span> Inserter<span class="token punctuation">[</span>T any<span class="token punctuation">]</span> <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    builder
+    values  <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>T
+    db      <span class="token operator">*</span>DB
+    columns <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span>
+    <span class="token comment" spellcheck="true">//onDuplicateKey []Assignable</span>
+    onDuplicateKey <span class="token operator">*</span>OnDuplicateKey
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> NewInserter<span class="token punctuation">[</span>T any<span class="token punctuation">]</span><span class="token punctuation">(</span>db <span class="token operator">*</span>DB<span class="token punctuation">)</span> <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>T<span class="token punctuation">]</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Inserter<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">{</span>
+        builder<span class="token punctuation">:</span> builder<span class="token punctuation">{</span>
+            dialect<span class="token punctuation">:</span> db<span class="token punctuation">.</span>dialect<span class="token punctuation">,</span>
+            quoter<span class="token punctuation">:</span>  db<span class="token punctuation">.</span>dialect<span class="token punctuation">.</span><span class="token function">quoter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            sb<span class="token punctuation">:</span> <span class="token operator">&amp;</span>strings<span class="token punctuation">.</span>Builder<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        db<span class="token punctuation">:</span> db<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>Query<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>values<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> errs<span class="token punctuation">.</span>ErrInsertZeroRow
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">//var sb strings.Builder</span>
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"INSERT INTO "</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 拿到元数据</span>
+    <span class="token keyword">var</span> err <span class="token builtin">error</span>
+    i<span class="token punctuation">.</span>model<span class="token punctuation">,</span> err <span class="token operator">=</span> i<span class="token punctuation">.</span>db<span class="token punctuation">.</span>r<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>values<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 拼接表名</span>
+    <span class="token comment" spellcheck="true">//sb.WriteByte('`')</span>
+    <span class="token comment" spellcheck="true">//sb.WriteString(m.TableName)</span>
+    <span class="token comment" spellcheck="true">//sb.WriteByte('`')</span>
+    i<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>model<span class="token punctuation">.</span>TableName<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 显示地指定列的顺序,不然很难处理</span>
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'('</span><span class="token punctuation">)</span>
+
+    fields <span class="token operator">:=</span> i<span class="token punctuation">.</span>model<span class="token punctuation">.</span>Fields
+    <span class="token comment" spellcheck="true">// 用户指定了列</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>columns<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        fields <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>model<span class="token punctuation">.</span>Field<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>columns<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> fd <span class="token operator">:=</span> <span class="token keyword">range</span> i<span class="token punctuation">.</span>columns <span class="token punctuation">{</span>
+            fdMeta<span class="token punctuation">,</span> ok <span class="token operator">:=</span> i<span class="token punctuation">.</span>model<span class="token punctuation">.</span>FieldMap<span class="token punctuation">[</span>fd<span class="token punctuation">]</span>
+            <span class="token comment" spellcheck="true">// 传入错误的列</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnknownField</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            fields <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>fields<span class="token punctuation">,</span> fdMeta<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 遍历map的顺序是随机的,不能遍历fieldmap或colmap拼接(x,x,x,x)</span>
+    <span class="token keyword">for</span> idx<span class="token punctuation">,</span> field <span class="token operator">:=</span> <span class="token keyword">range</span> fields <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> idx <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">//i.sb.WriteByte('`')</span>
+        <span class="token comment" spellcheck="true">//i.sb.WriteString(field.ColName)</span>
+        <span class="token comment" spellcheck="true">//i.sb.WriteByte('`')</span>
+        i<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>field<span class="token punctuation">.</span>ColName<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">')'</span><span class="token punctuation">)</span>
+
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" VALUES "</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">//sb.WriteByte('(')</span>
+    i<span class="token punctuation">.</span>args <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span>any<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>values<span class="token punctuation">)</span><span class="token operator">*</span><span class="token function">len</span><span class="token punctuation">(</span>fields<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> j<span class="token punctuation">,</span> val <span class="token operator">:=</span> <span class="token keyword">range</span> i<span class="token punctuation">.</span>values <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> j <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'('</span><span class="token punctuation">)</span>
+        <span class="token keyword">for</span> idx<span class="token punctuation">,</span> field <span class="token operator">:=</span> <span class="token keyword">range</span> fields <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> idx <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+                i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'?'</span><span class="token punctuation">)</span>
+            <span class="token comment" spellcheck="true">// 读取参数</span>
+            arg <span class="token operator">:=</span> reflect<span class="token punctuation">.</span><span class="token function">ValueOf</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Elem</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                <span class="token function">FieldByName</span><span class="token punctuation">(</span>field<span class="token punctuation">.</span>GoName<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Interface</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token comment" spellcheck="true">//args = append(args, arg)</span>
+            i<span class="token punctuation">.</span><span class="token function">addArg</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">')'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// on duplicate</span>
+    <span class="token keyword">if</span> i<span class="token punctuation">.</span>onDuplicateKey <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        err <span class="token operator">=</span> i<span class="token punctuation">.</span>dialect<span class="token punctuation">.</span><span class="token function">buildOnDuplicateKey</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>i<span class="token punctuation">.</span>builder<span class="token punctuation">,</span> i<span class="token punctuation">.</span>onDuplicateKey<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Query<span class="token punctuation">{</span>
+        SQL<span class="token punctuation">:</span>  i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        Args<span class="token punctuation">:</span> i<span class="token punctuation">.</span>args<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> err
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// select.go</span>
+<span class="token keyword">type</span> Selector<span class="token punctuation">[</span>T any<span class="token punctuation">]</span> <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    builder
+    table   <span class="token builtin">string</span>
+    where   <span class="token punctuation">[</span><span class="token punctuation">]</span>Predicate
+    db      <span class="token operator">*</span>DB
+    columns <span class="token punctuation">[</span><span class="token punctuation">]</span>Selectable
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> NewSelector<span class="token punctuation">[</span>T any<span class="token punctuation">]</span><span class="token punctuation">(</span>db <span class="token operator">*</span>DB<span class="token punctuation">)</span> <span class="token operator">*</span>Selector<span class="token punctuation">[</span>T<span class="token punctuation">]</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Selector<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">{</span>
+        builder<span class="token punctuation">:</span> builder<span class="token punctuation">{</span>
+            dialect<span class="token punctuation">:</span> db<span class="token punctuation">.</span>dialect<span class="token punctuation">,</span>
+            quoter<span class="token punctuation">:</span>  db<span class="token punctuation">.</span>dialect<span class="token punctuation">.</span><span class="token function">quoter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            sb<span class="token punctuation">:</span> <span class="token operator">&amp;</span>strings<span class="token punctuation">.</span>Builder<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        db<span class="token punctuation">:</span> db<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Selector<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>Query<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//var sb strings.Builder</span>
+    s<span class="token punctuation">.</span>sb <span class="token operator">=</span> <span class="token operator">&amp;</span>strings<span class="token punctuation">.</span>Builder<span class="token punctuation">{</span><span class="token punctuation">}</span> <span class="token comment" spellcheck="true">// 指针类型一定要初始化</span>
+    <span class="token keyword">var</span> err <span class="token builtin">error</span>
+    s<span class="token punctuation">.</span>model<span class="token punctuation">,</span> err <span class="token operator">=</span> s<span class="token punctuation">.</span>db<span class="token punctuation">.</span>r<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token function">new</span><span class="token punctuation">(</span>T<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// new(T) 生成T的指针</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    sb <span class="token operator">:=</span> s<span class="token punctuation">.</span>sb
+
+    sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"SELECT "</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> err <span class="token operator">=</span> s<span class="token punctuation">.</span><span class="token function">buildColumns</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">` FROM `</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> s<span class="token punctuation">.</span>table <span class="token operator">==</span> <span class="token string">""</span> <span class="token punctuation">{</span>
+        sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'`'</span><span class="token punctuation">)</span>
+        sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>model<span class="token punctuation">.</span>TableName<span class="token punctuation">)</span>
+        sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'`'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">//segs := strings.Split(s.table, ".")</span>
+        <span class="token comment" spellcheck="true">//sb.WriteByte('`')</span>
+        sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>table<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">//sb.WriteByte('`')</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>where<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" WHERE "</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">:=</span> s<span class="token punctuation">.</span><span class="token function">buildPredicates</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>where<span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Query<span class="token punctuation">{</span>
+        SQL<span class="token punctuation">:</span>  sb<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        Args<span class="token punctuation">:</span> s<span class="token punctuation">.</span>args<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// db.go</span>
+<span class="token comment" spellcheck="true">// DB 是一个sql.DB的装饰器</span>
+<span class="token keyword">type</span> DB <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    r       model<span class="token punctuation">.</span>Registry
+    db      <span class="token operator">*</span>sql<span class="token punctuation">.</span>DB
+    creator valuer<span class="token punctuation">.</span>Creator
+    dialect Dialect
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">DBWithDialect</span><span class="token punctuation">(</span>d Dialect<span class="token punctuation">)</span> DBOption <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">func</span><span class="token punctuation">(</span>db <span class="token operator">*</span>DB<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        db<span class="token punctuation">.</span>dialect <span class="token operator">=</span> d
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">OpenDB</span><span class="token punctuation">(</span>db <span class="token operator">*</span>sql<span class="token punctuation">.</span>DB<span class="token punctuation">,</span> opts <span class="token operator">...</span>DBOption<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>DB<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    res <span class="token operator">:=</span> <span class="token operator">&amp;</span>DB<span class="token punctuation">{</span>
+        r<span class="token punctuation">:</span>       model<span class="token punctuation">.</span><span class="token function">NewRegistry</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        db<span class="token punctuation">:</span>      db<span class="token punctuation">,</span>
+        creator<span class="token punctuation">:</span> valuer<span class="token punctuation">.</span>NewUnsafeValue<span class="token punctuation">,</span>
+        dialect<span class="token punctuation">:</span> DialectMysql<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> opt <span class="token operator">:=</span> <span class="token keyword">range</span> opts <span class="token punctuation">{</span>
+        <span class="token function">opt</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> res<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// dialect.go</span>
+<span class="token keyword">var</span> <span class="token punctuation">(</span>
+    DialectMysql   Dialect <span class="token operator">=</span> mysqlDialect<span class="token punctuation">{</span><span class="token punctuation">}</span>
+    DialectSqlLite Dialect <span class="token operator">=</span> sqliteDialect<span class="token punctuation">{</span><span class="token punctuation">}</span>
+    DialectPostgre Dialect <span class="token operator">=</span> postgreDialect<span class="token punctuation">{</span><span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>m mysqlDialect<span class="token punctuation">)</span> <span class="token function">buildOnDuplicateKey</span><span class="token punctuation">(</span>b <span class="token operator">*</span>builder<span class="token punctuation">,</span> odk <span class="token operator">*</span>OnDuplicateKey<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" ON DUPLICATE KEY UPDATE "</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> idx<span class="token punctuation">,</span> assign <span class="token operator">:=</span> <span class="token keyword">range</span> odk<span class="token punctuation">.</span>assigns <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> idx <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">switch</span> a <span class="token operator">:=</span> assign<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> Assignment<span class="token punctuation">:</span>
+            fd<span class="token punctuation">,</span> ok <span class="token operator">:=</span> b<span class="token punctuation">.</span>model<span class="token punctuation">.</span>FieldMap<span class="token punctuation">[</span>a<span class="token punctuation">.</span>col<span class="token punctuation">]</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnknownField</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>col<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteString(fd.ColName)</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            b<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>fd<span class="token punctuation">.</span>ColName<span class="token punctuation">)</span>
+            b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"=?"</span><span class="token punctuation">)</span>
+            b<span class="token punctuation">.</span><span class="token function">addArg</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>val<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> Column<span class="token punctuation">:</span>
+            fd<span class="token punctuation">,</span> ok <span class="token operator">:=</span> b<span class="token punctuation">.</span>model<span class="token punctuation">.</span>FieldMap<span class="token punctuation">[</span>a<span class="token punctuation">.</span>name<span class="token punctuation">]</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnknownField</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteString(fd.ColName)</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            b<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>fd<span class="token punctuation">.</span>ColName<span class="token punctuation">)</span>
+            b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"=VALUES("</span><span class="token punctuation">)</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteString(fd.ColName)</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            b<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>fd<span class="token punctuation">.</span>ColName<span class="token punctuation">)</span>
+            b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">')'</span><span class="token punctuation">)</span>
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnsupportedAssignable</span><span class="token punctuation">(</span>assign<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="16-INSERT：SQLite-UPSERT-实现、方言抽象局限性"><a href="#16-INSERT：SQLite-UPSERT-实现、方言抽象局限性" class="headerlink" title="16. INSERT：SQLite UPSERT 实现、方言抽象局限性"></a>16. INSERT：SQLite UPSERT 实现、方言抽象局限性</h3><p><img src="z/f5ae2874.png"><img src="z/2672fdd7.png"><img src="z/0aa7384f.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// dialect.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s sqliteDialect<span class="token punctuation">)</span> <span class="token function">quoter</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">byte</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token string">'`'</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s sqliteDialect<span class="token punctuation">)</span> <span class="token function">buildOnDuplicateKey</span><span class="token punctuation">(</span>b <span class="token operator">*</span>builder<span class="token punctuation">,</span> odk <span class="token operator">*</span>OnDuplicateKey<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" ON CONFLICT("</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i<span class="token punctuation">,</span> col <span class="token operator">:=</span> <span class="token keyword">range</span> odk<span class="token punctuation">.</span>conflictColumns <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> i <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        err <span class="token operator">:=</span> b<span class="token punctuation">.</span><span class="token function">buildColumn</span><span class="token punctuation">(</span>Column<span class="token punctuation">{</span>
+            name<span class="token punctuation">:</span> col<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> err
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">") DO UPDATE SET "</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> idx<span class="token punctuation">,</span> assign <span class="token operator">:=</span> <span class="token keyword">range</span> odk<span class="token punctuation">.</span>assigns <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> idx <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">switch</span> a <span class="token operator">:=</span> assign<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token keyword">type</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">case</span> Assignment<span class="token punctuation">:</span>
+            fd<span class="token punctuation">,</span> ok <span class="token operator">:=</span> b<span class="token punctuation">.</span>model<span class="token punctuation">.</span>FieldMap<span class="token punctuation">[</span>a<span class="token punctuation">.</span>col<span class="token punctuation">]</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnknownField</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>col<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteString(fd.ColName)</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            b<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>fd<span class="token punctuation">.</span>ColName<span class="token punctuation">)</span>
+            b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"=?"</span><span class="token punctuation">)</span>
+            b<span class="token punctuation">.</span><span class="token function">addArg</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>val<span class="token punctuation">)</span>
+        <span class="token keyword">case</span> Column<span class="token punctuation">:</span>
+            fd<span class="token punctuation">,</span> ok <span class="token operator">:=</span> b<span class="token punctuation">.</span>model<span class="token punctuation">.</span>FieldMap<span class="token punctuation">[</span>a<span class="token punctuation">.</span>name<span class="token punctuation">]</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnknownField</span><span class="token punctuation">(</span>a<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteString(fd.ColName)</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            b<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>fd<span class="token punctuation">.</span>ColName<span class="token punctuation">)</span>
+            b<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"=excluded."</span><span class="token punctuation">)</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteString(fd.ColName)</span>
+            <span class="token comment" spellcheck="true">//b.sb.WriteByte('`')</span>
+            b<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>fd<span class="token punctuation">.</span>ColName<span class="token punctuation">)</span>
+        <span class="token keyword">default</span><span class="token punctuation">:</span>
+            <span class="token keyword">return</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnsupportedAssignable</span><span class="token punctuation">(</span>assign<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// insert_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestSqlite_upsert_Build</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    db<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">Open</span><span class="token punctuation">(</span><span class="token string">"sqlite"</span><span class="token punctuation">,</span>
+        <span class="token string">"file:test.db?cache=shared&amp;mode=memory"</span><span class="token punctuation">,</span>
+        <span class="token function">DBWithDialect</span><span class="token punctuation">(</span>DialectSqlLite<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    assert<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    tests <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        name <span class="token builtin">string</span>
+        i    QueryBuilder
+
+        wantErr   <span class="token builtin">error</span>
+        wantQuery <span class="token operator">*</span>Query
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token punctuation">{</span>
+            name<span class="token punctuation">:</span> <span class="token string">"upsert"</span><span class="token punctuation">,</span>
+            i<span class="token punctuation">:</span> NewInserter<span class="token punctuation">[</span>TestModel<span class="token punctuation">]</span><span class="token punctuation">(</span>db<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Values</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>TestModel<span class="token punctuation">{</span>
+                Id<span class="token punctuation">:</span> <span class="token number">12</span><span class="token punctuation">,</span> FirstName<span class="token punctuation">:</span> <span class="token string">"Tom"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">18</span><span class="token punctuation">,</span> LastName<span class="token punctuation">:</span> <span class="token operator">&amp;</span>sql<span class="token punctuation">.</span>NullString<span class="token punctuation">{</span>String<span class="token punctuation">:</span> <span class="token string">"Jerry"</span><span class="token punctuation">,</span> Valid<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">OnDuplicateKey</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">ConflictColumns</span><span class="token punctuation">(</span><span class="token string">"FirstName"</span><span class="token punctuation">,</span> <span class="token string">"Age"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Update</span><span class="token punctuation">(</span>
+                <span class="token function">Assign</span><span class="token punctuation">(</span><span class="token string">"FirstName"</span><span class="token punctuation">,</span> <span class="token string">"Deng"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token function">Assign</span><span class="token punctuation">(</span><span class="token string">"Age"</span><span class="token punctuation">,</span> <span class="token number">19</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">)</span><span class="token punctuation">,</span>
+            wantQuery<span class="token punctuation">:</span> <span class="token operator">&amp;</span>Query<span class="token punctuation">{</span>
+                SQL<span class="token punctuation">:</span> <span class="token string">"INSERT INTO `test_model`(`id`,`first_name`,`age`,`last_name`) VALUES (?,?,?,?)"</span> <span class="token operator">+</span>
+                    <span class="token string">" ON CONFLICT(`first_name`,`age`) UPDATE `first_name`=excluded.`first_name`,`age`=excluded.`age`;"</span><span class="token punctuation">,</span>
+                Args<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>any<span class="token punctuation">{</span>
+                    <span class="token function">int64</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"Tom"</span><span class="token punctuation">,</span> <span class="token function">int8</span><span class="token punctuation">(</span><span class="token number">18</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>sql<span class="token punctuation">.</span>NullString<span class="token punctuation">{</span>String<span class="token punctuation">:</span> <span class="token string">"Jerry"</span><span class="token punctuation">,</span> Valid<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token string">"Deng"</span><span class="token punctuation">,</span> <span class="token number">19</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            name<span class="token punctuation">:</span> <span class="token string">"update insert column"</span><span class="token punctuation">,</span>
+            i<span class="token punctuation">:</span> NewInserter<span class="token punctuation">[</span>TestModel<span class="token punctuation">]</span><span class="token punctuation">(</span>db<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Values</span><span class="token punctuation">(</span>
+                <span class="token operator">&amp;</span>TestModel<span class="token punctuation">{</span>
+                    Id<span class="token punctuation">:</span> <span class="token number">12</span><span class="token punctuation">,</span> FirstName<span class="token punctuation">:</span> <span class="token string">"Tom"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">18</span><span class="token punctuation">,</span> LastName<span class="token punctuation">:</span> <span class="token operator">&amp;</span>sql<span class="token punctuation">.</span>NullString<span class="token punctuation">{</span>String<span class="token punctuation">:</span> <span class="token string">"Jerry"</span><span class="token punctuation">,</span> Valid<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token operator">&amp;</span>TestModel<span class="token punctuation">{</span>
+                    Id<span class="token punctuation">:</span> <span class="token number">13</span><span class="token punctuation">,</span> FirstName<span class="token punctuation">:</span> <span class="token string">"Dummy"</span><span class="token punctuation">,</span> Age<span class="token punctuation">:</span> <span class="token number">19</span><span class="token punctuation">,</span> LastName<span class="token punctuation">:</span> <span class="token operator">&amp;</span>sql<span class="token punctuation">.</span>NullString<span class="token punctuation">{</span>String<span class="token punctuation">:</span> <span class="token string">"Shan"</span><span class="token punctuation">,</span> Valid<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">OnDuplicateKey</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Update</span><span class="token punctuation">(</span><span class="token function">C</span><span class="token punctuation">(</span><span class="token string">"FirstName"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">C</span><span class="token punctuation">(</span><span class="token string">"Age"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            wantQuery<span class="token punctuation">:</span> <span class="token operator">&amp;</span>Query<span class="token punctuation">{</span>
+                SQL<span class="token punctuation">:</span> <span class="token string">"INSERT INTO `test_model`(`id`,`first_name`,`age`,`last_name`) VALUES (?,?,?,?),(?,?,?,?)"</span> <span class="token operator">+</span>
+                    <span class="token string">" ON DUPLICATE KEY UPDATE `first_name`=VALUES(`first_name`),`age`=VALUES(`age`);"</span><span class="token punctuation">,</span>
+                Args<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>any<span class="token punctuation">{</span>
+                    <span class="token function">int64</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"Tom"</span><span class="token punctuation">,</span> <span class="token function">int8</span><span class="token punctuation">(</span><span class="token number">18</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>sql<span class="token punctuation">.</span>NullString<span class="token punctuation">{</span>String<span class="token punctuation">:</span> <span class="token string">"Jerry"</span><span class="token punctuation">,</span> Valid<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token function">int64</span><span class="token punctuation">(</span><span class="token number">13</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">"Dummy"</span><span class="token punctuation">,</span> <span class="token function">int8</span><span class="token punctuation">(</span><span class="token number">19</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>sql<span class="token punctuation">.</span>NullString<span class="token punctuation">{</span>String<span class="token punctuation">:</span> <span class="token string">"Shan"</span><span class="token punctuation">,</span> Valid<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> tc <span class="token operator">:=</span> <span class="token keyword">range</span> tests <span class="token punctuation">{</span>
+        t<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span>tc<span class="token punctuation">.</span>name<span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            q<span class="token punctuation">,</span> err <span class="token operator">:=</span> tc<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            assert<span class="token punctuation">.</span><span class="token function">Equal</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> tc<span class="token punctuation">.</span>wantErr<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span>
+            <span class="token punctuation">}</span>
+            assert<span class="token punctuation">.</span><span class="token function">Equal</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> tc<span class="token punctuation">.</span>wantQuery<span class="token punctuation">,</span> q<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="17-INSERT：INSERT-执行"><a href="#17-INSERT：INSERT-执行" class="headerlink" title="17. INSERT：INSERT 执行"></a>17. INSERT：INSERT 执行</h3><p><img src="z/fa0726fb.png"><img src="z/ab4ee5c3.png"><img src="z/020159cc.png"><img src="z/9f08215d.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// types.go</span>
+<span class="token keyword">type</span> Executor <span class="token keyword">interface</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//Exec(ctx context.Context) (sql.Result, error)</span>
+    <span class="token function">Exec</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">)</span> Result
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// result.go</span>
+<span class="token keyword">package</span> orm
+
+<span class="token keyword">import</span> <span class="token string">"database/sql"</span>
+
+<span class="token keyword">type</span> Result <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    err <span class="token builtin">error</span>
+    res sql<span class="token punctuation">.</span>Result
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r Result<span class="token punctuation">)</span> <span class="token function">LastInsertId</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int64</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> r<span class="token punctuation">.</span>err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">,</span> r<span class="token punctuation">.</span>err
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> r<span class="token punctuation">.</span>res<span class="token punctuation">.</span><span class="token function">LastInsertId</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r Result<span class="token punctuation">)</span> <span class="token function">RowsAffected</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int64</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> r<span class="token punctuation">.</span>err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">,</span> r<span class="token punctuation">.</span>err
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> r<span class="token punctuation">.</span>res<span class="token punctuation">.</span><span class="token function">RowsAffected</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r Result<span class="token punctuation">)</span> <span class="token function">Err</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> r<span class="token punctuation">.</span>err
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// insert_test.go</span>
+<span class="token keyword">func</span> <span class="token function">TestInserter_Exec</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    mockDB<span class="token punctuation">,</span> mock<span class="token punctuation">,</span> err <span class="token operator">:=</span> sqlmock<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+    db<span class="token punctuation">,</span> err <span class="token operator">:=</span> <span class="token function">OpenDB</span><span class="token punctuation">(</span>mockDB<span class="token punctuation">)</span>
+    require<span class="token punctuation">.</span><span class="token function">NoError</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+
+    tests <span class="token operator">:=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token keyword">struct</span> <span class="token punctuation">{</span>
+        name <span class="token builtin">string</span>
+        i    <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>TestModel<span class="token punctuation">]</span>
+        <span class="token comment" spellcheck="true">//wantRes Result</span>
+        wantErr  <span class="token builtin">error</span>
+        affected <span class="token builtin">int64</span>
+    <span class="token punctuation">}</span><span class="token punctuation">{</span>
+        <span class="token punctuation">{</span>
+            name<span class="token punctuation">:</span> <span class="token string">"query error"</span><span class="token punctuation">,</span>
+            i<span class="token punctuation">:</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>TestModel<span class="token punctuation">]</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> NewInserter<span class="token punctuation">[</span>TestModel<span class="token punctuation">]</span><span class="token punctuation">(</span>db<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Values</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>TestModel<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                    <span class="token function">Columns</span><span class="token punctuation">(</span><span class="token string">"Invalid"</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            wantErr<span class="token punctuation">:</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnknownField</span><span class="token punctuation">(</span><span class="token string">"Invalid"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            name<span class="token punctuation">:</span> <span class="token string">"db error"</span><span class="token punctuation">,</span>
+            i<span class="token punctuation">:</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>TestModel<span class="token punctuation">]</span> <span class="token punctuation">{</span>
+                mock<span class="token punctuation">.</span><span class="token function">ExpectExec</span><span class="token punctuation">(</span><span class="token string">"INSERT INTO .*"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                    <span class="token function">WillReturnError</span><span class="token punctuation">(</span>errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"db error"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token keyword">return</span> NewInserter<span class="token punctuation">[</span>TestModel<span class="token punctuation">]</span><span class="token punctuation">(</span>db<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Values</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>TestModel<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            wantErr<span class="token punctuation">:</span> errors<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span><span class="token string">"db error"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span>
+            name<span class="token punctuation">:</span> <span class="token string">"exec"</span><span class="token punctuation">,</span>
+            i<span class="token punctuation">:</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>TestModel<span class="token punctuation">]</span> <span class="token punctuation">{</span>
+                res <span class="token operator">:=</span> driver<span class="token punctuation">.</span><span class="token function">RowsAffected</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+                mock<span class="token punctuation">.</span><span class="token function">ExpectExec</span><span class="token punctuation">(</span><span class="token string">"INSERT INTO .*"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                    <span class="token function">WillReturnResult</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+                <span class="token keyword">return</span> NewInserter<span class="token punctuation">[</span>TestModel<span class="token punctuation">]</span><span class="token punctuation">(</span>db<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Values</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>TestModel<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            affected<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> tc <span class="token operator">:=</span> <span class="token keyword">range</span> tests <span class="token punctuation">{</span>
+        t<span class="token punctuation">.</span><span class="token function">Run</span><span class="token punctuation">(</span>tc<span class="token punctuation">.</span>name<span class="token punctuation">,</span> <span class="token keyword">func</span><span class="token punctuation">(</span>t <span class="token operator">*</span>testing<span class="token punctuation">.</span>T<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            res <span class="token operator">:=</span> tc<span class="token punctuation">.</span>i<span class="token punctuation">.</span><span class="token function">Exec</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            affected<span class="token punctuation">,</span> err <span class="token operator">:=</span> res<span class="token punctuation">.</span><span class="token function">RowsAffected</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            assert<span class="token punctuation">.</span><span class="token function">Equal</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> tc<span class="token punctuation">.</span>wantErr<span class="token punctuation">,</span> err<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span>
+            <span class="token punctuation">}</span>
+            assert<span class="token punctuation">.</span><span class="token function">Equal</span><span class="token punctuation">(</span>t<span class="token punctuation">,</span> tc<span class="token punctuation">.</span>affected<span class="token punctuation">,</span> affected<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// insert.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">Exec</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">)</span> Result <span class="token punctuation">{</span>
+    q<span class="token punctuation">,</span> err <span class="token operator">:=</span> i<span class="token punctuation">.</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> Result<span class="token punctuation">{</span>
+            err<span class="token punctuation">:</span> err<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    res<span class="token punctuation">,</span> err <span class="token operator">:=</span> i<span class="token punctuation">.</span>db<span class="token punctuation">.</span>db<span class="token punctuation">.</span><span class="token function">Exec</span><span class="token punctuation">(</span>q<span class="token punctuation">.</span>SQL<span class="token punctuation">,</span> q<span class="token punctuation">.</span>Args<span class="token operator">...</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> Result<span class="token punctuation">{</span>
+        err<span class="token punctuation">:</span> err<span class="token punctuation">,</span> res<span class="token punctuation">:</span> res<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="18-INSERT：unsafe-读取字段、总结与面试要点"><a href="#18-INSERT：unsafe-读取字段、总结与面试要点" class="headerlink" title="18. INSERT：unsafe 读取字段、总结与面试要点"></a>18. INSERT：unsafe 读取字段、总结与面试要点</h3><p><img src="z/6279f847.png"><img src="z/0c1ba29a.png"><img src="z/36e12da7.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// insert.go </span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">BuildUnsafe</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>Query<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>values<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> errs<span class="token punctuation">.</span>ErrInsertZeroRow
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">//var sb strings.Builder</span>
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"INSERT INTO "</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 拿到元数据</span>
+    <span class="token keyword">var</span> err <span class="token builtin">error</span>
+    i<span class="token punctuation">.</span>model<span class="token punctuation">,</span> err <span class="token operator">=</span> i<span class="token punctuation">.</span>db<span class="token punctuation">.</span>r<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>values<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 拼接表名</span>
+    <span class="token comment" spellcheck="true">//sb.WriteByte('`')</span>
+    <span class="token comment" spellcheck="true">//sb.WriteString(m.TableName)</span>
+    <span class="token comment" spellcheck="true">//sb.WriteByte('`')</span>
+    i<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>model<span class="token punctuation">.</span>TableName<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 显示地指定列的顺序,不然很难处理</span>
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'('</span><span class="token punctuation">)</span>
+
+    fields <span class="token operator">:=</span> i<span class="token punctuation">.</span>model<span class="token punctuation">.</span>Fields
+    <span class="token comment" spellcheck="true">// 用户指定了列</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>columns<span class="token punctuation">)</span> <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        fields <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>model<span class="token punctuation">.</span>Field<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>columns<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> fd <span class="token operator">:=</span> <span class="token keyword">range</span> i<span class="token punctuation">.</span>columns <span class="token punctuation">{</span>
+            fdMeta<span class="token punctuation">,</span> ok <span class="token operator">:=</span> i<span class="token punctuation">.</span>model<span class="token punctuation">.</span>FieldMap<span class="token punctuation">[</span>fd<span class="token punctuation">]</span>
+            <span class="token comment" spellcheck="true">// 传入错误的列</span>
+            <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnknownField</span><span class="token punctuation">(</span>fd<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            fields <span class="token operator">=</span> <span class="token function">append</span><span class="token punctuation">(</span>fields<span class="token punctuation">,</span> fdMeta<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 遍历map的顺序是随机的,不能遍历fieldmap或colmap拼接(x,x,x,x)</span>
+    <span class="token keyword">for</span> idx<span class="token punctuation">,</span> field <span class="token operator">:=</span> <span class="token keyword">range</span> fields <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> idx <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">//i.sb.WriteByte('`')</span>
+        <span class="token comment" spellcheck="true">//i.sb.WriteString(field.ColName)</span>
+        <span class="token comment" spellcheck="true">//i.sb.WriteByte('`')</span>
+        i<span class="token punctuation">.</span><span class="token function">quote</span><span class="token punctuation">(</span>field<span class="token punctuation">.</span>ColName<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">')'</span><span class="token punctuation">)</span>
+
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">" VALUES "</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">//sb.WriteByte('(')</span>
+    i<span class="token punctuation">.</span>args <span class="token operator">=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token punctuation">]</span>any<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token function">len</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>values<span class="token punctuation">)</span><span class="token operator">*</span><span class="token function">len</span><span class="token punctuation">(</span>fields<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> j<span class="token punctuation">,</span> val <span class="token operator">:=</span> <span class="token keyword">range</span> i<span class="token punctuation">.</span>values <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> j <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'('</span><span class="token punctuation">)</span>
+
+        v <span class="token operator">:=</span> i<span class="token punctuation">.</span>db<span class="token punctuation">.</span><span class="token function">creator</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>model<span class="token punctuation">,</span> val<span class="token punctuation">)</span>
+
+        <span class="token keyword">for</span> idx<span class="token punctuation">,</span> field <span class="token operator">:=</span> <span class="token keyword">range</span> fields <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> idx <span class="token operator">></span> <span class="token number">0</span> <span class="token punctuation">{</span>
+                i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">'?'</span><span class="token punctuation">)</span>
+            <span class="token comment" spellcheck="true">// 读取参数</span>
+            arg<span class="token punctuation">,</span> err <span class="token operator">:=</span> v<span class="token punctuation">.</span><span class="token function">Filed</span><span class="token punctuation">(</span>field<span class="token punctuation">.</span>GoName<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+            <span class="token punctuation">}</span>
+            <span class="token comment" spellcheck="true">//args = append(args, arg)</span>
+            i<span class="token punctuation">.</span><span class="token function">addArg</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">')'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// on duplicate</span>
+    <span class="token keyword">if</span> i<span class="token punctuation">.</span>onDuplicateKey <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        err <span class="token operator">=</span> i<span class="token punctuation">.</span>dialect<span class="token punctuation">.</span><span class="token function">buildOnDuplicateKey</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>i<span class="token punctuation">.</span>builder<span class="token punctuation">,</span> i<span class="token punctuation">.</span>onDuplicateKey<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteByte</span><span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Query<span class="token punctuation">{</span>
+        SQL<span class="token punctuation">:</span>  i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        Args<span class="token punctuation">:</span> i<span class="token punctuation">.</span>args<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> err
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// unsafe.go</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>u unsafeValue<span class="token punctuation">)</span> <span class="token function">Filed</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>any<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    fd<span class="token punctuation">,</span> ok <span class="token operator">:=</span> u<span class="token punctuation">.</span>model<span class="token punctuation">.</span>FieldMap<span class="token punctuation">[</span>name<span class="token punctuation">]</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnknownField</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    fdAddr <span class="token operator">:=</span> unsafe<span class="token punctuation">.</span><span class="token function">Pointer</span><span class="token punctuation">(</span><span class="token function">uintptr</span><span class="token punctuation">(</span>u<span class="token punctuation">.</span>address<span class="token punctuation">)</span> <span class="token operator">+</span> fd<span class="token punctuation">.</span>Offset<span class="token punctuation">)</span>
+    val <span class="token operator">:=</span> reflect<span class="token punctuation">.</span><span class="token function">NewAt</span><span class="token punctuation">(</span>fd<span class="token punctuation">.</span>Typ<span class="token punctuation">,</span> fdAddr<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> val<span class="token punctuation">.</span><span class="token function">Elem</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Interface</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// reflect.go</span>
+<span class="token keyword">package</span> valuer
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"database/sql"</span>
+    <span class="token string">"my_framework/orm/internal/errs"</span>
+    <span class="token string">"my_framework/orm/model"</span>
+    <span class="token string">"reflect"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> reflectValue <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    model <span class="token operator">*</span>model<span class="token punctuation">.</span>Model
+    <span class="token comment" spellcheck="true">// 对应T的指针</span>
+    <span class="token comment" spellcheck="true">//val any</span>
+    val reflect<span class="token punctuation">.</span>Value
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r reflectValue<span class="token punctuation">)</span> <span class="token function">Filed</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>any<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//if _, ok := r.val.Type().FieldByName(name); !ok {</span>
+    <span class="token comment" spellcheck="true">//    return nil, errors.New("")</span>
+    <span class="token comment" spellcheck="true">//}</span>
+    <span class="token comment" spellcheck="true">//val:=r.val.FieldByName(name)</span>
+    <span class="token comment" spellcheck="true">//if val==(reflect.Value{}){</span>
+    <span class="token comment" spellcheck="true">//    // err</span>
+    <span class="token comment" spellcheck="true">//}</span>
+    <span class="token keyword">return</span> r<span class="token punctuation">.</span>val<span class="token punctuation">.</span><span class="token function">FieldByName</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Interface</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">var</span> <span class="token boolean">_</span> Creator <span class="token operator">=</span> NewReflectValue
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r reflectValue<span class="token punctuation">)</span> <span class="token function">SetColumns</span><span class="token punctuation">(</span>rows <span class="token operator">*</span>sql<span class="token punctuation">.</span>Rows<span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token comment" spellcheck="true">// 把vals填入tp</span>
+    <span class="token comment" spellcheck="true">//tpValue := reflect.ValueOf(r.val)</span>
+    tpValue <span class="token operator">:=</span> r<span class="token punctuation">.</span>val
+    <span class="token keyword">for</span> i<span class="token punctuation">,</span> c <span class="token operator">:=</span> <span class="token keyword">range</span> cs <span class="token punctuation">{</span>
+        fd<span class="token punctuation">,</span> ok <span class="token operator">:=</span> r<span class="token punctuation">.</span>model<span class="token punctuation">.</span>ColumnMap<span class="token punctuation">[</span>c<span class="token punctuation">]</span>
+        <span class="token keyword">if</span> <span class="token operator">!</span>ok <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> errs<span class="token punctuation">.</span><span class="token function">NewErrUnknownColumn</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        tpValue<span class="token punctuation">.</span><span class="token function">Elem</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">FieldByName</span><span class="token punctuation">(</span>fd<span class="token punctuation">.</span>GoName<span class="token punctuation">)</span><span class="token punctuation">.</span>
+            <span class="token comment" spellcheck="true">//Set(reflect.ValueOf(vals[i]).Elem())</span>
+            <span class="token function">Set</span><span class="token punctuation">(</span>valElems<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">NewReflectValue</span><span class="token punctuation">(</span>model <span class="token operator">*</span>model<span class="token punctuation">.</span>Model<span class="token punctuation">,</span> val any<span class="token punctuation">)</span> Value <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> reflectValue<span class="token punctuation">{</span>
+        model<span class="token punctuation">:</span> model<span class="token punctuation">,</span>
+        val<span class="token punctuation">:</span>   reflect<span class="token punctuation">.</span><span class="token function">ValueOf</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Elem</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// value.go</span>
+<span class="token keyword">type</span> Value <span class="token keyword">interface</span> <span class="token punctuation">{</span>
+    <span class="token function">Filed</span><span class="token punctuation">(</span>name <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token punctuation">(</span>any<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span>
+    <span class="token function">SetColumns</span><span class="token punctuation">(</span>rows <span class="token operator">*</span>sql<span class="token punctuation">.</span>Rows<span class="token punctuation">)</span> <span class="token builtin">error</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="z/b91aff44.png"></p>
+<h3 id="20-第六周作业：丰富-SELECT-语句-选学-【更多IT资料加微信djy136928775638】"><a href="#20-第六周作业：丰富-SELECT-语句-选学-【更多IT资料加微信djy136928775638】" class="headerlink" title="20.第六周作业：丰富 SELECT 语句[选学]【更多IT资料加微信djy136928775638】"></a>20.第六周作业：丰富 SELECT 语句[选学]【更多IT资料加微信djy136928775638】</h3><h3 id="21-第六周-SELECT-作业讲解-选学-【更多IT资料加微信djy136928775638】"><a href="#21-第六周-SELECT-作业讲解-选学-【更多IT资料加微信djy136928775638】" class="headerlink" title="21.第六周 SELECT 作业讲解[选学]【更多IT资料加微信djy136928775638】"></a>21.第六周 SELECT 作业讲解[选学]【更多IT资料加微信djy136928775638】</h3><h1 id="13-第七周：ORM-框架之事务-API、AOP-方案与集成测试"><a href="#13-第七周：ORM-框架之事务-API、AOP-方案与集成测试" class="headerlink" title="13 第七周：ORM 框架之事务 API、AOP 方案与集成测试"></a>13 第七周：ORM 框架之事务 API、AOP 方案与集成测试</h1><h2 id="事务api"><a href="#事务api" class="headerlink" title="事务api"></a>事务api</h2><h3 id="1-事务-API：不同框架设计分析、设计与实现"><a href="#1-事务-API：不同框架设计分析、设计与实现" class="headerlink" title="1. 事务 API：不同框架设计分析、设计与实现"></a>1. 事务 API：不同框架设计分析、设计与实现</h3><p><img src="z/3f554a34.png"><img src="z/5ec981d0.png"><img src="z/9ed6f9ce.png"><img src="z/6f36bad9.png"><img src="z/187b3838.png"><br><img src="z/688d076e.png"><img src="z/6bda301c.png"><img src="z/ecd4eee2.png"><img src="z/89eecd3f.png"><img src="z/ce7932e5.png"></p>
+
             </div>
             <hr/>
 
@@ -10022,7 +10781,7 @@ pluginManagement {
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">549.5k</span>
+                <span class="white-color">574.3k</span>
             
 
             
