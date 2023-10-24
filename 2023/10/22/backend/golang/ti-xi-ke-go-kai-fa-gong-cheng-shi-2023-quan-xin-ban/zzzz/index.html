@@ -368,14 +368,14 @@ import (
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        10k
+                        10.4k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        54 分
+                        57 分
                     </div>
                     
                 
@@ -3202,7 +3202,135 @@ protoc --go_out=. --go-grpc_out=. user.proto
     UserSrvClient proto<span class="token punctuation">.</span>UserClient
 <span class="token punctuation">)</span>
 </code></pre>
-<h3 id="第2章负载均衡"><a href="#第2章负载均衡" class="headerlink" title="第2章负载均衡"></a>第2章负载均衡</h3><h4 id="2-1动态获取可用端口"><a href="#2-1动态获取可用端口" class="headerlink" title="2-1动态获取可用端口"></a>2-1动态获取可用端口</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
+<h3 id="第2章负载均衡"><a href="#第2章负载均衡" class="headerlink" title="第2章负载均衡"></a>第2章负载均衡</h3><h4 id="2-1动态获取可用端口"><a href="#2-1动态获取可用端口" class="headerlink" title="2-1动态获取可用端口"></a>2-1动态获取可用端口</h4><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// user-web/main.go</span>
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"github.com/gin-gonic/gin/binding"</span>
+    ut <span class="token string">"github.com/go-playground/universal-translator"</span>
+    <span class="token string">"github.com/go-playground/validator/v10"</span>
+    <span class="token string">"github.com/spf13/viper"</span>
+    <span class="token string">"go.uber.org/zap"</span>
+    <span class="token string">"mxshop-api/user-web/global"</span>
+    <span class="token string">"mxshop-api/user-web/initialize"</span>
+    <span class="token string">"mxshop-api/user-web/utils"</span>
+    myvalidator <span class="token string">"mxshop-api/user-web/validator"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token comment" spellcheck="true">// 初始化user_src连接(consul grpc)</span>
+    initialize<span class="token punctuation">.</span><span class="token function">InitSrvConn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">//port:=global.ServerConfig.Port</span>
+    viper<span class="token punctuation">.</span><span class="token function">AutomaticEnv</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 本地开发环境端口固定, 线上环境自动获取端口号</span>
+    debug <span class="token operator">:=</span> viper<span class="token punctuation">.</span><span class="token function">GetBool</span><span class="token punctuation">(</span><span class="token string">"MXSHOP_DEBUG"</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token operator">!</span>debug <span class="token punctuation">{</span>
+        port<span class="token punctuation">,</span> err <span class="token operator">:=</span> utils<span class="token punctuation">.</span><span class="token function">GetFreePort</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            global<span class="token punctuation">.</span>ServerConfig<span class="token punctuation">.</span>Port <span class="token operator">=</span> port
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// user-web/utils/addr.go</span>
+<span class="token keyword">package</span> utils
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"net"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">GetFreePort</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    addr<span class="token punctuation">,</span> err <span class="token operator">:=</span> net<span class="token punctuation">.</span><span class="token function">ResolveTCPAddr</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> <span class="token string">"localhost:0"</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    l<span class="token punctuation">,</span> err <span class="token operator">:=</span> net<span class="token punctuation">.</span><span class="token function">ListenTCP</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> addr<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    <span class="token keyword">defer</span> l<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> l<span class="token punctuation">.</span><span class="token function">Addr</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>net<span class="token punctuation">.</span>TCPAddr<span class="token punctuation">)</span><span class="token punctuation">.</span>Port<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// user_srv/main.go</span>
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"flag"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"github.com/hashicorp/consul/api"</span>
+    <span class="token string">"go.uber.org/zap"</span>
+    <span class="token string">"google.golang.org/grpc"</span>
+    <span class="token string">"google.golang.org/grpc/health"</span>
+    <span class="token string">"google.golang.org/grpc/health/grpc_health_v1"</span>
+    <span class="token string">"mxshop_srvs/user_srv/global"</span>
+    <span class="token string">"mxshop_srvs/user_srv/handler"</span>
+    <span class="token string">"mxshop_srvs/user_srv/initialize"</span>
+    <span class="token string">"mxshop_srvs/user_srv/proto"</span>
+    <span class="token string">"mxshop_srvs/user_srv/utils"</span>
+    <span class="token string">"net"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 让用户从命令行传递</span>
+    <span class="token comment" spellcheck="true">//IP := flag.String("ip", "0.0.0.0", "ip地址")</span>
+    IP <span class="token operator">:=</span> flag<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token string">"ip"</span><span class="token punctuation">,</span> <span class="token string">"0.0.0.0"</span><span class="token punctuation">,</span> <span class="token string">"ip地址"</span><span class="token punctuation">)</span>
+    Port <span class="token operator">:=</span> flag<span class="token punctuation">.</span><span class="token function">Int</span><span class="token punctuation">(</span><span class="token string">"port"</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token string">"端口号"</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// 初始化日志</span>
+    initialize<span class="token punctuation">.</span><span class="token function">InitLogger</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    initialize<span class="token punctuation">.</span><span class="token function">InitConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    initialize<span class="token punctuation">.</span><span class="token function">InitDB</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span>global<span class="token punctuation">.</span>ServerConfig<span class="token punctuation">)</span>
+
+    flag<span class="token punctuation">.</span><span class="token function">Parse</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span><span class="token string">"ip: "</span><span class="token punctuation">,</span> <span class="token operator">*</span>IP<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token operator">*</span>Port <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        <span class="token operator">*</span>Port<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">=</span> utils<span class="token punctuation">.</span><span class="token function">GetFreePort</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span><span class="token string">"port: "</span><span class="token punctuation">,</span> <span class="token operator">*</span>Port<span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token comment" spellcheck="true">// 生成对应的检查对象</span>
+    check <span class="token operator">:=</span> <span class="token operator">&amp;</span>api<span class="token punctuation">.</span>AgentServiceCheck<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 0.0.0.0可以用于监听,但是不能用来访问(比如consul进行健康检测)</span>
+        GRPC<span class="token punctuation">:</span>                           fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"127.0.0.1:%d"</span><span class="token punctuation">,</span> <span class="token operator">*</span>Port<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        Timeout<span class="token punctuation">:</span>                        <span class="token string">"5s"</span><span class="token punctuation">,</span>
+        Interval<span class="token punctuation">:</span>                       <span class="token string">"5s"</span><span class="token punctuation">,</span>
+        DeregisterCriticalServiceAfter<span class="token punctuation">:</span> <span class="token string">"15s"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// user_srv/utils/addr.go</span>
+<span class="token keyword">package</span> utils
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"net"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">GetFreePort</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    addr<span class="token punctuation">,</span> err <span class="token operator">:=</span> net<span class="token punctuation">.</span><span class="token function">ResolveTCPAddr</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> <span class="token string">"localhost:0"</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    l<span class="token punctuation">,</span> err <span class="token operator">:=</span> net<span class="token punctuation">.</span><span class="token function">ListenTCP</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> addr<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+    <span class="token keyword">defer</span> l<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> l<span class="token punctuation">.</span><span class="token function">Addr</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>net<span class="token punctuation">.</span>TCPAddr<span class="token punctuation">)</span><span class="token punctuation">.</span>Port<span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="2-2什么是负载均衡，负载均衡的策略有哪些？"><a href="#2-2什么是负载均衡，负载均衡的策略有哪些？" class="headerlink" title="2-2什么是负载均衡，负载均衡的策略有哪些？"></a>2-2什么是负载均衡，负载均衡的策略有哪些？</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
             </div>
             <hr/>
 
@@ -3861,7 +3989,7 @@ import (
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">587.9k</span>
+                <span class="white-color">588.3k</span>
             
 
             
