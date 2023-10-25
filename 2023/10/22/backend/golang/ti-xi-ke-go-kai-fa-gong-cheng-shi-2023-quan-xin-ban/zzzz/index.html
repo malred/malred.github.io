@@ -368,14 +368,14 @@ import (
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        10.4k
+                        10.9k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        57 分
+                        59 分
                     </div>
                     
                 
@@ -3176,7 +3176,11 @@ protoc --go_out=. --go-grpc_out=. user.proto
 
     <span class="token comment" spellcheck="true">//info := global.ServerConfig.UserSrvInfo</span>
     <span class="token comment" spellcheck="true">// 连接user grpc服务</span>
-    userConn<span class="token punctuation">,</span> err <span class="token operator">:=</span> grpc<span class="token punctuation">.</span><span class="token function">Dial</span><span class="token punctuation">(</span>fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"%s:%d"</span><span class="token punctuation">,</span> userSrvHost<span class="token punctuation">,</span> userSrvPort<span class="token punctuation">)</span><span class="token punctuation">,</span> grpc<span class="token punctuation">.</span><span class="token function">WithInsecure</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">//userConn, err := grpc.Dial(fmt.Sprintf("%s:%d", userSrvHost, userSrvPort), grpc.WithInsecure())</span>
+    userConn<span class="token punctuation">,</span> err <span class="token operator">:=</span> grpc<span class="token punctuation">.</span><span class="token function">Dial</span><span class="token punctuation">(</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"%s:%d"</span><span class="token punctuation">,</span> userSrvHost<span class="token punctuation">,</span> userSrvPort<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        grpc<span class="token punctuation">.</span><span class="token function">WithTransportCredentials</span><span class="token punctuation">(</span>insecure<span class="token punctuation">.</span><span class="token function">NewCredentials</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
     <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
         zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Errorw</span><span class="token punctuation">(</span><span class="token string">"[GetUserList] 连接 [用户服务失败] "</span><span class="token punctuation">,</span> <span class="token string">"msg"</span><span class="token punctuation">,</span> err<span class="token punctuation">.</span><span class="token function">Error</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
         <span class="token keyword">return</span>
@@ -3330,8 +3334,134 @@ protoc --go_out=. --go-grpc_out=. user.proto
     <span class="token keyword">return</span> l<span class="token punctuation">.</span><span class="token function">Addr</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>net<span class="token punctuation">.</span>TCPAddr<span class="token punctuation">)</span><span class="token punctuation">.</span>Port<span class="token punctuation">,</span> <span class="token boolean">nil</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h4 id="2-2什么是负载均衡，负载均衡的策略有哪些？"><a href="#2-2什么是负载均衡，负载均衡的策略有哪些？" class="headerlink" title="2-2什么是负载均衡，负载均衡的策略有哪些？"></a>2-2什么是负载均衡，负载均衡的策略有哪些？</h4><p><img src="b736302f.png"><img src="zzzz/e387e491.png"><img src="zzzz/a245927f.png"><img src="zzzz/6042a966.png"><img src="zzzz/670322e6.png"><br><img src="zzzz/d6ac1051.png"></p>
-<h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
+<h4 id="2-2什么是负载均衡，负载均衡的策略有哪些？"><a href="#2-2什么是负载均衡，负载均衡的策略有哪些？" class="headerlink" title="2-2什么是负载均衡，负载均衡的策略有哪些？"></a>2-2什么是负载均衡，负载均衡的策略有哪些？</h4><p><img src="b736302f.png"><img src="zzzz/e387e491.png"><img src="zzzz/a245927f.png"><img src="zzzz/6042a966.png"><img src="zzzz/670322e6.png"><br><img src="zzzz/d6ac1051.png"><img src="zzzz/7b84fa50.png"><img src="zzzz/f3e20a73.png"></p>
+<h4 id="2-3常用负载均衡算法"><a href="#2-3常用负载均衡算法" class="headerlink" title="2-3常用负载均衡算法"></a>2-3常用负载均衡算法</h4><p><img src="zzzz/575aae9f.png"><img src="zzzz/26ebb199.png"><img src="zzzz/ed7278fc.png"></p>
+<h4 id="2-4gin从consul中同步服务信息并进行负载均衡"><a href="#2-4gin从consul中同步服务信息并进行负载均衡" class="headerlink" title="2-4gin从consul中同步服务信息并进行负载均衡"></a>2-4gin从consul中同步服务信息并进行负载均衡</h4><p><img src="zzzz/6d1195d3.png"><img src="zzzz/7cafd8a4.png" alt="这个库import后执行初始化, 注册解析器"><img src="zzzz/8994ac79.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// user_srv/main.go</span>
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"flag"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"github.com/hashicorp/consul/api"</span>
+    <span class="token string">"github.com/satori/go.uuid"</span>
+    <span class="token string">"go.uber.org/zap"</span>
+    <span class="token string">"google.golang.org/grpc"</span>
+    <span class="token string">"google.golang.org/grpc/health"</span>
+    <span class="token string">"google.golang.org/grpc/health/grpc_health_v1"</span>
+    <span class="token string">"mxshop_srvs/user_srv/global"</span>
+    <span class="token string">"mxshop_srvs/user_srv/handler"</span>
+    <span class="token string">"mxshop_srvs/user_srv/initialize"</span>
+    <span class="token string">"mxshop_srvs/user_srv/proto"</span>
+    <span class="token string">"mxshop_srvs/user_srv/utils"</span>
+    <span class="token string">"net"</span>
+    <span class="token string">"os"</span>
+    <span class="token string">"os/signal"</span>
+    <span class="token string">"syscall"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// 创建注册对象</span>
+    registration <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>AgentServiceRegistration<span class="token punctuation">)</span>
+    registration<span class="token punctuation">.</span>Name <span class="token operator">=</span> sc<span class="token punctuation">.</span>Name
+    <span class="token comment" spellcheck="true">// 名称相同id不同, consul就不会覆盖</span>
+    serviceID <span class="token operator">:=</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"%s"</span><span class="token punctuation">,</span> uuid<span class="token punctuation">.</span><span class="token function">NewV4</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">//registration.ID = sc.Name</span>
+    registration<span class="token punctuation">.</span>ID <span class="token operator">=</span> serviceID
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token keyword">go</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 这里是阻塞代码, 后面的执行不到, 所以改造为异步</span>
+        err <span class="token operator">=</span> server<span class="token punctuation">.</span><span class="token function">Serve</span><span class="token punctuation">(</span>lis<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"failed to start grpc: "</span> <span class="token operator">+</span> err<span class="token punctuation">.</span><span class="token function">Error</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// 接收终止信号, 注销服务</span>
+    quit <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">chan</span> os<span class="token punctuation">.</span>Signal<span class="token punctuation">)</span>
+    signal<span class="token punctuation">.</span><span class="token function">Notify</span><span class="token punctuation">(</span>quit<span class="token punctuation">,</span> syscall<span class="token punctuation">.</span>SIGINT<span class="token punctuation">,</span> syscall<span class="token punctuation">.</span>SIGTERM<span class="token punctuation">)</span>
+    <span class="token operator">&lt;-</span>quit
+    <span class="token keyword">if</span> err <span class="token operator">=</span> cli<span class="token punctuation">.</span><span class="token function">Agent</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">ServiceDeregister</span><span class="token punctuation">(</span>serviceID<span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span><span class="token string">"注销失败"</span><span class="token punctuation">)</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span><span class="token string">"注销成功"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// user-web/test/grpclb_test/main.go</span>
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token boolean">_</span> <span class="token string">"github.com/mbobakov/grpc-consul-resolver"</span>
+    <span class="token string">"google.golang.org/grpc"</span>
+    <span class="token string">"google.golang.org/grpc/credentials/insecure"</span>
+    <span class="token string">"log"</span>
+    <span class="token string">"mxshop-api/user-web/proto"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    conn<span class="token punctuation">,</span> err <span class="token operator">:=</span> grpc<span class="token punctuation">.</span><span class="token function">Dial</span><span class="token punctuation">(</span>
+        <span class="token string">"consul://127.0.0.1:8500/user_srv?wait=14s&amp;tag=imooc"</span><span class="token punctuation">,</span>
+        grpc<span class="token punctuation">.</span><span class="token function">WithTransportCredentials</span><span class="token punctuation">(</span>insecure<span class="token punctuation">.</span><span class="token function">NewCredentials</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        grpc<span class="token punctuation">.</span><span class="token function">WithDefaultServiceConfig</span><span class="token punctuation">(</span><span class="token string">`{"loadBalancingPolicy": "round_robin"}`</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        log<span class="token punctuation">.</span><span class="token function">Fatal</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">defer</span> conn<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    usc <span class="token operator">:=</span> proto<span class="token punctuation">.</span><span class="token function">NewUserClient</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">10</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+        rsp<span class="token punctuation">,</span> err <span class="token operator">:=</span> usc<span class="token punctuation">.</span><span class="token function">GetUserList</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>proto<span class="token punctuation">.</span>PageInfo<span class="token punctuation">{</span>
+            Pn<span class="token punctuation">:</span>    <span class="token number">1</span><span class="token punctuation">,</span>
+            PSize<span class="token punctuation">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">for</span> i<span class="token punctuation">,</span> data <span class="token operator">:=</span> <span class="token keyword">range</span> rsp<span class="token punctuation">.</span>Data <span class="token punctuation">{</span>
+            fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>i<span class="token punctuation">,</span> data<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="2-6gin集成grpc的负载均衡"><a href="#2-6gin集成grpc的负载均衡" class="headerlink" title="2-6gin集成grpc的负载均衡"></a>2-6gin集成grpc的负载均衡</h4><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// user-web/initialize/srv_conn.go</span>
+<span class="token keyword">package</span> initialize
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"github.com/hashicorp/consul/api"</span>
+    <span class="token boolean">_</span> <span class="token string">"github.com/mbobakov/grpc-consul-resolver"</span>
+    <span class="token string">"go.uber.org/zap"</span>
+    <span class="token string">"google.golang.org/grpc"</span>
+    <span class="token string">"google.golang.org/grpc/credentials/insecure"</span>
+    <span class="token string">"mxshop-api/user-web/global"</span>
+    <span class="token string">"mxshop-api/user-web/proto"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">InitSrvConn</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    g <span class="token operator">:=</span> global<span class="token punctuation">.</span>ServerConfig
+    conn<span class="token punctuation">,</span> err <span class="token operator">:=</span> grpc<span class="token punctuation">.</span><span class="token function">Dial</span><span class="token punctuation">(</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"consul://%s:%d/%s?wait=14s"</span><span class="token punctuation">,</span>
+            g<span class="token punctuation">.</span>ConsulInfo<span class="token punctuation">.</span>Host<span class="token punctuation">,</span> g<span class="token punctuation">.</span>ConsulInfo<span class="token punctuation">.</span>Port<span class="token punctuation">,</span> g<span class="token punctuation">.</span>UserSrvInfo<span class="token punctuation">.</span>Name<span class="token punctuation">,</span>
+        <span class="token punctuation">)</span><span class="token punctuation">,</span>
+        grpc<span class="token punctuation">.</span><span class="token function">WithTransportCredentials</span><span class="token punctuation">(</span>insecure<span class="token punctuation">.</span><span class="token function">NewCredentials</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        grpc<span class="token punctuation">.</span><span class="token function">WithDefaultServiceConfig</span><span class="token punctuation">(</span><span class="token string">`{"loadBalancingPolicy": "round_robin"}`</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Fatalf</span><span class="token punctuation">(</span><span class="token string">"[InitSrvConn] 连接 [用户服务失败]"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    global<span class="token punctuation">.</span>UserSrvClient <span class="token operator">=</span> proto<span class="token punctuation">.</span><span class="token function">NewUserClient</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="第3章分布式配置中心"><a href="#第3章分布式配置中心" class="headerlink" title="第3章分布式配置中心"></a>第3章分布式配置中心</h3><h4 id="3-1为什么需要配置中心"><a href="#3-1为什么需要配置中心" class="headerlink" title="3-1为什么需要配置中心"></a>3-1为什么需要配置中心</h4><p><img src="zzzz/1807ef58.png"><img src="zzzz/05068d73.png"><img src="zzzz/1f05a815.png"><img src="zzzz/4baead12.png"></p>
+<h4 id="3-2配置中心选型-apollovsnacos"><a href="#3-2配置中心选型-apollovsnacos" class="headerlink" title="3-2配置中心选型-apollovsnacos"></a>3-2配置中心选型-apollovsnacos</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
             </div>
             <hr/>
 
@@ -3990,7 +4120,7 @@ import (
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">588.3k</span>
+                <span class="white-color">588.8k</span>
             
 
             
