@@ -364,14 +364,14 @@ webpack(202011)(架构)(全)任务 1：1.201122.webpack 的核心概念_【海�
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        6.2k
+                        7k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        31 分
+                        36 分
                     </div>
                     
                 
@@ -2108,7 +2108,273 @@ estraverse<span class="token punctuation">.</span><span class="token function">t
 
 console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>tokens<span class="token punctuation">)</span>
 </code></pre>
-<h3 id="任务3：3-词法分析"><a href="#任务3：3-词法分析" class="headerlink" title="任务3：3.词法分析"></a>任务3：3.词法分析</h3>
+<h3 id="任务3：3-词法分析"><a href="#任务3：3-词法分析" class="headerlink" title="任务3：3.词法分析"></a>任务3：3.词法分析</h3><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// tokenizer.js </span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>
+    LeftParentheses<span class="token punctuation">,</span>
+    JSXIdentifier<span class="token punctuation">,</span>
+    AttributeKey<span class="token punctuation">,</span>
+    AttributeVal<span class="token punctuation">,</span> RightParentheses<span class="token punctuation">,</span> JSXText<span class="token punctuation">,</span> BackSlash<span class="token punctuation">,</span> AttributeExpressionValue
+<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./tokenTypes'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> LETTERS <span class="token operator">=</span> <span class="token regex">/[a-z0-9]/</span>
+
+<span class="token comment" spellcheck="true">// const curToken = {type: '', value: ''}</span>
+<span class="token keyword">let</span> curToken <span class="token operator">=</span> <span class="token punctuation">{</span>type<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">,</span> value<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">}</span>
+<span class="token keyword">let</span> tokens <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+<span class="token comment" spellcheck="true">// 当前token收集完毕,存入tokens</span>
+<span class="token keyword">function</span> <span class="token function">emit</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 还原token</span>
+    <span class="token comment" spellcheck="true">// curToken.type = curToken.value = ""</span>
+    curToken <span class="token operator">=</span> <span class="token punctuation">{</span>type<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">,</span> value<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">}</span>
+    tokens<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>token<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 开始解析 &lt;html</span>
+<span class="token keyword">function</span> <span class="token function">start</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'&lt;'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span><span class="token punctuation">{</span>type<span class="token punctuation">:</span> LeftParentheses<span class="token punctuation">,</span> value<span class="token punctuation">:</span> <span class="token string">'&lt;'</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> foundLeftParentheses <span class="token comment" spellcheck="true">// 找到了&lt;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'第一个字符必须是&lt;'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 结束</span>
+<span class="token keyword">function</span> <span class="token function">eof</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>curToken<span class="token punctuation">.</span>value<span class="token punctuation">.</span>length <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token function">emit</span><span class="token punctuation">(</span>curToken<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 找到&lt;状态</span>
+<span class="token keyword">function</span> <span class="token function">foundLeftParentheses</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">// char h1</span>
+    <span class="token comment" spellcheck="true">// char是小写字母0-9</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>LETTERS<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        curToken<span class="token punctuation">.</span>type <span class="token operator">=</span> JSXIdentifier
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> jsxIdentifier <span class="token comment" spellcheck="true">// 继续收集标识符</span>
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'/'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 双标签结束 -> 单标签又如何做</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span><span class="token punctuation">{</span>type<span class="token punctuation">:</span> BackSlash<span class="token punctuation">,</span> value<span class="token punctuation">:</span> <span class="token string">'/'</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> foundLeftParentheses
+    <span class="token punctuation">}</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'该字符不是&lt;'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 收集标识符</span>
+<span class="token keyword">function</span> <span class="token function">jsxIdentifier</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>LETTERS<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> jsxIdentifier
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">' '</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 遇到空格 -> 标识符收集结束</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span>curToken<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">// 标签名称解析完, 接着解析标签内属性 &lt;h1 id=xxx</span>
+        <span class="token keyword">return</span> attribute
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'>'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// todo: malred</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span>curToken<span class="token punctuation">)</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span><span class="token punctuation">{</span>type<span class="token punctuation">:</span> RightParentheses<span class="token punctuation">,</span> value<span class="token punctuation">:</span> <span class="token string">'>'</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> foundRightParentheses
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> eof
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 标签内属性</span>
+<span class="token keyword">function</span> <span class="token function">attribute</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>LETTERS<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        curToken<span class="token punctuation">.</span>type <span class="token operator">=</span> AttributeKey
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> attributeKey
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'>'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// todo malred</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span><span class="token punctuation">{</span>type<span class="token punctuation">:</span> RightParentheses<span class="token punctuation">,</span> value<span class="token punctuation">:</span> <span class="token string">">"</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> foundRightParentheses
+    <span class="token punctuation">}</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'key标识符语法错误'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 收集key token</span>
+<span class="token keyword">function</span> <span class="token function">attributeKey</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>LETTERS<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> attributeKey
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'='</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span>curToken<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> attributeValue
+    <span class="token punctuation">}</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'value标识符语法错误'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 解析标签内属性的值</span>
+<span class="token keyword">function</span> <span class="token function">attributeValue</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'"'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        curToken<span class="token punctuation">.</span>type <span class="token operator">=</span> AttributeKey
+        <span class="token comment" spellcheck="true">// 要不要加"val"</span>
+        <span class="token comment" spellcheck="true">// curToken.value += char</span>
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> attributeStringValue
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'{'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        curToken<span class="token punctuation">.</span>type <span class="token operator">=</span> AttributeExpressionValue
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> attributeExpressionValue
+    <span class="token punctuation">}</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">'value标识符语法错误'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// name={xxx}</span>
+<span class="token keyword">function</span> <span class="token function">attributeExpressionValue</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>LETTERS<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> attributeExpressionValue
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'}'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 属性解析结束了</span>
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token function">emit</span><span class="token punctuation">(</span>curToken<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> tryLeaveAttribute
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 读取标签内字符串属性值</span>
+<span class="token keyword">function</span> <span class="token function">attributeStringValue</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// todo 字符串的值应该不止0-9a-z</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>LETTERS<span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> attributeStringValue
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'"'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 属性解析结束了</span>
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token function">emit</span><span class="token punctuation">(</span>curToken<span class="token punctuation">)</span>
+        <span class="token keyword">return</span> tryLeaveAttribute
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 标签内属性解析完后试图离开属性解析(属性可能有多个)</span>
+<span class="token keyword">function</span> <span class="token function">tryLeaveAttribute</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 隔了一个空格可能是新属性</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">' '</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> attribute
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'>'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 标签结束</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span><span class="token punctuation">{</span>type<span class="token punctuation">:</span> RightParentheses<span class="token punctuation">,</span> value<span class="token punctuation">:</span> <span class="token string">'>'</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> foundRightParentheses
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 标签结束标记找到</span>
+<span class="token keyword">function</span> <span class="token function">foundRightParentheses</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'&lt;'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 新标签解析</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span><span class="token punctuation">{</span>type<span class="token punctuation">:</span> LeftParentheses<span class="token punctuation">,</span> value<span class="token punctuation">:</span> <span class="token string">'&lt;'</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> foundLeftParentheses
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 可能是文本</span>
+        curToken<span class="token punctuation">.</span>type <span class="token operator">=</span> JSXText
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> jsxText
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 解析标签内文本</span>
+<span class="token keyword">function</span> <span class="token function">jsxText</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 新标签</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>char <span class="token operator">===</span> <span class="token string">'&lt;'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span>curToken<span class="token punctuation">)</span>
+        <span class="token function">emit</span><span class="token punctuation">(</span><span class="token punctuation">{</span>type<span class="token punctuation">:</span> LeftParentheses<span class="token punctuation">,</span> value<span class="token punctuation">:</span> <span class="token string">'&lt;'</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> foundLeftParentheses
+    <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        curToken<span class="token punctuation">.</span>value <span class="token operator">+</span><span class="token operator">=</span> char
+        <span class="token keyword">return</span> jsxText
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+
+<span class="token keyword">function</span> <span class="token function">tokenizer</span><span class="token punctuation">(</span>input<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// let tokens = []</span>
+    <span class="token keyword">let</span> state <span class="token operator">=</span> start <span class="token comment" spellcheck="true">// 开始状态</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> char <span class="token keyword">of</span> input<span class="token punctuation">)</span> <span class="token punctuation">{</span><span class="token comment" spellcheck="true">// 遍历字符</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>state <span class="token operator">===</span> eof<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">break</span>
+        <span class="token punctuation">}</span>
+        state <span class="token operator">=</span> <span class="token function">state</span><span class="token punctuation">(</span>char<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> tokens
+<span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+    tokenizer
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> source_code <span class="token operator">=</span> <span class="token template-string"><span class="token string">`&lt;h1 id="title" name="malred" >&lt;span>hello&lt;/span>world&lt;/h1>`</span></span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">tokenizer</span><span class="token punctuation">(</span>source_code<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">let</span> source_code1 <span class="token operator">=</span> <span class="token template-string"><span class="token string">`&lt;h1 id="title" name="malred" token={xxx}>&lt;span>hello&lt;/span>world&lt;/h1>`</span></span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">tokenizer</span><span class="token punctuation">(</span>source_code1<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// 无法解析 单标签 -> src里的/ -> 报错</span>
+<span class="token comment" spellcheck="true">// let source_code2 = `&lt;img src="./index.css" />`</span>
+<span class="token keyword">let</span> source_code2 <span class="token operator">=</span> <span class="token template-string"><span class="token string">`&lt;!--&lt;img src="index.css" />-->`</span></span>
+<span class="token comment" spellcheck="true">// console.log(tokenizer(source_code2))</span>
+
+<span class="token comment" spellcheck="true">// 无法解析 无 / 的标签</span>
+<span class="token comment" spellcheck="true">// let source_code1 = `&lt;!DOCTYPE html></span>
+<span class="token comment" spellcheck="true">// &lt;html lang="en"></span>
+<span class="token comment" spellcheck="true">// &lt;head></span>
+<span class="token comment" spellcheck="true">//     &lt;meta charset="UTF-8"></span>
+<span class="token comment" spellcheck="true">//     &lt;title>Title&lt;/title></span>
+<span class="token comment" spellcheck="true">// &lt;/head></span>
+<span class="token comment" spellcheck="true">// &lt;body></span>
+<span class="token comment" spellcheck="true">//</span>
+<span class="token comment" spellcheck="true">// &lt;/body></span>
+<span class="token comment" spellcheck="true">// &lt;/html>`</span>
+<span class="token comment" spellcheck="true">// console.log(tokenizer(source_code1))</span>
+
+<span class="token keyword">let</span> source_code4 <span class="token operator">=</span> <span class="token template-string"><span class="token string">`&lt;head>
+    &lt;title>Title&lt;/title>
+&lt;/head>
+&lt;body>
+
+&lt;/body>
+&lt;/html>`</span></span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">tokenizer</span><span class="token punctuation">(</span>source_code4<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-js//"><code class="language-js//">/*
+[
+    {type: 'Punctuator', value: '<'},
+    {type: 'JSXIdentifier', value: 'h1'},
+    {type: 'JSXIdentifier', value: 'id'},
+    {type: 'Punctuator', value: '='},
+    {type: 'String', value: '"title"'},
+    {type: 'Punctuator', value: '>'},
+    {type: 'Punctuator', value: '<'},
+    {type: 'JSXIdentifier', value: 'span'},
+    {type: 'Punctuator', value: '>'},
+    {type: 'JSXText', value: 'hello'},
+    {type: 'Punctuator', value: '<'},
+    {type: 'Punctuator', value: '/'},
+    {type: 'JSXIdentifier', value: 'span'},
+    {type: 'Punctuator', value: '>'},
+    {type: 'JSXText', value: 'world'},
+    {type: 'Punctuator', value: '<'},
+    {type: 'Punctuator', value: '/'},
+    {type: 'JSXIdentifier', value: 'h1'},
+    {type: 'Punctuator', value: '>'}
+]
+*/
+
+exports.LeftParentheses = 'LeftParentheses' // <
+exports.RightParentheses = 'RightParentheses' // >
+exports.JSXIdentifier = 'JSXIdentifier' // 标识符
+exports.JSXText = 'JSXText' // 文本
+exports.BackSlash = 'BackSlash' // /
+exports.AttributeKey = 'AttributeKey' // 标签属性key
+exports.AttributeVal = 'AttributeVal' // 标签属性value
+exports.AttributeExpressionValue = 'AttributeExpressionValue' // 标签属性value
+
+
+// const LeftParentheses = 'LeftParentheses' // <
+// const JSXIdentifier = 'JSXIdentifier' // 标识符
+// const AttributeKey = 'AttributeKey' // 标签属性key
+// const AttributeVal = 'AttributeVal' // 标签属性value
+</code></pre>
+<h3 id="-1"><a href="#-1" class="headerlink" title=""></a></h3>
             </div>
             <hr/>
 
@@ -2760,7 +3026,7 @@ import "github.com/beego/beego/v2/serve</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">592.8k</span>
+                <span class="white-color">594.9k</span>
             
 
             
