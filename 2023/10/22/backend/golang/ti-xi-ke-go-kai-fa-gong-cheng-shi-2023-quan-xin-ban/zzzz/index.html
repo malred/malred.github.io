@@ -368,14 +368,14 @@ import (
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        23.9k
+                        26k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        133 分
+                        144 分
                     </div>
                     
                 
@@ -7282,8 +7282,554 @@ protoc --go_out=. --go-grpc_out=. user.proto
 </code></pre>
 <h5 id="2-4前端直传oss的流程"><a href="#2-4前端直传oss的流程" class="headerlink" title="2-4前端直传oss的流程"></a>2-4前端直传oss的流程</h5><p><img src="d8379f77.png" alt="前端如果用sdk传, 则需要存放和传输密钥, 很不安全"><img src="e0f977c0.png" alt="解决方案"><br><img src="b259d21a.png" alt="如果传输后需要一些业务逻辑,可以使用这种带回调的直传"></p>
 <h5 id="2-5gin集成前端直传文件"><a href="#2-5gin集成前端直传文件" class="headerlink" title="2-5gin集成前端直传文件"></a>2-5gin集成前端直传文件</h5><p><img src="99e3dc34.png"><img src="5b2f376a.png"></p>
-<h5 id="2-6为什么我们需要内网穿透"><a href="#2-6为什么我们需要内网穿透" class="headerlink" title="2-6为什么我们需要内网穿透"></a>2-6为什么我们需要内网穿透</h5><p><img src="29f13e48.png"></p>
-<h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
+<h5 id="2-6为什么我们需要内网穿透"><a href="#2-6为什么我们需要内网穿透" class="headerlink" title="2-6为什么我们需要内网穿透"></a>2-6为什么我们需要内网穿透</h5><p><img src="29f13e48.png"><br>…<br><img src="a3712d4a.png"></p>
+<h2 id="第13周-库存服务和分布式锁"><a href="#第13周-库存服务和分布式锁" class="headerlink" title="第13周 库存服务和分布式锁"></a>第13周 库存服务和分布式锁</h2><h3 id="第1章库存服务"><a href="#第1章库存服务" class="headerlink" title="第1章库存服务"></a>第1章库存服务</h3><h4 id="1-1库存服务的重要性"><a href="#1-1库存服务的重要性" class="headerlink" title="1-1库存服务的重要性"></a>1-1库存服务的重要性</h4><p><img src="8e0a85f6.png"></p>
+<h4 id="1-2表结构设计"><a href="#1-2表结构设计" class="headerlink" title="1-2表结构设计"></a>1-2表结构设计</h4><p><img src="7c5cb869.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/model/inventory.go</span>
+<span class="token keyword">package</span> model
+
+<span class="token comment" spellcheck="true">// 商品可以放多个仓库, 仓库可以放多个商品</span>
+<span class="token comment" spellcheck="true">// 这里就用最简单的情况, 仓库里有库存</span>
+<span class="token comment" spellcheck="true">//type Stock struct {</span>
+<span class="token comment" spellcheck="true">//    BaseModel</span>
+<span class="token comment" spellcheck="true">//    Name    string</span>
+<span class="token comment" spellcheck="true">//    Address string</span>
+<span class="token comment" spellcheck="true">//}</span>
+
+<span class="token comment" spellcheck="true">// Inventory</span>
+<span class="token keyword">type</span> Inventory <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    BaseModel
+    Goods <span class="token builtin">int32</span> <span class="token string">`gorm:"type:int;index"`</span> <span class="token comment" spellcheck="true">// 关键字段加索引</span>
+    <span class="token comment" spellcheck="true">// Stocks 库存</span>
+    Stocks <span class="token builtin">int32</span> <span class="token string">`gorm:"type:int"`</span>
+    <span class="token comment" spellcheck="true">//Stock  Stock</span>
+    <span class="token comment" spellcheck="true">// 用于实现分布式乐观锁</span>
+    Version <span class="token builtin">int32</span> <span class="token string">`gorm:"type:int"`</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/model/main/main.go</span>
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token boolean">_</span> <span class="token string">"github.com/anaskhan96/go-password-encoder"</span>
+    <span class="token string">"gorm.io/driver/mysql"</span>
+    <span class="token string">"gorm.io/gorm"</span>
+    <span class="token string">"gorm.io/gorm/logger"</span>
+    <span class="token string">"gorm.io/gorm/schema"</span>
+    <span class="token string">"log"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/model"</span>
+    <span class="token string">"os"</span>
+    <span class="token string">"time"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    dsn <span class="token operator">:=</span> <span class="token string">"root:123456@tcp(127.0.0.1:3307)/mxshop_inventory_srv?charset=utf8mb4&amp;parseTime=True&amp;loc=Local"</span>
+
+    newLogger <span class="token operator">:=</span> logger<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>
+        log<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>os<span class="token punctuation">.</span>Stdout<span class="token punctuation">,</span> <span class="token string">"\r\n"</span><span class="token punctuation">,</span> log<span class="token punctuation">.</span>LstdFlags<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// io writer</span>
+        logger<span class="token punctuation">.</span>Config<span class="token punctuation">{</span>
+            SlowThreshold<span class="token punctuation">:</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 慢 SQL 阈值</span>
+            LogLevel<span class="token punctuation">:</span>      logger<span class="token punctuation">.</span>Info<span class="token punctuation">,</span>
+            Colorful<span class="token punctuation">:</span>      <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 禁用彩色打印</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// 全局模式</span>
+    db<span class="token punctuation">,</span> err <span class="token operator">:=</span> gorm<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span>mysql<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span>dsn<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>gorm<span class="token punctuation">.</span>Config<span class="token punctuation">{</span>
+        NamingStrategy<span class="token punctuation">:</span> schema<span class="token punctuation">.</span>NamingStrategy<span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 为false会根据 结构体名+s 作为表名</span>
+            SingularTable<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        Logger<span class="token punctuation">:</span> newLogger<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 定义一个表结构, 生成对应表</span>
+    <span class="token boolean">_</span> <span class="token operator">=</span> db<span class="token punctuation">.</span><span class="token function">AutoMigrate</span><span class="token punctuation">(</span>
+        <span class="token operator">&amp;</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="1-3proto接口设计"><a href="#1-3proto接口设计" class="headerlink" title="1-3proto接口设计"></a>1-3proto接口设计</h4><p><img src="5531801c.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/proto/inventory.proto</span>
+syntax <span class="token operator">=</span> <span class="token string">"proto3"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token string">"google/protobuf/empty.proto"</span><span class="token punctuation">;</span>
+option go_package <span class="token operator">=</span> <span class="token string">".;proto"</span><span class="token punctuation">;</span>
+
+service Inventory <span class="token punctuation">{</span>
+  <span class="token comment" spellcheck="true">// 设置库存</span>
+  rpc <span class="token function">SetInv</span><span class="token punctuation">(</span>GoodsInvInfo<span class="token punctuation">)</span> <span class="token function">returns</span><span class="token punctuation">(</span>google<span class="token punctuation">.</span>protobuf<span class="token punctuation">.</span>Empty<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">// 获取库存信息</span>
+  rpc <span class="token function">InvDetail</span><span class="token punctuation">(</span>GoodsInvInfo<span class="token punctuation">)</span> <span class="token function">returns</span><span class="token punctuation">(</span>GoodsInvInfo<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">// 销售(库存扣减) 一般买东西是从购物车里买, 会有多个商品, 有事务问题(批量成功or失败)</span>
+  rpc <span class="token function">Sell</span><span class="token punctuation">(</span>SellInfo<span class="token punctuation">)</span> <span class="token function">returns</span><span class="token punctuation">(</span>google<span class="token punctuation">.</span>protobuf<span class="token punctuation">.</span>Empty<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token comment" spellcheck="true">// 库存归还 -> 分布式事务中重点</span>
+  rpc <span class="token function">Reback</span><span class="token punctuation">(</span>SellInfo<span class="token punctuation">)</span> <span class="token function">returns</span><span class="token punctuation">(</span>google<span class="token punctuation">.</span>protobuf<span class="token punctuation">.</span>Empty<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+message GoodsInvInfo <span class="token punctuation">{</span>
+  <span class="token builtin">int32</span> goodsId <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+  <span class="token builtin">int32</span> num <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+message SellInfo <span class="token punctuation">{</span>
+  repeated GoodsInvInfo goodsInfo <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="1-4快速启动库存服务"><a href="#1-4快速启动库存服务" class="headerlink" title="1-4快速启动库存服务"></a>1-4快速启动库存服务</h4><pre class=" language-json5"><code class="language-json5">// inventory_srv.json
+{
+  "name": "inventory_srv",
+  "host": "127.0.0.1",
+  "tags": [
+    "imooc",
+    "inventory",
+    "srv"
+  ],
+  "mysql": {
+    "host": "127.0.0.1",
+    "port": 3307,
+    "user": "root",
+    "password": "123456",
+    "db": "mxshop_inventory_srv"
+  },
+  "consul": {
+    "host": "127.0.0.1",
+    "port": 8500
+  }
+}
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/main.go</span>
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"flag"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"github.com/satori/go.uuid"</span>
+    <span class="token string">"go.uber.org/zap"</span>
+    <span class="token string">"google.golang.org/grpc"</span>
+    <span class="token string">"google.golang.org/grpc/health"</span>
+    <span class="token string">"google.golang.org/grpc/health/grpc_health_v1"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/global"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/initialize"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/proto"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/utils"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/utils/register/consul"</span>
+    <span class="token string">"net"</span>
+    <span class="token string">"os"</span>
+    <span class="token string">"os/signal"</span>
+    <span class="token string">"syscall"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 让用户从命令行传递</span>
+    <span class="token comment" spellcheck="true">//IP := flag.String("ip", "0.0.0.0", "ip地址")</span>
+    IP <span class="token operator">:=</span> flag<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token string">"ip"</span><span class="token punctuation">,</span> <span class="token string">"0.0.0.0"</span><span class="token punctuation">,</span> <span class="token string">"ip地址"</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">//Port := flag.Int("port", 50051, "端口号") // 用于测试API</span>
+    Port <span class="token operator">:=</span> flag<span class="token punctuation">.</span><span class="token function">Int</span><span class="token punctuation">(</span><span class="token string">"port"</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token string">"端口号"</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// 初始化日志</span>
+    initialize<span class="token punctuation">.</span><span class="token function">InitLogger</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    initialize<span class="token punctuation">.</span><span class="token function">InitConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    initialize<span class="token punctuation">.</span><span class="token function">InitDB</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span>global<span class="token punctuation">.</span>ServerConfig<span class="token punctuation">)</span>
+
+    flag<span class="token punctuation">.</span><span class="token function">Parse</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span><span class="token string">"ip: "</span><span class="token punctuation">,</span> <span class="token operator">*</span>IP<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token operator">*</span>Port <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        <span class="token operator">*</span>Port<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">=</span> utils<span class="token punctuation">.</span><span class="token function">GetFreePort</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span><span class="token string">"port: "</span><span class="token punctuation">,</span> <span class="token operator">*</span>Port<span class="token punctuation">)</span>
+
+    server <span class="token operator">:=</span> grpc<span class="token punctuation">.</span><span class="token function">NewServer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    proto<span class="token punctuation">.</span><span class="token function">RegisterInventoryServer</span><span class="token punctuation">(</span>server<span class="token punctuation">,</span> <span class="token operator">&amp;</span>proto<span class="token punctuation">.</span>UnimplementedInventoryServer<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    lis<span class="token punctuation">,</span> err <span class="token operator">:=</span> net<span class="token punctuation">.</span><span class="token function">Listen</span><span class="token punctuation">(</span><span class="token string">"tcp"</span><span class="token punctuation">,</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"%s:%d"</span><span class="token punctuation">,</span> <span class="token operator">*</span>IP<span class="token punctuation">,</span> <span class="token operator">*</span>Port<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"failed to listen: "</span> <span class="token operator">+</span> err<span class="token punctuation">.</span><span class="token function">Error</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 注册服务健康检查</span>
+    grpc_health_v1<span class="token punctuation">.</span><span class="token function">RegisterHealthServer</span><span class="token punctuation">(</span>server<span class="token punctuation">,</span> health<span class="token punctuation">.</span><span class="token function">NewServer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    register_cli <span class="token operator">:=</span> consul<span class="token punctuation">.</span><span class="token function">NewRegistryClient</span><span class="token punctuation">(</span>
+        global<span class="token punctuation">.</span>ServerConfig<span class="token punctuation">.</span>ConsulInfo<span class="token punctuation">.</span>Host<span class="token punctuation">,</span>
+        global<span class="token punctuation">.</span>ServerConfig<span class="token punctuation">.</span>ConsulInfo<span class="token punctuation">.</span>Port<span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+    serviceId <span class="token operator">:=</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"%s"</span><span class="token punctuation">,</span> uuid<span class="token punctuation">.</span><span class="token function">NewV4</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">:=</span> register_cli<span class="token punctuation">.</span><span class="token function">Register</span><span class="token punctuation">(</span>
+        global<span class="token punctuation">.</span>ServerConfig<span class="token punctuation">.</span>Host<span class="token punctuation">,</span>
+        <span class="token comment" spellcheck="true">//global.ServerConfig.Port,</span>
+        <span class="token operator">*</span>Port<span class="token punctuation">,</span>
+        global<span class="token punctuation">.</span>ServerConfig<span class="token punctuation">.</span>Name<span class="token punctuation">,</span>
+        global<span class="token punctuation">.</span>ServerConfig<span class="token punctuation">.</span>Tags<span class="token punctuation">,</span>
+        serviceId<span class="token punctuation">,</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Panic</span><span class="token punctuation">(</span><span class="token string">"服务注册失败: "</span><span class="token punctuation">,</span> err<span class="token punctuation">.</span><span class="token function">Error</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 启动服务</span>
+    <span class="token keyword">go</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 这里是阻塞代码, 后面的执行不到, 所以改造为异步</span>
+        err <span class="token operator">=</span> server<span class="token punctuation">.</span><span class="token function">Serve</span><span class="token punctuation">(</span>lis<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"failed to start grpc: "</span> <span class="token operator">+</span> err<span class="token punctuation">.</span><span class="token function">Error</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// 接收终止信号, 注销服务</span>
+    quit <span class="token operator">:=</span> <span class="token function">make</span><span class="token punctuation">(</span><span class="token keyword">chan</span> os<span class="token punctuation">.</span>Signal<span class="token punctuation">)</span>
+    signal<span class="token punctuation">.</span><span class="token function">Notify</span><span class="token punctuation">(</span>quit<span class="token punctuation">,</span> syscall<span class="token punctuation">.</span>SIGINT<span class="token punctuation">,</span> syscall<span class="token punctuation">.</span>SIGTERM<span class="token punctuation">)</span>
+    <span class="token operator">&lt;-</span>quit
+
+    <span class="token keyword">if</span> err <span class="token operator">:=</span> register_cli<span class="token punctuation">.</span><span class="token function">DeRegister</span><span class="token punctuation">(</span>serviceId<span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span><span class="token string">"注销失败"</span><span class="token punctuation">)</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span><span class="token string">"注销成功"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/utils/register/consul/register.go</span>
+<span class="token keyword">package</span> consul
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"github.com/hashicorp/consul/api"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> RegistryClient <span class="token keyword">interface</span> <span class="token punctuation">{</span>
+    <span class="token function">Register</span><span class="token punctuation">(</span>addr <span class="token builtin">string</span><span class="token punctuation">,</span> port <span class="token builtin">int</span><span class="token punctuation">,</span> name <span class="token builtin">string</span><span class="token punctuation">,</span> tags <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> id <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">error</span>
+    <span class="token function">DeRegister</span><span class="token punctuation">(</span>serviceId <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">error</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">type</span> Registry <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Host <span class="token builtin">string</span>
+    Port <span class="token builtin">int</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">NewRegistryClient</span><span class="token punctuation">(</span>host <span class="token builtin">string</span><span class="token punctuation">,</span> port <span class="token builtin">int</span><span class="token punctuation">)</span> RegistryClient <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>Registry<span class="token punctuation">{</span>
+        Host<span class="token punctuation">:</span> host<span class="token punctuation">,</span>
+        Port<span class="token punctuation">:</span> port<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>Registry<span class="token punctuation">)</span> <span class="token function">DeRegister</span><span class="token punctuation">(</span>serviceId <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    cfg <span class="token operator">:=</span> api<span class="token punctuation">.</span><span class="token function">DefaultConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// consul</span>
+    cfg<span class="token punctuation">.</span>Address <span class="token operator">=</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"%s:%d"</span><span class="token punctuation">,</span> r<span class="token punctuation">.</span>Host<span class="token punctuation">,</span> r<span class="token punctuation">.</span>Port<span class="token punctuation">)</span>
+
+    cli<span class="token punctuation">,</span> err <span class="token operator">:=</span> api<span class="token punctuation">.</span><span class="token function">NewClient</span><span class="token punctuation">(</span>cfg<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> cli<span class="token punctuation">.</span><span class="token function">Agent</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">ServiceDeregister</span><span class="token punctuation">(</span>serviceId<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>r <span class="token operator">*</span>Registry<span class="token punctuation">)</span> <span class="token function">Register</span><span class="token punctuation">(</span>addr <span class="token builtin">string</span><span class="token punctuation">,</span> port <span class="token builtin">int</span><span class="token punctuation">,</span> name <span class="token builtin">string</span><span class="token punctuation">,</span> tags <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">,</span> id <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token builtin">error</span> <span class="token punctuation">{</span>
+    cfg <span class="token operator">:=</span> api<span class="token punctuation">.</span><span class="token function">DefaultConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// consul</span>
+    cfg<span class="token punctuation">.</span>Address <span class="token operator">=</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"%s:%d"</span><span class="token punctuation">,</span> r<span class="token punctuation">.</span>Host<span class="token punctuation">,</span> r<span class="token punctuation">.</span>Port<span class="token punctuation">)</span>
+
+    client<span class="token punctuation">,</span> err <span class="token operator">:=</span> api<span class="token punctuation">.</span><span class="token function">NewClient</span><span class="token punctuation">(</span>cfg<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 生成对应的检查对象</span>
+    check <span class="token operator">:=</span> <span class="token operator">&amp;</span>api<span class="token punctuation">.</span>AgentServiceCheck<span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 0.0.0.0可以用于监听,但是不能用来访问(比如consul进行健康检测)</span>
+        GRPC<span class="token punctuation">:</span>                           fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"%s:%d"</span><span class="token punctuation">,</span> addr<span class="token punctuation">,</span> port<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        Timeout<span class="token punctuation">:</span>                        <span class="token string">"5s"</span><span class="token punctuation">,</span>
+        Interval<span class="token punctuation">:</span>                       <span class="token string">"5s"</span><span class="token punctuation">,</span>
+        DeregisterCriticalServiceAfter<span class="token punctuation">:</span> <span class="token string">"15s"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 生成注册对象</span>
+    registration <span class="token operator">:=</span> <span class="token function">new</span><span class="token punctuation">(</span>api<span class="token punctuation">.</span>AgentServiceRegistration<span class="token punctuation">)</span>
+    registration<span class="token punctuation">.</span>Name <span class="token operator">=</span> name
+    registration<span class="token punctuation">.</span>ID <span class="token operator">=</span> id
+    registration<span class="token punctuation">.</span>Port <span class="token operator">=</span> port
+    registration<span class="token punctuation">.</span>Tags <span class="token operator">=</span> tags
+    registration<span class="token punctuation">.</span>Address <span class="token operator">=</span> addr
+    registration<span class="token punctuation">.</span>Check <span class="token operator">=</span> check
+
+    err <span class="token operator">=</span> client<span class="token punctuation">.</span><span class="token function">Agent</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">ServiceRegister</span><span class="token punctuation">(</span>registration<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/global/global.go</span>
+<span class="token keyword">package</span> global
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"gorm.io/gorm"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/config"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">var</span> <span class="token punctuation">(</span>
+    NacosConfig  <span class="token operator">*</span>config<span class="token punctuation">.</span>NacosConfig <span class="token operator">=</span> <span class="token operator">&amp;</span>config<span class="token punctuation">.</span>NacosConfig<span class="token punctuation">{</span><span class="token punctuation">}</span>
+    DB           <span class="token operator">*</span>gorm<span class="token punctuation">.</span>DB
+    ServerConfig <span class="token operator">*</span>config<span class="token punctuation">.</span>ServerConfig <span class="token operator">=</span> <span class="token operator">&amp;</span>config<span class="token punctuation">.</span>ServerConfig<span class="token punctuation">{</span><span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-yaml"><code class="language-yaml"><span class="token key atrule">host</span><span class="token punctuation">:</span> 127.0.0.1
+<span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">8848</span>
+<span class="token key atrule">namespace</span><span class="token punctuation">:</span> f6fddbfe<span class="token punctuation">-</span>80ee<span class="token punctuation">-</span>4531<span class="token punctuation">-</span>806e<span class="token punctuation">-</span>d169af325e23
+<span class="token key atrule">user</span><span class="token punctuation">:</span> nacos
+<span class="token key atrule">password</span><span class="token punctuation">:</span> nacos
+<span class="token key atrule">dataid</span><span class="token punctuation">:</span> inventory_srv.json
+<span class="token key atrule">group</span><span class="token punctuation">:</span> dev
+</code></pre>
+<h4 id="1-5设置库存和获取库存接口"><a href="#1-5设置库存和获取库存接口" class="headerlink" title="1-5设置库存和获取库存接口"></a>1-5设置库存和获取库存接口</h4><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/handler/inventory.go</span>
+<span class="token keyword">package</span> handler
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"google.golang.org/grpc"</span>
+    <span class="token string">"google.golang.org/grpc/codes"</span>
+    <span class="token string">"google.golang.org/grpc/status"</span>
+    <span class="token string">"google.golang.org/protobuf/types/known/emptypb"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/global"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/model"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/proto"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> InventoryServer <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    proto<span class="token punctuation">.</span>UnimplementedInventoryServer
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// SetInv 设置库存(更新?如何)</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>InventoryServer<span class="token punctuation">)</span> <span class="token function">SetInv</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> in <span class="token operator">*</span>proto<span class="token punctuation">.</span>GoodsInvInfo<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> inv model<span class="token punctuation">.</span>Inventory
+    global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Where</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span>Goods<span class="token punctuation">:</span> in<span class="token punctuation">.</span>GoodsId<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">First</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">//if inv.Goods == 0 {</span>
+    <span class="token comment" spellcheck="true">// 没查到, goodid为默认值0</span>
+    inv<span class="token punctuation">.</span>Goods <span class="token operator">=</span> in<span class="token punctuation">.</span>GoodsId
+    <span class="token comment" spellcheck="true">//}</span>
+    inv<span class="token punctuation">.</span>Stocks <span class="token operator">=</span> in<span class="token punctuation">.</span>Num
+
+    global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Save</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// InvDetail 获取详情</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>InventoryServer<span class="token punctuation">)</span> <span class="token function">InvDetail</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> in <span class="token operator">*</span>proto<span class="token punctuation">.</span>GoodsInvInfo<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>proto<span class="token punctuation">.</span>GoodsInvInfo<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> inv model<span class="token punctuation">.</span>Inventory
+    <span class="token keyword">if</span> result <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Where</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span>Goods<span class="token punctuation">:</span> in<span class="token punctuation">.</span>GoodsId<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">First</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span><span class="token punctuation">;</span> result<span class="token punctuation">.</span>RowsAffected <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>NotFound<span class="token punctuation">,</span> <span class="token string">"库存信息不存在"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>proto<span class="token punctuation">.</span>GoodsInvInfo<span class="token punctuation">{</span>
+        GoodsId<span class="token punctuation">:</span> inv<span class="token punctuation">.</span>Goods<span class="token punctuation">,</span>
+        Num<span class="token punctuation">:</span>     inv<span class="token punctuation">.</span>Stocks<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span> 
+</code></pre>
+<h4 id="1-6本地数据库事务解决库存扣减的失败问题"><a href="#1-6本地数据库事务解决库存扣减的失败问题" class="headerlink" title="1-6本地数据库事务解决库存扣减的失败问题"></a>1-6本地数据库事务解决库存扣减的失败问题</h4><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/handler/inventory.go</span>
+<span class="token keyword">package</span> handler
+
+<span class="token comment" spellcheck="true">// ...</span>
+
+<span class="token comment" spellcheck="true">// Sell 扣减库存</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>InventoryServer<span class="token punctuation">)</span> <span class="token function">Sell</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> in <span class="token operator">*</span>proto<span class="token punctuation">.</span>SellInfo<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 整个订单的库存扣除应该是一整个事务, 要么都成功, 要么都失败</span>
+    <span class="token comment" spellcheck="true">// 并发之下可能出现超卖</span>
+    tx <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动事务(本地)</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> goodInfo <span class="token operator">:=</span> <span class="token keyword">range</span> in<span class="token punctuation">.</span>GoodsInfo <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> inv model<span class="token punctuation">.</span>Inventory
+        <span class="token keyword">if</span> result <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Where</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span>Goods<span class="token punctuation">:</span> goodInfo<span class="token punctuation">.</span>GoodsId<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">First</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span><span class="token punctuation">;</span> result<span class="token punctuation">.</span>RowsAffected <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 回滚之前的操作</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>InvalidArgument<span class="token punctuation">,</span> <span class="token string">"库存信息不存在"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 库存不够</span>
+        <span class="token keyword">if</span> inv<span class="token punctuation">.</span>Stocks <span class="token operator">&lt;</span> goodInfo<span class="token punctuation">.</span>Num <span class="token punctuation">{</span>
+            tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 回滚之前的操作</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>ResourceExhausted<span class="token punctuation">,</span> <span class="token string">"库存不足"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 扣减 可能出现数据不一致 -> 锁 分布式锁</span>
+        inv<span class="token punctuation">.</span>Stocks <span class="token operator">-=</span> goodInfo<span class="token punctuation">.</span>Num
+        tx<span class="token punctuation">.</span><span class="token function">Save</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    tx<span class="token punctuation">.</span><span class="token function">Commit</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动提交</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="1-7订单超时归还的重要性"><a href="#1-7订单超时归还的重要性" class="headerlink" title="1-7订单超时归还的重要性"></a>1-7订单超时归还的重要性</h4><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/handler/inventory.go</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+<span class="token comment" spellcheck="true">// Reback 库存归还 - 订单超时归还|订单创建失败|手动归还</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>InventoryServer<span class="token punctuation">)</span> <span class="token function">Reback</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> in <span class="token operator">*</span>proto<span class="token punctuation">.</span>SellInfo<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    tx <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动事务(本地)</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> goodInfo <span class="token operator">:=</span> <span class="token keyword">range</span> in<span class="token punctuation">.</span>GoodsInfo <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> inv model<span class="token punctuation">.</span>Inventory
+        <span class="token keyword">if</span> result <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Where</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span>Goods<span class="token punctuation">:</span> goodInfo<span class="token punctuation">.</span>GoodsId<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">First</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span><span class="token punctuation">;</span> result<span class="token punctuation">.</span>RowsAffected <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 回滚之前的操作</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>InvalidArgument<span class="token punctuation">,</span> <span class="token string">"库存信息不存在"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 扣减 可能出现数据不一致 -> 锁 分布式锁</span>
+        inv<span class="token punctuation">.</span>Stocks <span class="token operator">+=</span> goodInfo<span class="token punctuation">.</span>Num
+        tx<span class="token punctuation">.</span><span class="token function">Save</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    tx<span class="token punctuation">.</span><span class="token function">Commit</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动提交</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="1-8测试库存接口"><a href="#1-8测试库存接口" class="headerlink" title="1-8测试库存接口"></a>1-8测试库存接口</h4><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/test/inventory/main.go</span>
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"google.golang.org/grpc"</span>
+    <span class="token string">"google.golang.org/grpc/credentials/insecure"</span>
+    <span class="token string">"mxshop_srvs/inventory_srv/proto"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">var</span> cli proto<span class="token punctuation">.</span>InventoryClient
+<span class="token keyword">var</span> conn <span class="token operator">*</span>grpc<span class="token punctuation">.</span>ClientConn
+
+<span class="token keyword">func</span> <span class="token function">Init</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> err <span class="token builtin">error</span>
+    conn<span class="token punctuation">,</span> err <span class="token operator">=</span> grpc<span class="token punctuation">.</span><span class="token function">Dial</span><span class="token punctuation">(</span>
+        fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"127.0.0.1:50460"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        grpc<span class="token punctuation">.</span><span class="token function">WithTransportCredentials</span><span class="token punctuation">(</span>insecure<span class="token punctuation">.</span><span class="token function">NewCredentials</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    cli <span class="token operator">=</span> proto<span class="token punctuation">.</span><span class="token function">NewInventoryClient</span><span class="token punctuation">(</span>conn<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">TestSetInv</span><span class="token punctuation">(</span>goodsId<span class="token punctuation">,</span> Num <span class="token builtin">int32</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token boolean">_</span><span class="token punctuation">,</span> err <span class="token operator">:=</span> cli<span class="token punctuation">.</span><span class="token function">SetInv</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>proto<span class="token punctuation">.</span>GoodsInvInfo<span class="token punctuation">{</span>
+        GoodsId<span class="token punctuation">:</span> goodsId<span class="token punctuation">,</span> Num<span class="token punctuation">:</span> Num<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"设置成功"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">TestInvDetail</span><span class="token punctuation">(</span>goodsId <span class="token builtin">int32</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    rsp<span class="token punctuation">,</span> err <span class="token operator">:=</span> cli<span class="token punctuation">.</span><span class="token function">InvDetail</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>proto<span class="token punctuation">.</span>GoodsInvInfo<span class="token punctuation">{</span>
+        GoodsId<span class="token punctuation">:</span> goodsId<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span>rsp<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">TestSell</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token boolean">_</span><span class="token punctuation">,</span> err <span class="token operator">:=</span> cli<span class="token punctuation">.</span><span class="token function">Sell</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>proto<span class="token punctuation">.</span>SellInfo<span class="token punctuation">{</span>
+        GoodsInfo<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>proto<span class="token punctuation">.</span>GoodsInvInfo<span class="token punctuation">{</span>
+            <span class="token punctuation">{</span>GoodsId<span class="token punctuation">:</span> <span class="token number">421</span><span class="token punctuation">,</span> Num<span class="token punctuation">:</span> <span class="token number">10</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token comment" spellcheck="true">//{GoodsId: 422, Num: 50},</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"库存扣减成功"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">TestReback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token boolean">_</span><span class="token punctuation">,</span> err <span class="token operator">:=</span> cli<span class="token punctuation">.</span><span class="token function">Reback</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>proto<span class="token punctuation">.</span>SellInfo<span class="token punctuation">{</span>
+        GoodsInfo<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>proto<span class="token punctuation">.</span>GoodsInvInfo<span class="token punctuation">{</span>
+            <span class="token punctuation">{</span>GoodsId<span class="token punctuation">:</span> <span class="token number">421</span><span class="token punctuation">,</span> Num<span class="token punctuation">:</span> <span class="token number">10</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token comment" spellcheck="true">//{GoodsId: 422, Num: 50},</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"库存归还成功"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">Init</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token function">TestSetInv</span><span class="token punctuation">(</span><span class="token number">421</span><span class="token punctuation">,</span> <span class="token number">90</span><span class="token punctuation">)</span>
+    <span class="token function">TestInvDetail</span><span class="token punctuation">(</span><span class="token number">421</span><span class="token punctuation">)</span>
+    <span class="token function">TestSell</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token function">TestReback</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    conn<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="1-9为所有的商品添加库存信息"><a href="#1-9为所有的商品添加库存信息" class="headerlink" title="1-9为所有的商品添加库存信息"></a>1-9为所有的商品添加库存信息</h4><pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">Init</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">var</span> i <span class="token builtin">int32</span>
+    <span class="token keyword">for</span> i <span class="token operator">=</span> <span class="token number">421</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">840</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+        <span class="token function">TestSetInv</span><span class="token punctuation">(</span>i<span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span> 
+    conn<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="第2章分布式锁"><a href="#第2章分布式锁" class="headerlink" title="第2章分布式锁"></a>第2章分布式锁</h3><h4 id="2-1并发场景下的库存扣减不正确的问题"><a href="#2-1并发场景下的库存扣减不正确的问题" class="headerlink" title="2-1并发场景下的库存扣减不正确的问题"></a>2-1并发场景下的库存扣减不正确的问题</h4><p><img src="39bc51f8.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token function">TestSell</span><span class="token punctuation">(</span>wg <span class="token operator">*</span>sync<span class="token punctuation">.</span>WaitGroup<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">defer</span> wg<span class="token punctuation">.</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token boolean">_</span><span class="token punctuation">,</span> err <span class="token operator">:=</span> cli<span class="token punctuation">.</span><span class="token function">Sell</span><span class="token punctuation">(</span>context<span class="token punctuation">.</span><span class="token function">Background</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>proto<span class="token punctuation">.</span>SellInfo<span class="token punctuation">{</span>
+        GoodsInfo<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token operator">*</span>proto<span class="token punctuation">.</span>GoodsInvInfo<span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">//{GoodsId: 421, Num: 10},</span>
+            <span class="token punctuation">{</span>GoodsId<span class="token punctuation">:</span> <span class="token number">421</span><span class="token punctuation">,</span> Num<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token comment" spellcheck="true">//{GoodsId: 422, Num: 50},</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"库存扣减成功"</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">Init</span><span class="token punctuation">(</span><span class="token punctuation">)</span> 
+
+    <span class="token comment" spellcheck="true">// 10个协程并发扣库存</span>
+    <span class="token keyword">var</span> wg sync<span class="token punctuation">.</span>WaitGroup
+    wg<span class="token punctuation">.</span><span class="token function">Add</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token number">10</span><span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+        <span class="token keyword">go</span> <span class="token function">TestSell</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>wg<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    wg<span class="token punctuation">.</span><span class="token function">Wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span> 
+    
+    conn<span class="token punctuation">.</span><span class="token function">Close</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="2-2通过锁解决并发的问题"><a href="#2-2通过锁解决并发的问题" class="headerlink" title="2-2通过锁解决并发的问题"></a>2-2通过锁解决并发的问题</h4><p><img src="c8e67752.png"><img src="e61b03c2.png"><img src="cbbba3c2.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/handler/inventory.go</span>
+
+<span class="token comment" spellcheck="true">// 全局互斥锁</span>
+<span class="token keyword">var</span> m sync<span class="token punctuation">.</span>Mutex
+<span class="token comment" spellcheck="true">// ...</span>
+<span class="token comment" spellcheck="true">// Sell 扣减库存</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>InventoryServer<span class="token punctuation">)</span> <span class="token function">Sell</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> in <span class="token operator">*</span>proto<span class="token punctuation">.</span>SellInfo<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 整个订单的库存扣除应该是一整个事务, 要么都成功, 要么都失败</span>
+    <span class="token comment" spellcheck="true">// 并发之下可能出现超卖</span>
+    tx <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动事务(本地)</span>
+    m<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 加锁</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> goodInfo <span class="token operator">:=</span> <span class="token keyword">range</span> in<span class="token punctuation">.</span>GoodsInfo <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> inv model<span class="token punctuation">.</span>Inventory
+        <span class="token keyword">if</span> result <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Where</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span>Goods<span class="token punctuation">:</span> goodInfo<span class="token punctuation">.</span>GoodsId<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">First</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span><span class="token punctuation">;</span> result<span class="token punctuation">.</span>RowsAffected <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 回滚之前的操作</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>InvalidArgument<span class="token punctuation">,</span> <span class="token string">"库存信息不存在"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 库存不够</span>
+        <span class="token keyword">if</span> inv<span class="token punctuation">.</span>Stocks <span class="token operator">&lt;</span> goodInfo<span class="token punctuation">.</span>Num <span class="token punctuation">{</span>
+            tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 回滚之前的操作</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>ResourceExhausted<span class="token punctuation">,</span> <span class="token string">"库存不足"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 扣减 可能出现数据不一致 -> 锁 分布式锁</span>
+        inv<span class="token punctuation">.</span>Stocks <span class="token operator">-=</span> goodInfo<span class="token punctuation">.</span>Num
+        tx<span class="token punctuation">.</span><span class="token function">Save</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    tx<span class="token punctuation">.</span><span class="token function">Commit</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动提交</span>
+    m<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true">// (真正操作完数据库时)解锁</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="37a5dabc.png" alt="互斥锁性能不行"></p>
+<h4 id="2-5mysql的forupdate语句实现悲观锁"><a href="#2-5mysql的forupdate语句实现悲观锁" class="headerlink" title="2-5mysql的forupdate语句实现悲观锁"></a>2-5mysql的forupdate语句实现悲观锁</h4><p><img src="e9b1c400.png"><img src="cda88ea1.png"><img src="f730de7e.png"><img src="42da8f63.png"></p>
+<h4 id="2-6gorm实现forupdate悲观锁"><a href="#2-6gorm实现forupdate悲观锁" class="headerlink" title="2-6gorm实现forupdate悲观锁"></a>2-6gorm实现forupdate悲观锁</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
             </div>
             <hr/>
 
@@ -7943,7 +8489,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">608.6k</span>
+                <span class="white-color">612.9k</span>
             
 
             
