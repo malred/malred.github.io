@@ -368,14 +368,14 @@ import (
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        26k
+                        26.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        144 分
+                        146 分
                     </div>
                     
                 
@@ -7829,7 +7829,40 @@ message SellInfo <span class="token punctuation">{</span>
 </code></pre>
 <p><img src="37a5dabc.png" alt="互斥锁性能不行"></p>
 <h4 id="2-5mysql的forupdate语句实现悲观锁"><a href="#2-5mysql的forupdate语句实现悲观锁" class="headerlink" title="2-5mysql的forupdate语句实现悲观锁"></a>2-5mysql的forupdate语句实现悲观锁</h4><p><img src="e9b1c400.png"><img src="cda88ea1.png"><img src="f730de7e.png"><img src="42da8f63.png"></p>
-<h4 id="2-6gorm实现forupdate悲观锁"><a href="#2-6gorm实现forupdate悲观锁" class="headerlink" title="2-6gorm实现forupdate悲观锁"></a>2-6gorm实现forupdate悲观锁</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
+<h4 id="2-6gorm实现forupdate悲观锁"><a href="#2-6gorm实现forupdate悲观锁" class="headerlink" title="2-6gorm实现forupdate悲观锁"></a>2-6gorm实现forupdate悲观锁</h4><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// inventory_srv/handler/inventory.go</span>
+<span class="token comment" spellcheck="true">// Sell 扣减库存</span>
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>InventoryServer<span class="token punctuation">)</span> <span class="token function">Sell</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> in <span class="token operator">*</span>proto<span class="token punctuation">.</span>SellInfo<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 整个订单的库存扣除应该是一整个事务, 要么都成功, 要么都失败</span>
+    <span class="token comment" spellcheck="true">// 并发之下可能出现超卖</span>
+    tx <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动事务(本地)</span>
+    <span class="token comment" spellcheck="true">//m.Lock()                // 加锁</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> goodInfo <span class="token operator">:=</span> <span class="token keyword">range</span> in<span class="token punctuation">.</span>GoodsInfo <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> inv model<span class="token punctuation">.</span>Inventory
+        <span class="token comment" spellcheck="true">//if result := global.DB.Where(&amp;model.Inventory{Goods: goodInfo.GoodsId}).First(&amp;inv); result.RowsAffected == 0 {</span>
+        <span class="token keyword">if</span> result <span class="token operator">:=</span>
+            <span class="token comment" spellcheck="true">// gorm实现mysql的forupdate悲观锁</span>
+            tx<span class="token punctuation">.</span><span class="token function">Clauses</span><span class="token punctuation">(</span>clause<span class="token punctuation">.</span>Locking<span class="token punctuation">{</span>Strength<span class="token punctuation">:</span> <span class="token string">"UPDATE"</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                <span class="token function">Where</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span>Goods<span class="token punctuation">:</span> goodInfo<span class="token punctuation">.</span>GoodsId<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                <span class="token function">First</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span><span class="token punctuation">;</span> result<span class="token punctuation">.</span>RowsAffected <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+            tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 回滚之前的操作</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>InvalidArgument<span class="token punctuation">,</span> <span class="token string">"库存信息不存在"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 库存不够</span>
+        <span class="token keyword">if</span> inv<span class="token punctuation">.</span>Stocks <span class="token operator">&lt;</span> goodInfo<span class="token punctuation">.</span>Num <span class="token punctuation">{</span>
+            tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 回滚之前的操作</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>ResourceExhausted<span class="token punctuation">,</span> <span class="token string">"库存不足"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 扣减 可能出现数据不一致 -> 锁 分布式锁</span>
+        inv<span class="token punctuation">.</span>Stocks <span class="token operator">-=</span> goodInfo<span class="token punctuation">.</span>Num
+        tx<span class="token punctuation">.</span><span class="token function">Save</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    tx<span class="token punctuation">.</span><span class="token function">Commit</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动提交</span>
+    <span class="token comment" spellcheck="true">//m.Unlock()  // (真正操作完数据库时)解锁</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="2-7基于mysql的乐观锁实现原理"><a href="#2-7基于mysql的乐观锁实现原理" class="headerlink" title="2-7基于mysql的乐观锁实现原理"></a>2-7基于mysql的乐观锁实现原理</h4><p><img src="bbbfda88.png" alt="乐观锁严格上说不是一种锁, 而是一种解决数据不一致的方案, 可以提升性能"><br><img src="5730792f.png"></p>
+<h4 id="2-8gorm实现基于mysql的乐观锁"><a href="#2-8gorm实现基于mysql的乐观锁" class="headerlink" title="2-8gorm实现基于mysql的乐观锁"></a>2-8gorm实现基于mysql的乐观锁</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
             </div>
             <hr/>
 
@@ -8489,7 +8522,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">612.9k</span>
+                <span class="white-color">621.1k</span>
             
 
             

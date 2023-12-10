@@ -367,14 +367,14 @@ import &#34;github.com/beego/beego/v2/serve">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        30k
+                        30.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        169 分
+                        172 分
                     </div>
                     
                 
@@ -10478,7 +10478,211 @@ CREATE TABLE IF NOT EXISTS test_model(
     mdls    <span class="token punctuation">[</span><span class="token punctuation">]</span>Middleware
 <span class="token punctuation">}</span>
 </code></pre>
-<h3 id="5-AOP-方案：Middleware-各种实现、总结与面试要点"><a href="#5-AOP-方案：Middleware-各种实现、总结与面试要点" class="headerlink" title="5. AOP 方案：Middleware 各种实现、总结与面试要点"></a>5. AOP 方案：Middleware 各种实现、总结与面试要点</h3>
+<h3 id="5-AOP-方案：Middleware-各种实现、总结与面试要点"><a href="#5-AOP-方案：Middleware-各种实现、总结与面试要点" class="headerlink" title="5. AOP 方案：Middleware 各种实现、总结与面试要点"></a>5. AOP 方案：Middleware 各种实现、总结与面试要点</h3><p><img src="4c06f5fa.png"><img src="0c88b4a0.png"><img src="91ee3314.png"><img src="b43869f9.png"><img src="7c5b3ed2.png"><img src="5257fae6.png"><br><img src="43be8cf7.png"><img src="bf380c74.png"><img src="eb481702.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// orm/middleware/opentelemetry/middleware.go</span>
+<span class="token keyword">package</span> opentelemetry
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"fmt"</span>
+    <span class="token string">"go.opentelemetry.io/otel"</span>
+    <span class="token string">"go.opentelemetry.io/otel/attribute"</span>
+    <span class="token string">"go.opentelemetry.io/otel/trace"</span>
+    <span class="token string">"my_framework/orm"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> instrumentationName <span class="token operator">=</span> <span class="token string">"orm/middleware/opentelemetry/middleware.go"</span>
+
+<span class="token keyword">type</span> MiddlewareBuilder <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Tracer trace<span class="token punctuation">.</span>Tracer
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>m MiddlewareBuilder<span class="token punctuation">)</span> <span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span> orm<span class="token punctuation">.</span>Middleware <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> m<span class="token punctuation">.</span>Tracer <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        m<span class="token punctuation">.</span>Tracer <span class="token operator">=</span> otel<span class="token punctuation">.</span><span class="token function">GetTracerProvider</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Tracer</span><span class="token punctuation">(</span>instrumentationName<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token keyword">func</span><span class="token punctuation">(</span>next orm<span class="token punctuation">.</span>Handler<span class="token punctuation">)</span> orm<span class="token punctuation">.</span>Handler <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> qc <span class="token operator">*</span>orm<span class="token punctuation">.</span>QueryContent<span class="token punctuation">)</span> <span class="token operator">*</span>orm<span class="token punctuation">.</span>QueryResult <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// span name: select-test_model</span>
+            <span class="token comment" spellcheck="true">// insert-test_model</span>
+            tbl <span class="token operator">:=</span> qc<span class="token punctuation">.</span>Model<span class="token punctuation">.</span>TableName
+            spanCtx<span class="token punctuation">,</span> span <span class="token operator">:=</span> m<span class="token punctuation">.</span>Tracer<span class="token punctuation">.</span><span class="token function">Start</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> fmt<span class="token punctuation">.</span><span class="token function">Sprintf</span><span class="token punctuation">(</span><span class="token string">"%s-%s"</span><span class="token punctuation">,</span> qc<span class="token punctuation">.</span>Type<span class="token punctuation">,</span> tbl<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">defer</span> span<span class="token punctuation">.</span><span class="token function">End</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+            q<span class="token punctuation">,</span> <span class="token boolean">_</span> <span class="token operator">:=</span> qc<span class="token punctuation">.</span>Builder<span class="token punctuation">.</span><span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> q <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                span<span class="token punctuation">.</span><span class="token function">SetAttributes</span><span class="token punctuation">(</span>attribute<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token string">"sql"</span><span class="token punctuation">,</span> q<span class="token punctuation">.</span>SQL<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+
+            span<span class="token punctuation">.</span><span class="token function">SetAttributes</span><span class="token punctuation">(</span>attribute<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token string">"table"</span><span class="token punctuation">,</span> tbl<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            span<span class="token punctuation">.</span><span class="token function">SetAttributes</span><span class="token punctuation">(</span>attribute<span class="token punctuation">.</span><span class="token function">String</span><span class="token punctuation">(</span><span class="token string">"component"</span><span class="token punctuation">,</span> <span class="token string">"orm"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            res <span class="token operator">:=</span> <span class="token function">next</span><span class="token punctuation">(</span>spanCtx<span class="token punctuation">,</span> qc<span class="token punctuation">)</span>
+            <span class="token keyword">if</span> res<span class="token punctuation">.</span>Err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                span<span class="token punctuation">.</span><span class="token function">RecordError</span><span class="token punctuation">(</span>res<span class="token punctuation">.</span>Err<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">return</span> res
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// orm/middleware/prometheus/middleware.go</span>
+<span class="token keyword">package</span> prometheus
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"github.com/prometheus/client_golang/prometheus"</span>
+    <span class="token string">"my_framework/orm"</span>
+    <span class="token string">"time"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> MiddlewareBuilder <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    Namespace <span class="token builtin">string</span>
+    Subsystem <span class="token builtin">string</span>
+    Name      <span class="token builtin">string</span>
+    Help      <span class="token builtin">string</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>m MiddlewareBuilder<span class="token punctuation">)</span> <span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span> orm<span class="token punctuation">.</span>Middleware <span class="token punctuation">{</span>
+    vector <span class="token operator">:=</span> prometheus<span class="token punctuation">.</span><span class="token function">NewSummaryVec</span><span class="token punctuation">(</span>prometheus<span class="token punctuation">.</span>SummaryOpts<span class="token punctuation">{</span>
+        Namespace<span class="token punctuation">:</span> m<span class="token punctuation">.</span>Namespace<span class="token punctuation">,</span>
+        Subsystem<span class="token punctuation">:</span> m<span class="token punctuation">.</span>Subsystem<span class="token punctuation">,</span>
+        Name<span class="token punctuation">:</span>      m<span class="token punctuation">.</span>Name<span class="token punctuation">,</span>
+        Help<span class="token punctuation">:</span>      m<span class="token punctuation">.</span>Help<span class="token punctuation">,</span>
+        Objectives<span class="token punctuation">:</span> <span class="token keyword">map</span><span class="token punctuation">[</span><span class="token builtin">float64</span><span class="token punctuation">]</span><span class="token builtin">float64</span><span class="token punctuation">{</span>
+            <span class="token number">0.5</span><span class="token punctuation">:</span>   <span class="token number">0.01</span><span class="token punctuation">,</span>
+            <span class="token number">0.75</span><span class="token punctuation">:</span>  <span class="token number">0.01</span><span class="token punctuation">,</span>
+            <span class="token number">0.90</span><span class="token punctuation">:</span>  <span class="token number">0.01</span><span class="token punctuation">,</span>
+            <span class="token number">0.99</span><span class="token punctuation">:</span>  <span class="token number">0.001</span><span class="token punctuation">,</span>
+            <span class="token number">0.999</span><span class="token punctuation">:</span> <span class="token number">0.0001</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span><span class="token punctuation">{</span><span class="token string">"type"</span><span class="token punctuation">,</span> <span class="token string">"table"</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 注册观察者</span>
+    prometheus<span class="token punctuation">.</span><span class="token function">MustRegister</span><span class="token punctuation">(</span>vector<span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 两次调用builder会panic</span>
+
+    <span class="token comment" spellcheck="true">// errCounterVec 记录错误数</span>
+    <span class="token comment" spellcheck="true">// histogram 也行</span>
+    <span class="token comment" spellcheck="true">// active query</span>
+    <span class="token keyword">return</span> <span class="token keyword">func</span><span class="token punctuation">(</span>next orm<span class="token punctuation">.</span>Handler<span class="token punctuation">)</span> orm<span class="token punctuation">.</span>Handler <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">func</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> qc <span class="token operator">*</span>orm<span class="token punctuation">.</span>QueryContent<span class="token punctuation">)</span> <span class="token operator">*</span>orm<span class="token punctuation">.</span>QueryResult <span class="token punctuation">{</span>
+            startTime <span class="token operator">:=</span> time<span class="token punctuation">.</span><span class="token function">Now</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">defer</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// 执行时间</span>
+                vector<span class="token punctuation">.</span><span class="token function">WithLabelValues</span><span class="token punctuation">(</span>qc<span class="token punctuation">.</span>Type<span class="token punctuation">,</span> qc<span class="token punctuation">.</span>Model<span class="token punctuation">.</span>TableName<span class="token punctuation">)</span><span class="token punctuation">.</span>
+                    <span class="token function">Observe</span><span class="token punctuation">(</span><span class="token function">float64</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span><span class="token function">Since</span><span class="token punctuation">(</span>startTime<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Milliseconds</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token function">next</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> qc<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// orm/select.go</span>
+<span class="token keyword">package</span> orm
+
+<span class="token comment" spellcheck="true">// ...</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Selector<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>Query<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//var sb strings.Builder</span>
+    s<span class="token punctuation">.</span>sb <span class="token operator">=</span> <span class="token operator">&amp;</span>strings<span class="token punctuation">.</span>Builder<span class="token punctuation">{</span><span class="token punctuation">}</span> <span class="token comment" spellcheck="true">// 指针类型一定要初始化</span>
+
+    <span class="token keyword">if</span> s<span class="token punctuation">.</span>model <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> err <span class="token builtin">error</span>
+        s<span class="token punctuation">.</span>model<span class="token punctuation">,</span> err <span class="token operator">=</span> s<span class="token punctuation">.</span>db<span class="token punctuation">.</span>r<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token function">new</span><span class="token punctuation">(</span>T<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// new(T) 生成T的指针</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    sb <span class="token operator">:=</span> s<span class="token punctuation">.</span>sb
+
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>s <span class="token operator">*</span>Selector<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">Get</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>T<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> err <span class="token builtin">error</span>
+    s<span class="token punctuation">.</span>model<span class="token punctuation">,</span> err <span class="token operator">=</span> s<span class="token punctuation">.</span>db<span class="token punctuation">.</span>r<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token function">new</span><span class="token punctuation">(</span>T<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// new(T) 生成T的指针</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+    <span class="token punctuation">}</span>
+
+    root <span class="token operator">:=</span> s<span class="token punctuation">.</span>getHandler
+
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token function">len</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>db<span class="token punctuation">.</span>mdls<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">;</span> i <span class="token operator">>=</span> <span class="token number">0</span><span class="token punctuation">;</span> i<span class="token operator">--</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 遍历并使用中间件</span>
+        root <span class="token operator">=</span> s<span class="token punctuation">.</span>db<span class="token punctuation">.</span>mdls<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">(</span>root<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    res <span class="token operator">:=</span> <span class="token function">root</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> <span class="token operator">&amp;</span>QueryContent<span class="token punctuation">{</span>
+        Type<span class="token punctuation">:</span>    <span class="token string">"SELECT"</span><span class="token punctuation">,</span>
+        Builder<span class="token punctuation">:</span> s<span class="token punctuation">,</span>
+        Model<span class="token punctuation">:</span>   s<span class="token punctuation">.</span>model<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> res<span class="token punctuation">.</span>Result <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> res<span class="token punctuation">.</span>Result<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token operator">*</span>T<span class="token punctuation">)</span><span class="token punctuation">,</span> res<span class="token punctuation">.</span>Err
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> res<span class="token punctuation">.</span>Err
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// orm/insert.go</span>
+
+<span class="token keyword">package</span> orm
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">Build</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>Query<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token function">len</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>values<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> errs<span class="token punctuation">.</span>ErrInsertZeroRow
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">//var sb strings.Builder</span>
+    i<span class="token punctuation">.</span>sb<span class="token punctuation">.</span><span class="token function">WriteString</span><span class="token punctuation">(</span><span class="token string">"INSERT INTO "</span><span class="token punctuation">)</span>
+    <span class="token keyword">var</span> err <span class="token builtin">error</span>
+    <span class="token keyword">if</span> i<span class="token punctuation">.</span>model <span class="token operator">==</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 拿到元数据</span>
+        i<span class="token punctuation">.</span>model<span class="token punctuation">,</span> err <span class="token operator">=</span> i<span class="token punctuation">.</span>db<span class="token punctuation">.</span>r<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span>i<span class="token punctuation">.</span>values<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> err
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token comment" spellcheck="true">// 拼接表名</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>Inserter<span class="token punctuation">[</span>T<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token function">Exec</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">)</span> Result <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> err <span class="token builtin">error</span>
+    i<span class="token punctuation">.</span>model<span class="token punctuation">,</span> err <span class="token operator">=</span> i<span class="token punctuation">.</span>db<span class="token punctuation">.</span>r<span class="token punctuation">.</span><span class="token function">Get</span><span class="token punctuation">(</span><span class="token function">new</span><span class="token punctuation">(</span>T<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> Result<span class="token punctuation">{</span>
+            err<span class="token punctuation">:</span> err<span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    root <span class="token operator">:=</span> i<span class="token punctuation">.</span>execHandler
+    <span class="token comment" spellcheck="true">// ...</span>
+    res <span class="token operator">:=</span> <span class="token function">root</span><span class="token punctuation">(</span>ctx<span class="token punctuation">,</span> <span class="token operator">&amp;</span>QueryContent<span class="token punctuation">{</span>
+        Type<span class="token punctuation">:</span>    <span class="token string">"INSERT"</span><span class="token punctuation">,</span>
+        Builder<span class="token punctuation">:</span> i<span class="token punctuation">,</span>
+        Model<span class="token punctuation">:</span>   i<span class="token punctuation">.</span>model<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// orm/middleware.go</span>
+<span class="token keyword">package</span> orm
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"context"</span>
+    <span class="token string">"my_framework/orm/model"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">type</span> QueryContent <span class="token keyword">struct</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 查询类型, 标记增删改查</span>
+    Type <span class="token builtin">string</span>
+    <span class="token comment" spellcheck="true">// 代表的是查询本身</span>
+    Builder QueryBuilder
+    <span class="token comment" spellcheck="true">//</span>
+    Model <span class="token operator">*</span>model<span class="token punctuation">.</span>Model
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+</code></pre>
+<h2 id="集成测试"><a href="#集成测试" class="headerlink" title="集成测试"></a>集成测试</h2><h3 id="6-集成测试：起步与-MySQL-的增删改查"><a href="#6-集成测试：起步与-MySQL-的增删改查" class="headerlink" title="6. 集成测试：起步与 MySQL 的增删改查"></a>6. 集成测试：起步与 MySQL 的增删改查</h3><p><img src="z/923d7504.png"><img src="z/2612ee29.png"><img src="z/b6fc7800.png"><img src="z/7024ccd2.png"><br>// … 跳过</p>
+<h2 id="原生查询详解"><a href="#原生查询详解" class="headerlink" title="原生查询详解"></a>原生查询详解</h2><p><img src="z/5aa304ad.png"><img src="z/01e97cbf.png"><img src="z/66cb28f3.png"><img src="z/683088ef.png"><img src="z/f4abc296.png"></p>
+
             </div>
             <hr/>
 
@@ -11017,17 +11221,23 @@ webpack(202011)(架构)(全)任务 1：1.201122.webpack 的核心概念_【海�
                 下一篇&nbsp;<i class="fa fa-chevron-right"></i>
             </div>
             <div class="card">
-                <a href="/2023/08/29/frontend/android/jin-zhi-wei-android-gong-cheng-shi/z/">
+                <a href="/2023/08/29/frontend/android/android-proxy/android-proxy/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/8.jpg" class="responsive-img" alt="金职位_Android工程师">
+                        <img src="/medias/featureimages/13.jpg" class="responsive-img" alt="安卓项目下载问题解决">
                         
-                        <span class="card-title">金职位_Android工程师</span>
+                        <span class="card-title">安卓项目下载问题解决</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">01 Android 零基础入门01 步骤一：java 基础语法02 步骤二：java 面向对象03 步骤三：Java 常用工具类04 步骤四：UI 基础入门01 Android 入门02 AS 使用指南03 Android 线性与相对布局</div>
+                    <div class="summary">
+在项目的 settings.gradle 里加入
+
+pluginManagement {
+    repositories {
+        // 就是这个
+        maven { url 'https://maven.aliy</div>
                     <div class="publish-info">
                             <span class="publish-date">
                                 <i class="fa fa-clock-o fa-fw icon-date"></i>2023-08-29
@@ -11122,7 +11332,7 @@ webpack(202011)(架构)(全)任务 1：1.201122.webpack 的核心概念_【海�
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">612.9k</span>
+                <span class="white-color">621.1k</span>
             
 
             
