@@ -366,14 +366,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        769
+                        1.3k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        2 分
+                        5 分
                     </div>
                     
                 
@@ -478,7 +478,207 @@
 <p><img src="a88d8433.png"><img src="8684bb8c.png" alt="将节点类型变为0, 其中的子节点的类型和值分别用0和1表示, 可将ast简化为数组类型"><br><img src="4e4950ba.png" alt="甚至可以将操作简化为符号(如addition -> +), 去掉变量标识符的type属性"><br><img src="eaca3bbe.png" alt="这种AST格式称为Symbolic Expression"><br><img src="e8f57bcb.png" alt="直接使用这种格式的好处是, 可以用js或py的字典或列表来表示, 就不需要额外写解析器"><br><img src="8110a658.png"></p>
 <h3 id="我们将实现-eva语言-的编译器"><a href="#我们将实现-eva语言-的编译器" class="headerlink" title="我们将实现 eva语言 的编译器"></a>我们将实现 eva语言 的编译器</h3><p><img src="a8dc3bfc.png"><img src="d9f6ee49.png" alt="eval也有求值的意思"><img src="60f60cec.png"><img src="153140ac.png"><br><img src="7207599a.png"><img src="8625320b.png"><img src="bbeab81f.png"></p>
 <p><img src="e13da93d.png" alt="eva中任何东西都是表达式"><img src="d2d01f14.png"><br><img src="53769f2b.png" alt="函数一等公民"></p>
-<h2 id="2-Self-evaluating-expressions"><a href="#2-Self-evaluating-expressions" class="headerlink" title="2. Self-evaluating expressions"></a>2. Self-evaluating expressions</h2>
+<h2 id="2-Self-evaluating-expressions"><a href="#2-Self-evaluating-expressions" class="headerlink" title="2. Self-evaluating expressions"></a>2. Self-evaluating expressions</h2><p><img src="26bedeb1.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token keyword">const</span> assert <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'assert'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">/**
+ * Eva interpreter
+ */</span>
+<span class="token keyword">class</span> <span class="token class-name">Eva</span> <span class="token punctuation">{</span>
+    <span class="token function">eval</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">isNumber</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> exp
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">isString</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// "hello" -> hello</span>
+            <span class="token keyword">return</span> exp<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'+'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// (+ 1 2) -> 3</span>
+            <span class="token keyword">return</span> exp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> exp<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">throw</span> <span class="token string">'Unimplemented'</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">isNumber</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">typeof</span> exp <span class="token operator">===</span> <span class="token string">'number'</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">isString</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">typeof</span> exp <span class="token operator">===</span> <span class="token string">'string'</span> <span class="token operator">&amp;&amp;</span> exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'"'</span> <span class="token operator">&amp;&amp;</span> exp<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">===</span> <span class="token string">'"'</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// ----- -----</span>
+<span class="token comment" spellcheck="true">// tests:</span>
+<span class="token keyword">const</span> eva <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Eva</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// Self-evaluating 自求值(评估) -> 对应字面量, 编译器不做处理直接返回字面量本身</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token string">'"hello"'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'hello'</span><span class="token punctuation">)</span>
+
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'+'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'+'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'+'</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'All assertions passed!'</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="3-Variables-and-Environments"><a href="#3-Variables-and-Environments" class="headerlink" title="3. Variables and Environments"></a>3. Variables and Environments</h2><p><img src="32dadea1.png"><img src="73371256.png" alt="使用递归解决多层加法"><img src="ee3625b3.png" alt="变量定义"><img src="66c6e4e7.png" alt="变量赋值"><br><img src="a9a22421.png" alt="变量使用"></p>
+<p><img src="bb78a0ac.png"><img src="6e4c55ac.png"><img src="c23c983c.png"><img src="5ba78ba8.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// Eva.js</span>
+<span class="token keyword">const</span> assert <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'assert'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">const</span> Environment <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./Environment'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">/**
+ * Eva interpreter
+ */</span>
+<span class="token keyword">class</span> <span class="token class-name">Eva</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/**
+     * Creates an Eva instance with the global environment
+     */</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span>global <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Environment</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>global <span class="token operator">=</span> global
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Evaluates an expression in the given environment
+     * @param exp
+     * @param env
+     * @return {number|*}
+     */</span>
+    <span class="token function">eval</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>global<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// -------------------------------------</span>
+        <span class="token comment" spellcheck="true">// Self-evaluating expressions</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">isNumber</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> exp
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">isString</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// "hello" -> hello</span>
+            <span class="token keyword">return</span> exp<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// -------------------------------------</span>
+        <span class="token comment" spellcheck="true">// Math operations</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'+'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// (+ 1 2) -> 3</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'*'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// (+ 1 2) -> 3</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// -------------------------------------</span>
+        <span class="token comment" spellcheck="true">// Variable declaration</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'var'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_<span class="token punctuation">,</span> name<span class="token punctuation">,</span> value<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+            <span class="token keyword">return</span> env<span class="token punctuation">.</span><span class="token function">define</span><span class="token punctuation">(</span>name<span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// -------------------------------------</span>
+        <span class="token comment" spellcheck="true">// Variable access</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token function">isVariableName</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> env<span class="token punctuation">.</span><span class="token function">lookup</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unimplemented: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>JSON<span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">isNumber</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">typeof</span> exp <span class="token operator">===</span> <span class="token string">'number'</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">isString</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">typeof</span> exp <span class="token operator">===</span> <span class="token string">'string'</span> <span class="token operator">&amp;&amp;</span> exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'"'</span> <span class="token operator">&amp;&amp;</span> exp<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">===</span> <span class="token string">'"'</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">isVariableName</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">typeof</span> exp <span class="token operator">===</span> <span class="token string">'string'</span> <span class="token operator">&amp;&amp;</span> <span class="token regex">/^[a-zA-Z][a-zA-Z0-9_]*$/</span><span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// ----- -----</span>
+<span class="token comment" spellcheck="true">// tests:</span>
+<span class="token keyword">const</span> eva <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Eva</span><span class="token punctuation">(</span><span class="token keyword">new</span> <span class="token class-name">Environment</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+    <span class="token keyword">null</span><span class="token punctuation">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+
+    <span class="token boolean">true</span><span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+    <span class="token boolean">false</span><span class="token punctuation">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+
+    VERSION<span class="token punctuation">:</span> <span class="token string">'0.1'</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// Self-evaluating 自求值(评估) -> 对应字面量, 编译器不做处理直接返回字面量本身</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token string">'"hello"'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'hello'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// Math</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'+'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'+'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'+'</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'+'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'*'</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">11</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// Variables</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'var'</span><span class="token punctuation">,</span> <span class="token string">'x'</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token string">'x'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'var'</span><span class="token punctuation">,</span> <span class="token string">'y'</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span>
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token string">'y'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span>
+
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token string">'VERSION'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'0.1'</span><span class="token punctuation">)</span>
+
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'var'</span><span class="token punctuation">,</span> <span class="token string">'isUser'</span><span class="token punctuation">,</span> <span class="token string">'true'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span>
+
+assert<span class="token punctuation">.</span><span class="token function">strictEqual</span><span class="token punctuation">(</span>eva<span class="token punctuation">.</span><span class="token function">eval</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'var'</span><span class="token punctuation">,</span> <span class="token string">'z'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'*'</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">)</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'All assertions passed!'</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// Environment.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Environment: names storage
+ */</span>
+<span class="token keyword">class</span> <span class="token class-name">Environment</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/**
+     * Creates an environment with the given record.
+     */</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span>record <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>record <span class="token operator">=</span> record
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Create a variable with the given name and value.
+     * @param name
+     * @param value
+     */</span>
+    <span class="token function">define</span><span class="token punctuation">(</span>name<span class="token punctuation">,</span> value<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>record<span class="token punctuation">[</span>name<span class="token punctuation">]</span> <span class="token operator">=</span> value
+        <span class="token keyword">return</span> value
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Returns the value of a defined variable, or throws
+     * if the variable is not defined
+     */</span>
+    <span class="token function">lookup</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 对象是否有指定名称的属性</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>record<span class="token punctuation">.</span><span class="token function">hasOwnProperty</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ReferenceError</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`Variable "</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">" is not defined.`</span></span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>record<span class="token punctuation">[</span>name<span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> Environment
+</code></pre>
+<h2 id="4-Blocks-expression-groups-and-Nested-Scopes"><a href="#4-Blocks-expression-groups-and-Nested-Scopes" class="headerlink" title="4. Blocks expression groups and Nested Scopes"></a>4. Blocks expression groups and Nested Scopes</h2><p><img src="2265593c.png"></p>
+
             </div>
             <hr/>
 
@@ -1136,7 +1336,7 @@ cargo add ndarr</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">672.5k</span>
+                <span class="white-color">673k</span>
             
 
             
