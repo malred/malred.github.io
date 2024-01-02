@@ -6,7 +6,9 @@
     <meta charset="utf-8">
     <meta name="keywords" content="Building a Parser from scratch, HTML,CSS,React,Vue,Java,Go,微服务,linux">
     <meta name="description" content="01 - Basic expressions and Tokenizer001 Tokenizer  Parser
-">
+// __test__/run.js
+const {Parser} = require(&#39;../src/Parser&#39;)
+c">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="renderer" content="webkit|ie-stand|ie-comp">
@@ -364,7 +366,7 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        7
+                        90
                     </div>
                     
 
@@ -387,8 +389,64 @@
         <hr class="clearfix">
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <h1 id="01-Basic-expressions-and-Tokenizer"><a href="#01-Basic-expressions-and-Tokenizer" class="headerlink" title="01 - Basic expressions and Tokenizer"></a>01 - Basic expressions and Tokenizer</h1><h2 id="001-Tokenizer-Parser"><a href="#001-Tokenizer-Parser" class="headerlink" title="001 Tokenizer  Parser"></a>001 Tokenizer  Parser</h2><p><img src="zffqwe2/b5f4bd9b.png"></p>
+                <h1 id="01-Basic-expressions-and-Tokenizer"><a href="#01-Basic-expressions-and-Tokenizer" class="headerlink" title="01 - Basic expressions and Tokenizer"></a>01 - Basic expressions and Tokenizer</h1><h2 id="001-Tokenizer-Parser"><a href="#001-Tokenizer-Parser" class="headerlink" title="001 Tokenizer  Parser"></a>001 Tokenizer  Parser</h2><p><img src="b5f4bd9b.png" alt="解析语法, 人们一开始尝试使用正则表达式, 但是正则表达式不适合解析, 我们确实使用了它(只限于标记器模块)"><br><img src="8882437f.png"><img src="09531411.png"><img src="58d6aa43.png"><img src="0406334e.png"><br><img src="bb54df5f.png" alt="另一门课"><img src="1a9d57ab.png"><img src="9b6a3442.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/run.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>Parser<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Parser'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> parser <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Parser</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 
+<span class="token keyword">const</span> program <span class="token operator">=</span> <span class="token template-string"><span class="token string">`42`</span></span>
+
+<span class="token keyword">const</span> ast <span class="token operator">=</span> parser<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span>program<span class="token punctuation">)</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>JSON<span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>ast<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Parser.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Letter parser: recursive descent implementation
+ */</span>
+<span class="token keyword">class</span> <span class="token class-name">Parser</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/**
+     * Parses a string into an AST
+     */</span>
+    <span class="token function">parse</span><span class="token punctuation">(</span>string<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_string <span class="token operator">=</span> string
+
+        <span class="token comment" spellcheck="true">// Parse recursively starting from the main</span>
+        <span class="token comment" spellcheck="true">// entry point, the Program</span>
+
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Program</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Main entry point
+     *
+     * Program
+     *      : NumericLiteral
+     *      ;
+     */</span>
+    <span class="token function">Program</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">NumericLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * NumericLiteral
+     *      : NUMBER
+     *      ;
+     */</span>
+    <span class="token function">NumericLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'NumericLiteral'</span><span class="token punctuation">,</span>
+            value<span class="token punctuation">:</span> <span class="token function">Number</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_string<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+    Parser
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
             </div>
             <hr/>
 
@@ -877,45 +935,46 @@ gitment.render('gitment-content');
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fa fa-dot-circle-o"></i>&nbsp;本篇
-            </div>
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2024/01/02/ji-suan-ji-ke-xue-ji-lun-zi/bian-yi-yuan-li/building-a-parser-from-scratch/zffqwe2/">
+                <a href="/2024/01/02/game/create-a-complete-2d-survivors-style-game-in-godot-4/cb644c1b/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/2.jpg" class="responsive-img" alt="Building a Parser from scratch">
+                        <img src="/medias/featureimages/20.jpg" class="responsive-img" alt="Create a Complete 2D Survivors Style Game in Godot 4">
                         
-                        <span class="card-title">Building a Parser from scratch</span>
+                        <span class="card-title">Create a Complete 2D Survivors Style Game in Godot 4</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">01 - Basic expressions and Tokenizer001 Tokenizer  Parser
-</div>
+                    <div class="summary">1. Starting Out1. Godot Download, Orientation, and Setup
+2. Creating the Player
+3. Player Movement
+# player.gd
+extends C</div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2024-01-02
-                            </span>
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2024-01-02
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" class="post-category" target="_blank">
-                                    编译原理
+                            <a href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91/" class="post-category" target="_blank">
+                                    游戏开发
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" target="_blank">
-                        <span class="chip bg-color">编译原理</span>
+                    <a href="/tags/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91/" target="_blank">
+                        <span class="chip bg-color">游戏开发</span>
                     </a>
                     
                 </div>
@@ -1034,7 +1093,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">789.2k</span>
+                <span class="white-color">683.8k</span>
             
 
             
