@@ -373,14 +373,14 @@ name = &#34;server&#34;">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        1.5k
+                        2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        9 分
+                        12 分
                     </div>
                     
                 
@@ -900,7 +900,200 @@ reqwest = { version = "0.11.14", features = ["json"] }
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2 id="037-Displaying-Data"><a href="#037-Displaying-Data" class="headerlink" title="037 - Displaying Data"></a>037 - Displaying Data</h2><h2 id="038-Yew-useeffect-hook"><a href="#038-Yew-useeffect-hook" class="headerlink" title="038 - Yew useeffect hook"></a>038 - Yew useeffect hook</h2><h2 id="039-Create-Form"><a href="#039-Create-Form" class="headerlink" title="039 - Create Form"></a>039 - Create Form</h2><h2 id="040-Add-Form"><a href="#040-Add-Form" class="headerlink" title="040 - Add Form"></a>040 - Add Form</h2><h2 id="041-Connect-Yew-and-Axum"><a href="#041-Connect-Yew-and-Axum" class="headerlink" title="041 - Connect Yew and Axum"></a>041 - Connect Yew and Axum</h2><h2 id="042-Post-Form-Data-to-Server-API"><a href="#042-Post-Form-Data-to-Server-API" class="headerlink" title="042 - Post Form Data to Server API"></a>042 - Post Form Data to Server API</h2><h2 id="043-Style-Form"><a href="#043-Style-Form" class="headerlink" title="043 - Style Form"></a>043 - Style Form</h2><h2 id="044-Yew-Routing"><a href="#044-Yew-Routing" class="headerlink" title="044 - Yew Routing"></a>044 - Yew Routing</h2><h2 id="045-Yew-Routing-Adding-Components-and-Navigation"><a href="#045-Yew-Routing-Adding-Components-and-Navigation" class="headerlink" title="045 - Yew Routing Adding Components and Navigation"></a>045 - Yew Routing Adding Components and Navigation</h2>
+<h2 id="037-Displaying-Data"><a href="#037-Displaying-Data" class="headerlink" title="037 - Displaying Data"></a>037 - Displaying Data</h2><pre class=" language-rust"><code class="language-rust"><span class="token comment" spellcheck="true">// frontend/src/products.rs</span>
+<span class="token keyword">use</span> yew<span class="token punctuation">:</span><span class="token punctuation">:</span>prelude<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">*</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> serde<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span>Deserialize<span class="token punctuation">,</span> Serialize<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token attribute attr-name">#[derive(Serialize, Deserialize, Debug)]</span>
+<span class="token keyword">pub</span> <span class="token keyword">struct</span> Product <span class="token punctuation">{</span>
+    id<span class="token punctuation">:</span> i32<span class="token punctuation">,</span>
+    name<span class="token punctuation">:</span> String<span class="token punctuation">,</span>
+    price<span class="token punctuation">:</span> i32<span class="token punctuation">,</span>
+<span class="token punctuation">}</span>
+
+<span class="token attribute attr-name">#[function_component]</span>
+<span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">Products</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> Html <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> data<span class="token punctuation">:</span> UseStateHandle<span class="token operator">&lt;</span>Vec<span class="token operator">&lt;</span>Product<span class="token operator">>></span> <span class="token operator">=</span> <span class="token function">use_state</span><span class="token punctuation">(</span><span class="token operator">||</span> <span class="token function">vec!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> data_clone <span class="token operator">=</span> data<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    wasm_bindgen_futures<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">spawn_local</span><span class="token punctuation">(</span>
+        async <span class="token keyword">move</span> <span class="token punctuation">{</span>
+            <span class="token keyword">let</span> fetched_data <span class="token operator">=</span> reqwest<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">"http://localhost:3001/api/products"</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span>await
+                <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"cannot get data from url"</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span>json<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>Vec<span class="token operator">&lt;</span>Product<span class="token operator">>></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span>await
+                <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"cannot convert to json"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            data_clone<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span>fetched_data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">let</span> products <span class="token operator">=</span> data<span class="token punctuation">.</span><span class="token function">iter</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token operator">|</span>product<span class="token operator">|</span> <span class="token macro-rules function">html!</span> <span class="token punctuation">{</span>
+        <span class="token operator">&lt;</span>ul<span class="token operator">></span>
+            <span class="token operator">&lt;</span>li key<span class="token operator">=</span><span class="token punctuation">{</span>product<span class="token punctuation">.</span>id<span class="token punctuation">}</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token function">format!</span><span class="token punctuation">(</span><span class="token string">"Name: {}, Price: {}"</span><span class="token punctuation">,</span>product<span class="token punctuation">.</span>name<span class="token punctuation">,</span>product<span class="token punctuation">.</span>price<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>li<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>ul<span class="token operator">></span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>collect<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>Html<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token macro-rules function">html!</span> <span class="token punctuation">{</span>
+        <span class="token operator">&lt;</span>div class<span class="token operator">=</span><span class="token string">"container"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>h2<span class="token operator">></span><span class="token punctuation">{</span><span class="token string">"List of Products: "</span><span class="token punctuation">}</span> <span class="token punctuation">{</span>data<span class="token punctuation">.</span><span class="token function">len</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+            <span class="token operator">&lt;</span>p<span class="token operator">></span><span class="token punctuation">{</span>products<span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>p<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="038-Yew-useeffect-hook"><a href="#038-Yew-useeffect-hook" class="headerlink" title="038 - Yew useeffect hook"></a>038 - Yew useeffect hook</h2><pre class=" language-rust"><code class="language-rust"><span class="token attribute attr-name">#[function_component]</span>
+<span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">Products</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> Html <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> data<span class="token punctuation">:</span> UseStateHandle<span class="token operator">&lt;</span>Vec<span class="token operator">&lt;</span>Product<span class="token operator">>></span> <span class="token operator">=</span> <span class="token function">use_state</span><span class="token punctuation">(</span><span class="token operator">||</span> <span class="token function">vec!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">let</span> data_clone <span class="token operator">=</span> data<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">use_effect</span><span class="token punctuation">(</span><span class="token keyword">move</span> <span class="token closure-params"><span class="token punctuation">|</span><span class="token punctuation">|</span></span> <span class="token punctuation">{</span>
+            wasm_bindgen_futures<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">spawn_local</span><span class="token punctuation">(</span>
+                async <span class="token keyword">move</span> <span class="token punctuation">{</span>
+                    <span class="token keyword">let</span> fetched_data <span class="token operator">=</span> reqwest<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">get</span><span class="token punctuation">(</span><span class="token string">"http://localhost:3001/api/products"</span><span class="token punctuation">)</span>
+                        <span class="token punctuation">.</span>await
+                        <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"cannot get data from url"</span><span class="token punctuation">)</span>
+                        <span class="token punctuation">.</span>json<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">&lt;</span>Vec<span class="token operator">&lt;</span>Product<span class="token operator">>></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                        <span class="token punctuation">.</span>await
+                        <span class="token punctuation">.</span><span class="token function">expect</span><span class="token punctuation">(</span><span class="token string">"cannot convert to json"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    data_clone<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span>fetched_data<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token operator">||</span> <span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="039-Create-Form"><a href="#039-Create-Form" class="headerlink" title="039 - Create Form"></a>039 - Create Form</h2><pre class=" language-toml"><code class="language-toml">web-sys = { version = "0.3.60", features = ["HtmlInputElement"] }
+gloo-console = "0.2.3"
+</code></pre>
+<pre class=" language-rust"><code class="language-rust"><span class="token comment" spellcheck="true">// frontend/src/products.rs</span>
+<span class="token keyword">use</span> yew<span class="token punctuation">:</span><span class="token punctuation">:</span>prelude<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">*</span><span class="token punctuation">;</span> 
+<span class="token keyword">use</span> web_sys<span class="token punctuation">:</span><span class="token punctuation">:</span>HtmlInputElement<span class="token punctuation">;</span> 
+
+<span class="token attribute attr-name">#[function_component]</span>
+<span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">Form</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> Html <span class="token punctuation">{</span>
+
+    <span class="token macro-rules function">html!</span> <span class="token punctuation">{</span>
+        <span class="token operator">&lt;</span>div class<span class="token operator">=</span><span class="token string">"container"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>h2<span class="token operator">></span><span class="token punctuation">{</span><span class="token string">"Add a Product"</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+            <span class="token operator">&lt;</span>div<span class="token operator">></span>
+
+            <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="040-Add-Form"><a href="#040-Add-Form" class="headerlink" title="040 - Add Form"></a>040 - Add Form</h2><pre class=" language-rust"><code class="language-rust"><span class="token comment" spellcheck="true">// frontend/src/products.rs</span>
+<span class="token keyword">use</span> yew<span class="token punctuation">:</span><span class="token punctuation">:</span>prelude<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token operator">*</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> web_sys<span class="token punctuation">:</span><span class="token punctuation">:</span>HtmlInputElement<span class="token punctuation">;</span>
+
+<span class="token attribute attr-name">#[function_component]</span>
+<span class="token keyword">pub</span> <span class="token keyword">fn</span> <span class="token function">Form</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">-></span> Html <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// name</span>
+    <span class="token keyword">let</span> name_ref <span class="token operator">=</span> NodeRef<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> name_ref_outer <span class="token operator">=</span> name_ref<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// price</span>
+    <span class="token keyword">let</span> price_ref <span class="token operator">=</span> NodeRef<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">default</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> price_ref_outer <span class="token operator">=</span> price_ref<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// submit form data</span>
+    <span class="token keyword">let</span> onclick <span class="token operator">=</span> Callback<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">from</span><span class="token punctuation">(</span><span class="token keyword">move</span> <span class="token closure-params"><span class="token punctuation">|</span>_<span class="token punctuation">|</span></span> <span class="token punctuation">{</span>
+        gloo_console<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">log!</span><span class="token punctuation">(</span><span class="token string">"Button Clicked"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token macro-rules function">html!</span> <span class="token punctuation">{</span>
+        <span class="token operator">&lt;</span>div class<span class="token operator">=</span><span class="token string">"container"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>h2<span class="token operator">></span><span class="token punctuation">{</span><span class="token string">"Add a Product"</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>h2<span class="token operator">></span>
+            <span class="token operator">&lt;</span>div<span class="token operator">></span>
+                <span class="token operator">&lt;</span>label <span class="token keyword">for</span><span class="token operator">=</span><span class="token string">"name"</span> class<span class="token operator">=</span><span class="token string">""</span><span class="token operator">></span>
+                <span class="token punctuation">{</span><span class="token string">"Name"</span><span class="token punctuation">}</span>
+                <span class="token operator">&lt;</span>input
+                    <span class="token keyword">ref</span><span class="token operator">=</span><span class="token punctuation">{</span>name_ref_outer<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+                    id<span class="token operator">=</span><span class="token string">"name"</span>
+                    class<span class="token operator">=</span><span class="token string">""</span>
+                    <span class="token keyword">type</span><span class="token operator">=</span><span class="token string">"text"</span>
+                    <span class="token operator">/</span><span class="token operator">></span>
+                <span class="token operator">&lt;</span><span class="token operator">/</span>label<span class="token operator">></span>
+                <span class="token operator">&lt;</span>br<span class="token operator">/</span><span class="token operator">></span> <span class="token operator">&lt;</span>br<span class="token operator">/</span><span class="token operator">></span>
+                <span class="token operator">&lt;</span>label <span class="token keyword">for</span><span class="token operator">=</span><span class="token string">"price"</span> class<span class="token operator">=</span><span class="token string">""</span><span class="token operator">></span>
+                <span class="token punctuation">{</span><span class="token string">"Price"</span><span class="token punctuation">}</span>
+                <span class="token operator">&lt;</span>input
+                    <span class="token keyword">ref</span><span class="token operator">=</span><span class="token punctuation">{</span>price_ref_outer<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+                    id<span class="token operator">=</span><span class="token string">"price"</span>
+                    class<span class="token operator">=</span><span class="token string">""</span>
+                    <span class="token keyword">type</span><span class="token operator">=</span><span class="token string">"number"</span>
+                    <span class="token operator">/</span><span class="token operator">></span>
+                <span class="token operator">&lt;</span><span class="token operator">/</span>label<span class="token operator">></span>
+                <span class="token operator">&lt;</span>br<span class="token operator">/</span><span class="token operator">></span> <span class="token operator">&lt;</span>br<span class="token operator">/</span><span class="token operator">></span>
+                <span class="token operator">&lt;</span>button <span class="token punctuation">{</span>onclick<span class="token punctuation">}</span> class<span class="token operator">=</span><span class="token string">""</span><span class="token operator">></span><span class="token punctuation">{</span><span class="token string">"Add Product"</span><span class="token punctuation">}</span><span class="token operator">&lt;</span><span class="token operator">/</span>button<span class="token operator">></span>
+            <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+            <span class="token operator">&lt;</span>hr <span class="token operator">/</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>div<span class="token operator">></span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="041-Connect-Yew-and-Axum"><a href="#041-Connect-Yew-and-Axum" class="headerlink" title="041 - Connect Yew and Axum"></a>041 - Connect Yew and Axum</h2><p><img src="9401aeb0.png"><img src="db8a9270.png"></p>
+<pre class=" language-toml"><code class="language-toml">[workspace]
+
+members = [
+    "server", "frontend"
+]
+# ================================== #
+
+[build]
+target = "index.html"
+dist = "../dist"
+</code></pre>
+<p><img src="1e1f34b3.png"></p>
+<pre class=" language-rust"><code class="language-rust"><span class="token keyword">mod</span> handlers<span class="token punctuation">;</span>
+
+<span class="token keyword">use</span> axum<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span>
+    response<span class="token punctuation">:</span><span class="token punctuation">:</span>IntoResponse<span class="token punctuation">,</span>
+    http<span class="token punctuation">:</span><span class="token punctuation">:</span>StatusCode<span class="token punctuation">,</span>
+    routing<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span>get<span class="token punctuation">,</span> post<span class="token punctuation">,</span> delete<span class="token punctuation">}</span><span class="token punctuation">,</span> Router<span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> std<span class="token punctuation">:</span><span class="token punctuation">:</span>io<span class="token punctuation">;</span>
+<span class="token keyword">use</span> axum<span class="token punctuation">:</span><span class="token punctuation">:</span>routing<span class="token punctuation">:</span><span class="token punctuation">:</span>get_service<span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+
+<span class="token keyword">use</span> tower_http<span class="token punctuation">:</span><span class="token punctuation">:</span>cors<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span>Any<span class="token punctuation">,</span> CorsLayer<span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token keyword">use</span> tower_http<span class="token punctuation">:</span><span class="token punctuation">:</span>services<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token punctuation">{</span>ServeDir<span class="token punctuation">,</span> ServeFile<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// add handle error fn</span>
+async <span class="token keyword">fn</span> <span class="token function">handle_error</span><span class="token punctuation">(</span>_err<span class="token punctuation">:</span> io<span class="token punctuation">:</span><span class="token punctuation">:</span>Error<span class="token punctuation">)</span> <span class="token punctuation">-></span> <span class="token keyword">impl</span> IntoResponse <span class="token punctuation">{</span>
+    <span class="token punctuation">(</span>StatusCode<span class="token punctuation">:</span><span class="token punctuation">:</span>INTERNAL_SERVER_ERROR<span class="token punctuation">,</span> <span class="token string">"Something went wrong..."</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token attribute attr-name">#[tokio::main]</span>
+async <span class="token keyword">fn</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// add cors ...</span>
+
+    <span class="token comment" spellcheck="true">// serving frontend static files</span>
+    <span class="token keyword">let</span> serve_dir <span class="token operator">=</span> ServeDir<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token string">"../frontend/dist"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">not_found_service</span><span class="token punctuation">(</span>ServeFile<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token string">"../dist/frontend/index.html"</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">let</span> serve_dir <span class="token operator">=</span> <span class="token function">get_service</span><span class="token punctuation">(</span>serve_dir<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">handle_error</span><span class="token punctuation">(</span>handle_error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// add postgres ...</span>
+
+    <span class="token keyword">let</span> app <span class="token operator">=</span> Router<span class="token punctuation">:</span><span class="token punctuation">:</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">route</span><span class="token punctuation">(</span><span class="token string">"/home"</span><span class="token punctuation">,</span> <span class="token function">get</span><span class="token punctuation">(</span>root<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">layer</span><span class="token punctuation">(</span>cors<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">route</span><span class="token punctuation">(</span><span class="token string">"/api/products"</span><span class="token punctuation">,</span> <span class="token function">post</span><span class="token punctuation">(</span>handlers<span class="token punctuation">:</span><span class="token punctuation">:</span>create_product<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">route</span><span class="token punctuation">(</span><span class="token string">"/api/products"</span><span class="token punctuation">,</span> <span class="token function">get</span><span class="token punctuation">(</span>handlers<span class="token punctuation">:</span><span class="token punctuation">:</span>get_products<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">route</span><span class="token punctuation">(</span><span class="token string">"/api/products/:id"</span><span class="token punctuation">,</span> <span class="token function">get</span><span class="token punctuation">(</span>handlers<span class="token punctuation">:</span><span class="token punctuation">:</span>get_one_product<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">route</span><span class="token punctuation">(</span><span class="token string">"/api/products/:id"</span><span class="token punctuation">,</span> <span class="token function">delete</span><span class="token punctuation">(</span>handlers<span class="token punctuation">:</span><span class="token punctuation">:</span>del_one_product<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">with_state</span><span class="token punctuation">(</span>pool<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">nest_service</span><span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">,</span> serve_dir<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">fallback_service</span><span class="token punctuation">(</span>serve_dir<span class="token punctuation">.</span><span class="token function">clone</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="042-Post-Form-Data-to-Server-API"><a href="#042-Post-Form-Data-to-Server-API" class="headerlink" title="042 - Post Form Data to Server API"></a>042 - Post Form Data to Server API</h2><h2 id="043-Style-Form"><a href="#043-Style-Form" class="headerlink" title="043 - Style Form"></a>043 - Style Form</h2><h2 id="044-Yew-Routing"><a href="#044-Yew-Routing" class="headerlink" title="044 - Yew Routing"></a>044 - Yew Routing</h2><h2 id="045-Yew-Routing-Adding-Components-and-Navigation"><a href="#045-Yew-Routing-Adding-Components-and-Navigation" class="headerlink" title="045 - Yew Routing Adding Components and Navigation"></a>045 - Yew Routing Adding Components and Navigation</h2>
             </div>
             <hr/>
 
@@ -1560,7 +1753,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">679.6k</span>
+                <span class="white-color">682.3k</span>
             
 
             
