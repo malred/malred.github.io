@@ -368,14 +368,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        3.1k
+                        3.3k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        16 分
+                        17 分
                     </div>
                     
                 
@@ -431,7 +431,7 @@
 <h1 id="第4章-学习SQL引擎，破解各种数据库优化的核心密码"><a href="#第4章-学习SQL引擎，破解各种数据库优化的核心密码" class="headerlink" title="第4章 学习SQL引擎，破解各种数据库优化的核心密码"></a>第4章 学习SQL引擎，破解各种数据库优化的核心密码</h1><h2 id="4-1-深入学习SQL模块的原理"><a href="#4-1-深入学习SQL模块的原理" class="headerlink" title="4-1 深入学习SQL模块的原理"></a>4-1 深入学习SQL模块的原理</h2><p><img src="76848de2.png"><img src="f91b4108.png"><img src="5f62d742.png"><img src="78ff40ae.png"><br><img src="837b210d.png"><img src="1b8bd184.png"></p>
 <h2 id="4-2-探索数据库SQL语句执行中的坑"><a href="#4-2-探索数据库SQL语句执行中的坑" class="headerlink" title="4-2 探索数据库SQL语句执行中的坑"></a>4-2 探索数据库SQL语句执行中的坑</h2><p><img src="e8727b69.png"><img src="7e503540.png"><img src="298e5bb5.png"><img src="04d9840d.png"><img src="9543e1fc.png"></p>
 <h2 id="4-3-了解编译原理，知道语句是如何变成执行计划的"><a href="#4-3-了解编译原理，知道语句是如何变成执行计划的" class="headerlink" title="4-3 了解编译原理，知道语句是如何变成执行计划的"></a>4-3 了解编译原理，知道语句是如何变成执行计划的</h2><p><img src="1f6e17cb.png"><img src="c254b956.png"><img src="1717b056.png"><img src="c95fe7a3.png"><img src="db0064bd.png"></p>
-<h2 id="4-4-代码实现：实现一个SQL语法解析器（一）"><a href="#4-4-代码实现：实现一个SQL语法解析器（一）" class="headerlink" title="4-4 代码实现：实现一个SQL语法解析器（一）"></a>4-4 代码实现：实现一个SQL语法解析器（一）</h2><p><img src="e1345141/b39fa50e.png"><img src="e1345141/6d6ed6cc.png"></p>
+<h2 id="4-4-代码实现：实现一个SQL语法解析器（一）"><a href="#4-4-代码实现：实现一个SQL语法解析器（一）" class="headerlink" title="4-4 代码实现：实现一个SQL语法解析器（一）"></a>4-4 代码实现：实现一个SQL语法解析器（一）</h2><p><img src="b39fa50e.png"><img src="6d6ed6cc.png"></p>
 <pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># imoocdb/sql/parser/parser.py</span>
 <span class="token keyword">import</span> sly  <span class="token comment" spellcheck="true"># 语法解析</span>
 <span class="token keyword">import</span> re  <span class="token comment" spellcheck="true"># 正则表达式</span>
@@ -1263,7 +1263,47 @@
 
 test_parse_select_stmt<span class="token punctuation">(</span><span class="token punctuation">)</span>
 </code></pre>
-<h2 id="4-9-代码实现：完善增删查改语句的逻辑（二）"><a href="#4-9-代码实现：完善增删查改语句的逻辑（二）" class="headerlink" title="4-9 代码实现：完善增删查改语句的逻辑（二）"></a>4-9 代码实现：完善增删查改语句的逻辑（二）</h2>
+<h2 id="4-9-代码实现：完善增删查改语句的逻辑（二）"><a href="#4-9-代码实现：完善增删查改语句的逻辑（二）" class="headerlink" title="4-9 代码实现：完善增删查改语句的逻辑（二）"></a>4-9 代码实现：完善增删查改语句的逻辑（二）</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># imoocdb/tests/test_sql_parser.py</span>
+<span class="token keyword">from</span> imoocdb<span class="token punctuation">.</span>sql<span class="token punctuation">.</span>parser<span class="token punctuation">.</span>parser <span class="token keyword">import</span> query_parse
+
+
+<span class="token keyword">def</span> <span class="token function">test_parse_select_stmt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ast <span class="token operator">=</span> query_parse<span class="token punctuation">(</span><span class="token string">'select a,b from t1'</span><span class="token punctuation">)</span>
+    <span class="token keyword">assert</span> str<span class="token punctuation">(</span>
+        ast<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token string">'&lt;Select> targets=[&lt;Identifier> parts=a, &lt;Identifier> parts=b] from_table=&lt;Identifier> parts=t1 where=None group_by=None order_by=None'</span>
+    <span class="token keyword">try</span><span class="token punctuation">:</span>
+        query_parse<span class="token punctuation">(</span><span class="token string">'select a,b from t1 order by b order by a'</span><span class="token punctuation">)</span>
+    <span class="token keyword">except</span> SyntaxError<span class="token punctuation">:</span>
+        <span class="token keyword">pass</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> AssertionError<span class="token punctuation">(</span><span class="token string">'should raise an exception'</span><span class="token punctuation">)</span>
+
+test_parse_select_stmt<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">test_parse_dml_stmt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ast <span class="token operator">=</span> query_parse<span class="token punctuation">(</span><span class="token string">'update t1 set a = 1'</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>ast<span class="token punctuation">)</span>
+
+
+test_parse_dml_stmt<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># imoocdb/sql/parser/ast.py</span>
+<span class="token comment" spellcheck="true"># ...</span>
+<span class="token keyword">class</span> <span class="token class-name">Update</span><span class="token punctuation">(</span>ASTNode<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> table<span class="token punctuation">,</span> columns<span class="token punctuation">,</span> where<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        super<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>__init__<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># update t1 set a=1 where b>100;</span>
+        self<span class="token punctuation">.</span>table <span class="token operator">=</span> table
+        <span class="token comment" spellcheck="true"># 期望column是字典(set x=x)</span>
+        <span class="token keyword">assert</span> isinstance<span class="token punctuation">(</span>columns<span class="token punctuation">,</span> dict<span class="token punctuation">)</span>
+
+        self<span class="token punctuation">.</span>columns <span class="token operator">=</span> columns
+        self<span class="token punctuation">.</span>where <span class="token operator">=</span> where
+</code></pre>
+<h2 id="4-10-我们的产品应该支持哪些功能"><a href="#4-10-我们的产品应该支持哪些功能" class="headerlink" title="4-10 我们的产品应该支持哪些功能"></a>4-10 我们的产品应该支持哪些功能</h2><p><img src="bbd5750d.png"><img src="dfea87b4.png"><img src="966d3a5a.png"><img src="2fdf9a96.png"><img src="14b41765.png"></p>
+<h2 id="4-11-如何把语法树变成查询树"><a href="#4-11-如何把语法树变成查询树" class="headerlink" title="4-11 如何把语法树变成查询树"></a>4-11 如何把语法树变成查询树</h2><p><img src="cee28a80.png"><img src="a7bf5912.png"><img src="bd574f6a.png"><img src="a4df91e5.png"><img src="47a5ceaa.png"></p>
+<h2 id="4-12-代码实现：将AST转换为查询树（一）"><a href="#4-12-代码实现：将AST转换为查询树（一）" class="headerlink" title="4-12 代码实现：将AST转换为查询树（一）"></a>4-12 代码实现：将AST转换为查询树（一）</h2>
             </div>
             <hr/>
 
@@ -1913,7 +1953,7 @@ cla</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">682.3k</span>
+                <span class="white-color">789.2k</span>
             
 
             
