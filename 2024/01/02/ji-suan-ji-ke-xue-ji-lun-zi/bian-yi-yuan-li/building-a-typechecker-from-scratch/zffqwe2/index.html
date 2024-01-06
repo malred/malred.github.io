@@ -366,14 +366,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        1.9k
+                        5.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        11 分
+                        34 分
                     </div>
                     
                 
@@ -1232,7 +1232,1480 @@ module<span class="token punctuation">.</span>exports <span class="token operato
  */</span>
 Type<span class="token punctuation">.</span>boolean <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Type</span><span class="token punctuation">(</span><span class="token string">'boolean'</span><span class="token punctuation">)</span>
 </code></pre>
-<h1 id="2-Functional-programming"><a href="#2-Functional-programming" class="headerlink" title="2. Functional programming"></a>2. Functional programming</h1><h2 id="1-User-defined-functions-Local-environments"><a href="#1-User-defined-functions-Local-environments" class="headerlink" title="1. User-defined functions  Local environments"></a>1. User-defined functions  Local environments</h2>
+<h1 id="2-Functional-programming"><a href="#2-Functional-programming" class="headerlink" title="2. Functional programming"></a>2. Functional programming</h1><h2 id="1-User-defined-functions-Local-environments"><a href="#1-User-defined-functions-Local-environments" class="headerlink" title="1. User-defined functions  Local environments"></a>1. User-defined functions  Local environments</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/user-defined-function-test.js</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>exec<span class="token punctuation">,</span> test<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (def square ((x number)) -> number
+            (* x x))
+
+        (square 2)
+        // (square "2")
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// Complex body</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (def calc ((x number) (y number)) -> number
+            (begin
+                (var z 30)
+                (+ (* x y) z)
+            )
+        )
+        
+        (calc 10 20)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js</span>
+
+<span class="token keyword">class</span> <span class="token class-name">EvaTC</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token function">tc</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>global<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token comment" spellcheck="true">// -----------------------------------</span>
+        <span class="token comment" spellcheck="true">// Function declaration:(def square ((x number))->number (xx))</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'def'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> name<span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+            <span class="token keyword">return</span> env<span class="token punctuation">.</span><span class="token function">define</span><span class="token punctuation">(</span>
+                name<span class="token punctuation">,</span>
+                <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_tcFunction</span><span class="token punctuation">(</span>params<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// -----------------------------------</span>
+        <span class="token comment" spellcheck="true">// Function calls</span>
+        <span class="token comment" spellcheck="true">// (square 2)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>Array<span class="token punctuation">.</span><span class="token function">isArray</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> fn <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+            <span class="token keyword">const</span> argValues <span class="token operator">=</span> exp<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// Passed arguments</span>
+            <span class="token keyword">const</span> argTypes <span class="token operator">=</span> argValues<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>arg <span class="token operator">=</span><span class="token operator">></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>arg<span class="token punctuation">,</span> env<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_checkFunctionCall</span><span class="token punctuation">(</span>fn<span class="token punctuation">,</span> argTypes<span class="token punctuation">,</span> env<span class="token punctuation">,</span> exp<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown type for expression </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Checks function body.
+     */</span>
+    <span class="token function">_tcFunction</span><span class="token punctuation">(</span>params<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">,</span> env<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> returnType <span class="token operator">=</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>returnTypeStr<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// Parameters environment and types:</span>
+        <span class="token keyword">const</span> paramsRecord <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+        <span class="token keyword">const</span> paramTypes <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+        params<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">[</span>name<span class="token punctuation">,</span> typeStr<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> paramType <span class="token operator">=</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span>
+            paramsRecord<span class="token punctuation">[</span>name<span class="token punctuation">]</span> <span class="token operator">=</span> paramType
+            paramTypes<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span>paramType<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">const</span> fnEnv <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">TypeEnvironment</span><span class="token punctuation">(</span>paramsRecord<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// Check the body in the extended environment:</span>
+        <span class="token keyword">const</span> actualReturnType <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_tcBody</span><span class="token punctuation">(</span>body<span class="token punctuation">,</span> fnEnv<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// Check return type</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>returnType<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span>actualReturnType<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Expected function </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>body<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> to return </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>returnType<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">, but got </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>actualReturnType<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.`</span></span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Function type records its parameters and return type,</span>
+        <span class="token comment" spellcheck="true">// so we can use them to validate function calls:\</span>
+        <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Function</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            paramTypes<span class="token punctuation">,</span> returnType
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Checks function call.
+     */</span>
+    <span class="token function">_checkFunctionCall</span><span class="token punctuation">(</span>fn<span class="token punctuation">,</span> argTypes<span class="token punctuation">,</span> env<span class="token punctuation">,</span> exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Check arity</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>fn<span class="token punctuation">.</span>paramTypes<span class="token punctuation">.</span>length <span class="token operator">!==</span> argTypes<span class="token punctuation">.</span>length<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`\nFunction </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>fn<span class="token punctuation">.</span><span class="token function">getName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> expects </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>
+                fn<span class="token punctuation">.</span>paramTypes<span class="token punctuation">.</span>length
+            <span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> arguments, </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>argTypes<span class="token punctuation">.</span>length<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> given in </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.\n`</span></span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Check if argument types match the parameter types:</span>
+        argTypes<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span>argType<span class="token punctuation">,</span> index<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_expect</span><span class="token punctuation">(</span>argType<span class="token punctuation">,</span> fn<span class="token punctuation">.</span>paramTypes<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">,</span> argTypes<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">,</span> exp<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> fn<span class="token punctuation">.</span>returnType
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Types.js</span>
+<span class="token keyword">class</span> <span class="token class-name">Type</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">/**
+     * From string: 'number' -> Type.number
+     */</span>
+    <span class="token keyword">static</span> <span class="token function">fromString</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">hasOwnProperty</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">[</span>typeStr<span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Functions</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>typeStr<span class="token punctuation">.</span><span class="token function">includes</span><span class="token punctuation">(</span><span class="token string">'Fn&lt;'</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> Type<span class="token punctuation">.</span>Function<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown type: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>typeStr<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/**
+ * Function meta type
+ */</span>
+Type<span class="token punctuation">.</span>Function <span class="token operator">=</span> <span class="token keyword">class</span> <span class="token class-name">extends</span> Type <span class="token punctuation">{</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">{</span>name <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> paramTypes<span class="token punctuation">,</span> returnType<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>paramTypes <span class="token operator">=</span> paramTypes
+        <span class="token keyword">this</span><span class="token punctuation">.</span>returnType <span class="token operator">=</span> returnType
+        <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">getName</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Returns name:Fn&lt;returnType&lt;p1,p2,...>>
+     *
+     * Fn&lt;number> - function which returns a number
+     * Fn&lt;number&lt;number,number>> - function which returns a number,and accepts two number
+     */</span>
+    <span class="token function">getName</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> name <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">'Fn&lt;'</span><span class="token punctuation">,</span> <span class="token keyword">this</span><span class="token punctuation">.</span>returnType<span class="token punctuation">.</span><span class="token function">getName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+            <span class="token comment" spellcheck="true">// params</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>paramTypes<span class="token punctuation">.</span>length <span class="token operator">!==</span> <span class="token number">0</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">const</span> params <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+                <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token keyword">this</span><span class="token punctuation">.</span>paramTypes<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                    params<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>paramTypes<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">getName</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">}</span>
+                name<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token string">'&lt;'</span><span class="token punctuation">,</span> params<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">'>'</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            name<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token string">'>'</span><span class="token punctuation">)</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">=</span> name<span class="token punctuation">.</span><span class="token function">join</span><span class="token punctuation">(</span><span class="token string">''</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>name
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Equals
+     */</span>
+    <span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>paramTypes<span class="token punctuation">.</span>length <span class="token operator">!==</span> other<span class="token punctuation">.</span>paramTypes<span class="token punctuation">.</span>length<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Same params</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> <span class="token keyword">this</span><span class="token punctuation">.</span>paramTypes<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>paramTypes<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">.</span>paramTypes<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> <span class="token boolean">false</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Return type</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span>returnType<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">.</span>returnType<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * From string: 'Fn&lt;number>' -> Type.Function
+     */</span>
+    <span class="token keyword">static</span> <span class="token function">fromString</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Already compiled</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>Type<span class="token punctuation">.</span><span class="token function">hasOwnProperty</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> Type<span class="token punctuation">[</span>typeStr<span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Function type with return and params:</span>
+        <span class="token keyword">let</span> matched <span class="token operator">=</span> <span class="token regex">/^Fn&lt;(\w+)&lt;([a-z,\s]+)>>$/</span><span class="token punctuation">.</span><span class="token function">exec</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>matched <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> paramsString<span class="token punctuation">]</span> <span class="token operator">=</span> matched
+
+            <span class="token comment" spellcheck="true">// Param types</span>
+            <span class="token keyword">const</span> paramTypes <span class="token operator">=</span> paramsString
+                <span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token regex">/,\s*/g</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>param <span class="token operator">=</span><span class="token operator">></span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>param<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+            <span class="token keyword">return</span> <span class="token punctuation">(</span>Type<span class="token punctuation">[</span>typeStr<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Function</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+                name<span class="token punctuation">:</span> typeStr<span class="token punctuation">,</span>
+                paramTypes<span class="token punctuation">,</span>
+                returnType<span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>returnTypeStr<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// Function type with return type only:</span>
+            matched <span class="token operator">=</span> <span class="token regex">/^Fn&lt;(\w+)>$/</span><span class="token punctuation">.</span><span class="token function">exec</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>matched <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">const</span> <span class="token punctuation">[</span>_<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">]</span> <span class="token operator">=</span> matched
+
+                <span class="token keyword">return</span> <span class="token punctuation">(</span>Type<span class="token punctuation">[</span>typeStr<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Function</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+                    name<span class="token punctuation">:</span> typeStr<span class="token punctuation">,</span>
+                    paramTypes<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                    returnType<span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>returnTypeStr<span class="token punctuation">)</span>
+                <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Type.Function.fromString: Unknown type: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>typeStr<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.`</span></span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="2-Function-calls-Built-in-functions"><a href="#2-Function-calls-Built-in-functions" class="headerlink" title="2. Function calls  Built-in functions"></a>2. Function calls  Built-in functions</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js</span>
+<span class="token comment" spellcheck="true">// ...</span>
+<span class="token function">_createGlobal</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">TypeEnvironment</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        VERSION<span class="token punctuation">:</span> Type<span class="token punctuation">.</span>string<span class="token punctuation">,</span>
+
+        sum<span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span><span class="token string">"Fn&lt;number&lt;number,number>>"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        square<span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span><span class="token string">"Fn&lt;number&lt;number>>"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/built-in-function-test.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>test<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`(sum 1 5)`</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`(sum (square 2) 4)`</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-Closures-Recursive-calls"><a href="#3-Closures-Recursive-calls" class="headerlink" title="3. Closures  Recursive calls"></a>3. Closures  Recursive calls</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js</span>
+<span class="token comment" spellcheck="true">// ...</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'def'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> name<span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+    <span class="token comment" spellcheck="true">// We have to extend environment with the function name *before*</span>
+    <span class="token comment" spellcheck="true">// evaluating the body -- this is need to support recursive</span>
+    <span class="token comment" spellcheck="true">// function calls:</span>
+    <span class="token keyword">const</span> paramTypes <span class="token operator">=</span> params<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">[</span>name<span class="token punctuation">,</span> typeStr<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span>
+        Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span>
+    <span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// Predefine from the signature:</span>
+    env<span class="token punctuation">.</span><span class="token function">define</span><span class="token punctuation">(</span>
+        name<span class="token punctuation">,</span>
+        <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Function</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            paramTypes<span class="token punctuation">,</span>
+            returnType<span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>returnTypeStr<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// return env.define(</span>
+    <span class="token comment" spellcheck="true">//     name,</span>
+    <span class="token comment" spellcheck="true">//     this._tcFunction(params, returnTypeStr, body, env)</span>
+    <span class="token comment" spellcheck="true">// )</span>
+
+    <span class="token comment" spellcheck="true">// Actually validate the body</span>
+    <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_tcFunction</span><span class="token punctuation">(</span>params<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/user-defined-function-test.js</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>exec<span class="token punctuation">,</span> test<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// Closure</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (var value 100)
+        
+        (def calc ((x number) (y number)) -> Fn&lt;number&lt;number>>
+            (begin
+                (var z (+ x y))
+                
+                (def inner ((foo number)) -> number
+                    (+ (+ foo z) value)
+                )
+                
+                inner
+            )
+        )
+        
+        (var fn (calc 10 20))
+        
+        (fn 30)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// Recursive function</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (def factorial ((x number)) -> number
+            (if (== x 1)
+                1
+                (* x (factorial (- x 1)))
+            )
+        )
+        
+        (factorial 5)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="4-Lambda-functions-and-IILE-Syntactic-sugar"><a href="#4-Lambda-functions-and-IILE-Syntactic-sugar" class="headerlink" title="4. Lambda functions and IILE  Syntactic sugar"></a>4. Lambda functions and IILE  Syntactic sugar</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js</span>
+<span class="token keyword">class</span> <span class="token class-name">EvaTC</span> <span class="token punctuation">{</span>
+    <span class="token function">tc</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>global<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+        <span class="token comment" spellcheck="true">// -----------------------------------</span>
+        <span class="token comment" spellcheck="true">// Function declaration:(def square ((x number))->number (xx))</span>
+        <span class="token comment" spellcheck="true">//</span>
+        <span class="token comment" spellcheck="true">// Syntactic sugar for:(var square (Lambda ((x number))->number (xx)))</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'def'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// const [_tag, name, params, _retDel, returnTypeStr, body] = exp</span>
+
+            <span class="token comment" spellcheck="true">// Transpile to a variable declaration</span>
+            <span class="token keyword">const</span> varExp <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_transformDefToVarLambda</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span>
+
+            <span class="token keyword">const</span> name <span class="token operator">=</span> exp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+            <span class="token keyword">const</span> params <span class="token operator">=</span> exp<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+            <span class="token keyword">const</span> returnTypeStr <span class="token operator">=</span> exp<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span>
+
+            <span class="token comment" spellcheck="true">// We have to extend environment with the function name *before*</span>
+            <span class="token comment" spellcheck="true">// evaluating the body -- this is need to support recursive</span>
+            <span class="token comment" spellcheck="true">// function calls:</span>
+            <span class="token keyword">const</span> paramTypes <span class="token operator">=</span> params<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">[</span>name<span class="token punctuation">,</span> typeStr<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span>
+                Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span>
+            <span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// Predefine from the signature:</span>
+            env<span class="token punctuation">.</span><span class="token function">define</span><span class="token punctuation">(</span>
+                name<span class="token punctuation">,</span>
+                <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Function</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+                    paramTypes<span class="token punctuation">,</span>
+                    returnType<span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>returnTypeStr<span class="token punctuation">)</span>
+                <span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// return env.define(</span>
+            <span class="token comment" spellcheck="true">//     name,</span>
+            <span class="token comment" spellcheck="true">//     this._tcFunction(params, returnTypeStr, body, env)</span>
+            <span class="token comment" spellcheck="true">// )</span>
+
+            <span class="token comment" spellcheck="true">// Actually validate the body</span>
+            <span class="token comment" spellcheck="true">// return this._tcFunction(params, returnTypeStr, body, env)</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>varExp<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// -----------------------------------</span>
+        <span class="token comment" spellcheck="true">// Lambda function:(Lambda ((x number))->number (xx))</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'lambda'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_tcFunction</span><span class="token punctuation">(</span>params<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown type for expression </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">/**
+     * Transforms def to var-lambda.
+     */</span>
+    <span class="token function">_transformDefToVarLambda</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> name<span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+        <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token string">'var'</span><span class="token punctuation">,</span> name<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'lambda'</span><span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/lambda-function-test.js</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>exec<span class="token punctuation">,</span> test<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// lambda function</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (lambda ((x number)) -> number (* x x))
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span><span class="token string">'Fn&lt;number&lt;number>>'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// Pass lambda as a callback</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (def onClick ((callback Fn&lt;number&lt;number>>)) -> number
+            (begin
+                (var x 10)     
+                (var y 20)
+                (callback (+ x y))
+            )
+        )
+        
+        (onClick (lambda ((data number)) -> number (* data 10)))
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// Immediately-invoked lambda expression IILE:</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        ((lambda ((x number)) -> number (* x x)) 2)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// Save lambda to a variable:</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (var square (lambda ((x number)) -> number (* x x)))
+        (square 2)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="3-Type-declarations-and-Classes"><a href="#3-Type-declarations-and-Classes" class="headerlink" title="3. Type declarations and Classes"></a>3. Type declarations and Classes</h1><h2 id="1-Declaring-new-types-Type-aliases"><a href="#1-Declaring-new-types-Type-aliases" class="headerlink" title="1. Declaring new types  Type aliases"></a>1. Declaring new types  Type aliases</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js</span>
+<span class="token keyword">class</span> <span class="token class-name">EvaTC</span> <span class="token punctuation">{</span>
+    <span class="token function">tc</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>global<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token comment" spellcheck="true">// -----------------------------------</span>
+        <span class="token comment" spellcheck="true">// Type declaration/alias:(type &lt;namew>&lt;base>)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'type'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> name<span class="token punctuation">,</span> base<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+            <span class="token comment" spellcheck="true">// Type alias</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Type<span class="token punctuation">.</span><span class="token function">hasOwnProperty</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Type </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> is already defined: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>Type<span class="token punctuation">[</span>name<span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+            <span class="token punctuation">}</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>Type<span class="token punctuation">.</span><span class="token function">hasOwnProperty</span><span class="token punctuation">(</span>base<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Type </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>base<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> is not defined.`</span></span>
+            <span class="token punctuation">}</span>
+
+            <span class="token keyword">return</span> <span class="token punctuation">(</span>Type<span class="token punctuation">[</span>name<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Alias</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+                name<span class="token punctuation">,</span>
+                parent<span class="token punctuation">:</span> Type<span class="token punctuation">[</span>base<span class="token punctuation">]</span>
+            <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown type for expression </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/alias-test.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>test<span class="token punctuation">,</span> exec<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token function">exec</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (type int number)
+        (type ID int)
+        (type Index ID)
+    `</span></span><span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (def square ((x int)) -> int (* x x))
+        (square 2)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>int<span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (def promote ((userID ID)) -> ID (+ 1 userID))
+        (promote 1)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>ID<span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (var (x Index) 1)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>Index<span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`x`</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>ID<span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`x`</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>int<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Types.js</span>
+<span class="token keyword">class</span> <span class="token class-name">Type</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>other <span class="token keyword">instanceof</span> <span class="token class-name">Type<span class="token punctuation">.</span>Alias</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> other<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">===</span> other<span class="token punctuation">.</span>name
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/**
+ * Type alias
+ */</span>
+Type<span class="token punctuation">.</span>Alias <span class="token operator">=</span> <span class="token keyword">class</span> <span class="token class-name">extends</span> Type <span class="token punctuation">{</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">{</span>name<span class="token punctuation">,</span> parent<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>parent <span class="token operator">=</span> parent
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Equals
+     */</span>
+    <span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">===</span> other<span class="token punctuation">.</span>name<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>parent<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="2-OOP-Classes-amp-3-OOP-Instances"><a href="#2-OOP-Classes-amp-3-OOP-Instances" class="headerlink" title="2. OOP  Classes &amp; 3. OOP  Instances"></a>2. OOP  Classes &amp; 3. OOP  Instances</h2><p><img src="10e75780.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/class-test.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>test<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (class Point null
+      (begin
+
+        (var (x number) 0)
+        (var (y number) 0)
+
+        (def constructor ((self Point) (x number) (y number)) -> Point
+          (begin
+            (set (prop self x) x)
+            (set (prop self y) y)
+            self))
+
+        (def calc ((self Point)) -> number
+          (+ (prop self x) (prop self y)))))
+
+    (var (p Point) (new Point 10 20))
+
+    ((prop p calc) p)
+
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token keyword">class</span> <span class="token class-name">EvaTC</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token function">tc</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>global<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'set'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_<span class="token punctuation">,</span> ref<span class="token punctuation">,</span> value<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+            <span class="token comment" spellcheck="true">// 1.Assignment to a property:</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>ref<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'prop'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> instance<span class="token punctuation">,</span> propName<span class="token punctuation">]</span> <span class="token operator">=</span> ref
+                <span class="token keyword">const</span> instanceType <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>instance<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+
+                <span class="token keyword">const</span> valueType <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>value<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+                <span class="token keyword">const</span> propType <span class="token operator">=</span> instanceType<span class="token punctuation">.</span><span class="token function">getField</span><span class="token punctuation">(</span>propName<span class="token punctuation">)</span>
+
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_expect</span><span class="token punctuation">(</span>valueType<span class="token punctuation">,</span> propType<span class="token punctuation">,</span> value<span class="token punctuation">,</span> exp<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// -----------------------------------</span>
+        <span class="token comment" spellcheck="true">// Class declaration: (class &lt;Name> &lt;Super> &lt;Body>)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'class'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> name<span class="token punctuation">,</span> superClassName<span class="token punctuation">,</span> body<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+            <span class="token comment" spellcheck="true">// Resolve super</span>
+            <span class="token keyword">const</span> superClass <span class="token operator">=</span> Type<span class="token punctuation">[</span>superClassName<span class="token punctuation">]</span>
+
+            <span class="token comment" spellcheck="true">// New class (type)</span>
+            <span class="token keyword">const</span> classType <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Class</span><span class="token punctuation">(</span><span class="token punctuation">{</span>name<span class="token punctuation">,</span> superClass<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// class is accessible by name.</span>
+            Type<span class="token punctuation">[</span>name<span class="token punctuation">]</span> <span class="token operator">=</span> env<span class="token punctuation">.</span><span class="token function">define</span><span class="token punctuation">(</span>name<span class="token punctuation">,</span> classType<span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// Body is evaluated in the class environment.</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_tcBody</span><span class="token punctuation">(</span>body<span class="token punctuation">,</span> classType<span class="token punctuation">.</span>env<span class="token punctuation">)</span>
+
+            <span class="token keyword">return</span> classType
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// -----------------------------------</span>
+        <span class="token comment" spellcheck="true">// class instantiation:(new &lt;class>&lt;Arguments>...)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'new'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> className<span class="token punctuation">,</span> <span class="token operator">...</span>argValues<span class="token punctuation">]</span> <span class="token operator">=</span> exp<span class="token punctuation">;</span>
+            <span class="token keyword">const</span> classType <span class="token operator">=</span> Type<span class="token punctuation">[</span>className<span class="token punctuation">]</span><span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>classType <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown class </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.`</span></span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">const</span> argTypes <span class="token operator">=</span> argValues<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>arg <span class="token operator">=</span><span class="token operator">></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>arg<span class="token punctuation">,</span> env<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_checkFunctionCall</span><span class="token punctuation">(</span>
+                classType<span class="token punctuation">.</span><span class="token function">getField</span><span class="token punctuation">(</span><span class="token string">'constructor'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token punctuation">[</span>classType<span class="token punctuation">,</span> <span class="token operator">...</span>argTypes<span class="token punctuation">]</span><span class="token punctuation">,</span>
+                env<span class="token punctuation">,</span> exp
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// -----------------------------------</span>
+        <span class="token comment" spellcheck="true">// Property access:(prop &lt;instance>&lt;name></span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'prop'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> instance<span class="token punctuation">,</span> name<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+            <span class="token keyword">const</span> instanceType <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>instance<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+            <span class="token keyword">return</span> instanceType<span class="token punctuation">.</span><span class="token function">getField</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown type for expression </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Types.js</span>
+<span class="token comment" spellcheck="true">// ...</span>
+<span class="token comment" spellcheck="true">/**
+ * Null type
+ */</span>
+Type<span class="token punctuation">.</span><span class="token keyword">null</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Type</span><span class="token punctuation">(</span><span class="token string">'null'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">/**
+ * Class type:(class ...
+ * Creates a new TypeEnvironment.
+ */</span>
+Type<span class="token punctuation">.</span>Class <span class="token operator">=</span> <span class="token keyword">class</span> <span class="token class-name">extends</span> Type <span class="token punctuation">{</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">{</span>name<span class="token punctuation">,</span> superClass <span class="token operator">=</span> Type<span class="token punctuation">.</span><span class="token keyword">null</span><span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>superClass <span class="token operator">=</span> superClass
+        <span class="token keyword">this</span><span class="token punctuation">.</span>env <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">TypeEnvironment</span><span class="token punctuation">(</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> superClass <span class="token operator">!=</span> Type<span class="token punctuation">.</span><span class="token keyword">null</span> <span class="token operator">?</span> superClass<span class="token punctuation">.</span>env <span class="token punctuation">:</span> <span class="token keyword">null</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Returns field type
+     */</span>
+    <span class="token function">getField</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token function">lookup</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Equals
+     */</span>
+    <span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span> <span class="token operator">===</span> other<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Aliases</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>other <span class="token keyword">instanceof</span> <span class="token class-name">Type<span class="token punctuation">.</span>Alias</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> other<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Super class</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>superClass <span class="token operator">!=</span> Type<span class="token punctuation">.</span><span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// type: 子类 == 父类</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>superClass<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Anything else</span>
+        <span class="token keyword">return</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="4-Super-calls-Inheritance"><a href="#4-Super-calls-Inheritance" class="headerlink" title="4. Super calls  Inheritance"></a>4. Super calls  Inheritance</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js </span>
+
+<span class="token comment" spellcheck="true">// -----------------------------------</span>
+<span class="token comment" spellcheck="true">// Super expressions:(super &lt;ClassName>)</span>
+<span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'super'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> className<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+    <span class="token keyword">const</span> classType <span class="token operator">=</span> Type<span class="token punctuation">[</span>className<span class="token punctuation">]</span>
+
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>classType <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown class </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.`</span></span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">return</span> classType<span class="token punctuation">.</span>superClass
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/class-test.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>test<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (class Point3D Point
+      (begin
+
+        (var (z number) 0)
+
+        (def constructor ((self Point3D) (x number) (y number) (z number)) -> Point3D
+          (begin
+            ((prop (super Point3D) constructor) self x y)
+            (set (prop self z) z)
+            self))
+
+        (def calc ((self Point3D)) -> number
+          (+ ((prop (super Point3D) calc) self)
+             (prop self z)))))
+
+    (var (p Point3D) (new Point3D 10 20 30))
+
+    ((prop p calc) p)
+
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre>
+<h1 id="4-Generic-programming"><a href="#4-Generic-programming" class="headerlink" title="4. Generic programming"></a>4. Generic programming</h1><h2 id="1-Union-type"><a href="#1-Union-type" class="headerlink" title="1. Union type"></a>1. Union type</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js</span>
+
+<span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'type'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> name<span class="token punctuation">,</span> base<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+    <span class="token comment" spellcheck="true">// Union type (e.g. (or number string))</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>base<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'or'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> options <span class="token operator">=</span> base<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token keyword">const</span> optionTypes <span class="token operator">=</span> options<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>option <span class="token operator">=</span><span class="token operator">></span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>option<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span>Type<span class="token punctuation">[</span>name<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Union</span><span class="token punctuation">(</span><span class="token punctuation">{</span>name<span class="token punctuation">,</span> optionTypes<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Type alias</span>
+    <span class="token keyword">else</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>Type<span class="token punctuation">.</span><span class="token function">hasOwnProperty</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Type </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>name<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> is already defined: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>Type<span class="token punctuation">[</span>name<span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>Type<span class="token punctuation">.</span><span class="token function">hasOwnProperty</span><span class="token punctuation">(</span>base<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Type </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>base<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> is not defined.`</span></span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> <span class="token punctuation">(</span>Type<span class="token punctuation">[</span>name<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Alias</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            name<span class="token punctuation">,</span>
+            parent<span class="token punctuation">:</span> Type<span class="token punctuation">[</span>base<span class="token punctuation">]</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Types.js </span>
+
+<span class="token keyword">class</span> <span class="token class-name">Type</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>other <span class="token keyword">instanceof</span> <span class="token class-name">Type<span class="token punctuation">.</span>Alias</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> other<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>other <span class="token keyword">instanceof</span> <span class="token class-name">Type<span class="token punctuation">.</span>Union</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> other<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">===</span> other<span class="token punctuation">.</span>name
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// ...</span>
+<span class="token comment" spellcheck="true">/**
+ * Union type:(or string number)
+ */</span>
+Type<span class="token punctuation">.</span>Union <span class="token operator">=</span> <span class="token keyword">class</span> <span class="token class-name">extends</span> Type <span class="token punctuation">{</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">{</span>name<span class="token punctuation">,</span> optionTypes<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>optionTypes <span class="token operator">=</span> optionTypes
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Equals
+     */</span>
+    <span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span> <span class="token operator">===</span> other<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">true</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Aliases</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>other <span class="token keyword">instanceof</span> <span class="token class-name">Type<span class="token punctuation">.</span>Alias</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> other<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Other union</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>other <span class="token keyword">instanceof</span> <span class="token class-name">Type<span class="token punctuation">.</span>Union</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">includesAll</span><span class="token punctuation">(</span>other<span class="token punctuation">.</span>optionTypes<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Anything else</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>optionTypes<span class="token punctuation">.</span><span class="token function">some</span><span class="token punctuation">(</span>t <span class="token operator">=</span><span class="token operator">></span> t<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span>other<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Whether this union includes all types.
+     */</span>
+    <span class="token function">includesAll</span><span class="token punctuation">(</span>types<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>types<span class="token punctuation">.</span>length <span class="token operator">!==</span> <span class="token keyword">this</span><span class="token punctuation">.</span>optionTypes<span class="token punctuation">.</span>length<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">false</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> type_ <span class="token keyword">of</span> types<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span>type_<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> <span class="token boolean">false</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> <span class="token boolean">true</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/union-test.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>exec<span class="token punctuation">,</span> test<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+
+    <span class="token function">exec</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (type value (or number string))
+
+    (type ID (or string number))
+
+  `</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (var (x value) 10)
+
+    x
+
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    x
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    x
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>string<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (var (y value) "hello")
+
+    y 
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">` 
+    (var (a value) 10)
+    (var (b ID) "x")
+
+    (def process ((id ID)) -> number
+      (+ a id))
+      // (- "a" id))
+
+    (process b)
+
+    (+ a b) 
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="2-Union-Type-narrowing"><a href="#2-Union-Type-narrowing" class="headerlink" title="2. Union  Type narrowing"></a>2. Union  Type narrowing</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js </span>
+
+<span class="token keyword">class</span> <span class="token class-name">EvaTC</span> <span class="token punctuation">{</span>
+    <span class="token function">tc</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>global<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'if'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> condition<span class="token punctuation">,</span> consequent<span class="token punctuation">,</span> alternate<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+            <span class="token comment" spellcheck="true">// Boolean condition</span>
+            <span class="token keyword">const</span> t1 <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>condition<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_expect</span><span class="token punctuation">(</span>t1<span class="token punctuation">,</span> Type<span class="token punctuation">.</span>boolean<span class="token punctuation">,</span> condition<span class="token punctuation">,</span> exp<span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// Initially,environment used to tc consequent part</span>
+            <span class="token comment" spellcheck="true">// is the same as the main env,however can be updated</span>
+            <span class="token comment" spellcheck="true">// for the union type with type casting:</span>
+            <span class="token keyword">let</span> consequentEnv <span class="token operator">=</span> env
+
+            <span class="token comment" spellcheck="true">// Check if the condition is a type casting rule.</span>
+            <span class="token comment" spellcheck="true">// This is used with union types to make a type concrete:</span>
+            <span class="token comment" spellcheck="true">// (if (== (typeof foo) "string")...)</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_isTypeCastCondition</span><span class="token punctuation">(</span>condition<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">const</span> <span class="token punctuation">[</span>name<span class="token punctuation">,</span> specificType<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_getSpecifiedType</span><span class="token punctuation">(</span>condition<span class="token punctuation">)</span>
+
+                <span class="token comment" spellcheck="true">// Update environment with the concrete type for this name:</span>
+                consequentEnv <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">TypeEnvironment</span><span class="token punctuation">(</span>
+                    <span class="token punctuation">{</span><span class="token punctuation">[</span>name<span class="token punctuation">]</span><span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>specificType<span class="token punctuation">)</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    env
+                <span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token keyword">const</span> t2 <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>consequent<span class="token punctuation">,</span> consequentEnv<span class="token punctuation">)</span>
+            <span class="token keyword">const</span> t3 <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>alternate<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// Same types for both branches</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_expect</span><span class="token punctuation">(</span>t3<span class="token punctuation">,</span> t2<span class="token punctuation">,</span> exp<span class="token punctuation">,</span> exp<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown type for expression </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token function">_expectOperatorType</span><span class="token punctuation">(</span>type_<span class="token punctuation">,</span> allowedTypes<span class="token punctuation">,</span> exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// For union type, _all_ sub-types should support this operation:</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>type_ <span class="token keyword">instanceof</span> <span class="token class-name">Type<span class="token punctuation">.</span>Union</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>type_<span class="token punctuation">.</span><span class="token function">includesAll</span><span class="token punctuation">(</span>allowedTypes<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// other types</span>
+        <span class="token keyword">else</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>allowedTypes<span class="token punctuation">.</span><span class="token function">some</span><span class="token punctuation">(</span>t <span class="token operator">=</span><span class="token operator">></span> t<span class="token punctuation">.</span><span class="token function">equals</span><span class="token punctuation">(</span>type_<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`\nUnexpected type:</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>type_<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> in </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">, allowed: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>allowedTypes<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.`</span></span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">_createGlobal</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">TypeEnvironment</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            VERSION<span class="token punctuation">:</span> Type<span class="token punctuation">.</span>string<span class="token punctuation">,</span>
+
+            sum<span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span><span class="token string">"Fn&lt;number&lt;number,number>>"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            square<span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span><span class="token string">"Fn&lt;number&lt;number>>"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+
+            <span class="token keyword">typeof</span><span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span><span class="token string">'Fn&lt;string&lt;any>>'</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">_checkFunctionCall</span><span class="token punctuation">(</span>fn<span class="token punctuation">,</span> argTypes<span class="token punctuation">,</span> env<span class="token punctuation">,</span> exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+
+        <span class="token comment" spellcheck="true">// Check if argument types match the parameter types:</span>
+        argTypes<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span><span class="token punctuation">(</span>argType<span class="token punctuation">,</span> index<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>fn<span class="token punctuation">.</span>paramTypes<span class="token punctuation">[</span>index<span class="token punctuation">]</span> <span class="token operator">===</span> Type<span class="token punctuation">.</span>any<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_expect</span><span class="token punctuation">(</span>argType<span class="token punctuation">,</span> fn<span class="token punctuation">.</span>paramTypes<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">,</span> argTypes<span class="token punctuation">[</span>index<span class="token punctuation">]</span><span class="token punctuation">,</span> exp<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> fn<span class="token punctuation">.</span>returnType
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Whether the if-condition is type casting/specification.
+     *
+     * This is used with union types to make a type concrete:
+     *
+     * (if (=(typeof foo)"string")...)
+     */</span>
+    <span class="token function">_isTypeCastCondition</span><span class="token punctuation">(</span>condition<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> <span class="token punctuation">[</span>op<span class="token punctuation">,</span> lhs<span class="token punctuation">]</span> <span class="token operator">=</span> condition
+        <span class="token keyword">return</span> op <span class="token operator">===</span> <span class="token string">'=='</span> <span class="token operator">&amp;&amp;</span> lhs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'typeof'</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Returns specific type after casting.
+     *
+     * This is used with union types to make a type concrete:
+     *
+     * (if (=(typeof foo)"string")...)
+     */</span>
+    <span class="token function">_getSpecifiedType</span><span class="token punctuation">(</span>condition<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> <span class="token punctuation">[</span>op<span class="token punctuation">,</span> <span class="token punctuation">[</span>_typeof<span class="token punctuation">,</span> name<span class="token punctuation">]</span><span class="token punctuation">,</span> specificType<span class="token punctuation">]</span> <span class="token operator">=</span> condition<span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// Return name and the new type (stripping quotes).</span>
+        <span class="token keyword">return</span> <span class="token punctuation">[</span>name<span class="token punctuation">,</span> specificType<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Types.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Any type
+ */</span>
+Type<span class="token punctuation">.</span>any <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Type</span><span class="token punctuation">(</span><span class="token string">'any'</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/union-test.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>exec<span class="token punctuation">,</span> test<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+
+    <span class="token function">exec</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (type value (or number string))
+
+    (type ID (or string number))
+
+  `</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (var (x value) 10)
+
+    x
+
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    x
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    x
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>string<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (var (y value) "hello")
+
+    y 
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">` 
+    (var (a value) 10)
+    (var (b ID) "x")
+
+    (def process ((id ID)) -> number
+      (+ a id))
+      // (- a id)) // should panic(cause string can't use - operator)
+      // (- "a" id))
+
+    (process b)
+
+    (+ a b) 
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (def accept ((x value)) -> value
+      (begin
+        (if (== (typeof x) "number")
+            (- 1 x)
+            (+ "y" x))))
+
+    (accept 10)
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span>
+        <span class="token template-string"><span class="token string">`
+    (accept "x")
+  `</span></span><span class="token punctuation">,</span>
+        Type<span class="token punctuation">.</span>string<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-Generics-Function-declarations"><a href="#3-Generics-Function-declarations" class="headerlink" title="3. Generics  Function declarations"></a>3. Generics  Function declarations</h2><p><img src="136f6272.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/generic-test.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>test<span class="token punctuation">,</span> exec<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// Generic function</span>
+    <span class="token function">exec</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        // (def combine ((x number) (y number)) -> number (+ x y))
+        // (def combine ((x string) (y string)) -> string (+ x y))
+        
+        (def combine &lt;K> ((x K) (y K)) -> K (+ x y))
+    `</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js</span>
+<span class="token keyword">class</span> <span class="token class-name">EvaTC</span> <span class="token punctuation">{</span>
+    <span class="token function">tc</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>global<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'def'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// const [_tag, name, params, _retDel, returnTypeStr, body] = exp</span>
+
+            <span class="token comment" spellcheck="true">// Transpile to a variable declaration</span>
+            <span class="token keyword">const</span> varExp <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_transformDefToVarLambda</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_isGenericDefFunction</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+
+                <span class="token keyword">const</span> name <span class="token operator">=</span> exp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span>
+                <span class="token keyword">const</span> params <span class="token operator">=</span> exp<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+                <span class="token keyword">const</span> returnTypeStr <span class="token operator">=</span> exp<span class="token punctuation">[</span><span class="token number">4</span><span class="token punctuation">]</span>
+
+                <span class="token comment" spellcheck="true">// We have to extend environment with the function name *before*</span>
+                <span class="token comment" spellcheck="true">// evaluating the body -- this is need to support recursive</span>
+                <span class="token comment" spellcheck="true">// function calls:</span>
+                <span class="token keyword">const</span> paramTypes <span class="token operator">=</span> params<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">[</span>name<span class="token punctuation">,</span> typeStr<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span>
+                    Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>typeStr<span class="token punctuation">)</span>
+                <span class="token punctuation">)</span>
+
+                <span class="token comment" spellcheck="true">// Predefine from the signature:</span>
+                env<span class="token punctuation">.</span><span class="token function">define</span><span class="token punctuation">(</span>
+                    name<span class="token punctuation">,</span>
+                    <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>Function</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+                        paramTypes<span class="token punctuation">,</span>
+                        returnType<span class="token punctuation">:</span> Type<span class="token punctuation">.</span><span class="token function">fromString</span><span class="token punctuation">(</span>returnTypeStr<span class="token punctuation">)</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+                <span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// return env.define(</span>
+            <span class="token comment" spellcheck="true">//     name,</span>
+            <span class="token comment" spellcheck="true">//     this._tcFunction(params, returnTypeStr, body, env)</span>
+            <span class="token comment" spellcheck="true">// )</span>
+
+            <span class="token comment" spellcheck="true">// Actually validate the body</span>
+            <span class="token comment" spellcheck="true">// return this._tcFunction(params, returnTypeStr, body, env)</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>varExp<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'lambda'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 1. Generic function</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_isGenericLambdaFunction</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_createGenericFunctionType</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// 2. Simple function</span>
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_createSimpleFunctionType</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown type for expression </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Generic function declarations.
+     * Such functions are not checked at declaration,
+     * instead they are checked at call time,when all
+     * generic parameters are bound.
+     */</span>
+    <span class="token function">_createGenericFunctionType</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> genericTypes<span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnType<span class="token punctuation">,</span> body<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+        <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">Type<span class="token punctuation">.</span>GenericFunction</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+            genericTypesStr<span class="token punctuation">:</span> genericTypes<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            params<span class="token punctuation">,</span> body<span class="token punctuation">,</span> returnType<span class="token punctuation">,</span>
+            env <span class="token comment" spellcheck="true">// Closure</span>
+        <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Simple function declarations (no generic parameters).
+     *
+     * Such functions are type-checked during declaration time.
+     */</span>
+    <span class="token function">_createSimpleFunctionType</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_tcFunction</span><span class="token punctuation">(</span>params<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Whether the function is generic.
+     *
+     * (def foo &lt;K>((x K))->K (xx))
+     */</span>
+    <span class="token function">_isGenericDefFunction</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> exp<span class="token punctuation">.</span>length <span class="token operator">===</span> <span class="token number">7</span> <span class="token operator">&amp;&amp;</span> <span class="token regex">/^&lt;[^>]+>$/</span><span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Whether the function is generic.
+     *
+     * (lambda &lt;K>((x K))->K (xx))
+     */</span>
+    <span class="token function">_isGenericLambdaFunction</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> exp<span class="token punctuation">.</span>length <span class="token operator">===</span> <span class="token number">6</span> <span class="token operator">&amp;&amp;</span> <span class="token regex">/^&lt;[^>]+>$/</span><span class="token punctuation">.</span><span class="token function">test</span><span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Transforms def to var-lambda.
+     */</span>
+    <span class="token function">_transformDefToVarLambda</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 1. Generic function</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_isGenericDefFunction</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> name<span class="token punctuation">,</span> genericTypesStr<span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span> <span class="token operator">=</span> exp<span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token string">'var'</span><span class="token punctuation">,</span> name<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'lambda'</span><span class="token punctuation">,</span> genericTypesStr<span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 2. Simple function</span>
+        <span class="token keyword">const</span> <span class="token punctuation">[</span>_tag<span class="token punctuation">,</span> name<span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span> <span class="token operator">=</span> exp
+
+        <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token string">'var'</span><span class="token punctuation">,</span> name<span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token string">'lambda'</span><span class="token punctuation">,</span> params<span class="token punctuation">,</span> _retDel<span class="token punctuation">,</span> returnTypeStr<span class="token punctuation">,</span> body<span class="token punctuation">]</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span> 
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Types.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Generic function type.
+ * Generic functions create normal function types
+ * when a function is called.
+ */</span>
+Type<span class="token punctuation">.</span>GenericFunction <span class="token operator">=</span> <span class="token keyword">class</span> <span class="token class-name">extends</span> Type <span class="token punctuation">{</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">{</span>name <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> genericTypesStr<span class="token punctuation">,</span> params<span class="token punctuation">,</span> body<span class="token punctuation">,</span> returnType<span class="token punctuation">,</span> env<span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">super</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>name <span class="token operator">||</span> <span class="token string">'lambda'</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> &lt;</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>genericTypesStr<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">>`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>genericTypes <span class="token operator">=</span> genericTypesStr<span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>params <span class="token operator">=</span> params
+        <span class="token keyword">this</span><span class="token punctuation">.</span>body <span class="token operator">=</span> body
+        <span class="token keyword">this</span><span class="token punctuation">.</span>returnType <span class="token operator">=</span> returnType
+        <span class="token keyword">this</span><span class="token punctuation">.</span>env <span class="token operator">=</span> env
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="4-Generics-Function-calls"><a href="#4-Generics-Function-calls" class="headerlink" title="4. Generics  Function calls"></a>4. Generics  Function calls</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/EvaTC.js</span>
+
+<span class="token keyword">class</span> <span class="token class-name">EvaTC</span> <span class="token punctuation">{</span>
+    <span class="token function">tc</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> env <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>global<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>Array<span class="token punctuation">.</span><span class="token function">isArray</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> fn <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> env<span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// Simple function calls</span>
+            <span class="token keyword">let</span> actualFn <span class="token operator">=</span> fn
+            <span class="token keyword">let</span> argValues <span class="token operator">=</span> exp<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// Generic function call</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>fn <span class="token keyword">instanceof</span> <span class="token class-name">Type<span class="token punctuation">.</span>GenericFunction</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// Actual (instantiated) types</span>
+                <span class="token keyword">const</span> actualTypes <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_extractActualCallTypes</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span>
+
+                <span class="token comment" spellcheck="true">// Map the generic types to the actual types:</span>
+                <span class="token keyword">const</span> genericTypesMap <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_getGenericTypesMap</span><span class="token punctuation">(</span>
+                    fn<span class="token punctuation">.</span>genericTypes<span class="token punctuation">,</span>
+                    actualTypes
+                <span class="token punctuation">)</span>
+
+                <span class="token comment" spellcheck="true">// Bind parameters and return types:</span>
+                <span class="token keyword">const</span> <span class="token punctuation">[</span>boundParams<span class="token punctuation">,</span> boundReturnType<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_bindFunctionTypes</span><span class="token punctuation">(</span>
+                    fn<span class="token punctuation">.</span>params<span class="token punctuation">,</span> fn<span class="token punctuation">.</span>returnType<span class="token punctuation">,</span>
+                    genericTypesMap <span class="token comment" spellcheck="true">// {K: number}</span>
+                <span class="token punctuation">)</span>
+
+                <span class="token comment" spellcheck="true">// Check function body with the bound parameter types:</span>
+                <span class="token comment" spellcheck="true">// This creates an actual function type.</span>
+
+                <span class="token comment" spellcheck="true">// Notice:we pass environment as fn.env,i.e.closured environment</span>
+                <span class="token comment" spellcheck="true">// TODO: pre-install to Type combine_number,combine_string,etc.</span>
+                actualFn <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_tcFunction</span><span class="token punctuation">(</span>
+                    boundParams<span class="token punctuation">,</span> boundReturnType<span class="token punctuation">,</span>
+                    fn<span class="token punctuation">.</span>body<span class="token punctuation">,</span>
+                    fn<span class="token punctuation">.</span>env <span class="token comment" spellcheck="true">// Closure</span>
+                <span class="token punctuation">)</span>
+
+                <span class="token comment" spellcheck="true">// In generic function calls parameters are passed from index 2:</span>
+                argValues <span class="token operator">=</span> exp<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// (combine &lt;number> 2 3)</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// Passed arguments</span>
+            <span class="token keyword">const</span> argTypes <span class="token operator">=</span> argValues<span class="token punctuation">.</span><span class="token function">map</span><span class="token punctuation">(</span>arg <span class="token operator">=</span><span class="token operator">></span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">tc</span><span class="token punctuation">(</span>arg<span class="token punctuation">,</span> env<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+            <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_checkFunctionCall</span><span class="token punctuation">(</span>actualFn<span class="token punctuation">,</span> argTypes<span class="token punctuation">,</span> env<span class="token punctuation">,</span> exp<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`Unknown type for expression </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Maps generic parameter types to actual types.
+     */</span>
+    <span class="token function">_getGenericTypesMap</span><span class="token punctuation">(</span>genericTypes<span class="token punctuation">,</span> actualType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> boundTypes <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Map</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> genericTypes<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            boundTypes<span class="token punctuation">.</span><span class="token keyword">set</span><span class="token punctuation">(</span>genericTypes<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> actualType<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">return</span> boundTypes
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Binds generic parameters and return type to actual types.
+     */</span>
+    <span class="token function">_bindFunctionTypes</span><span class="token punctuation">(</span>params<span class="token punctuation">,</span> returnType<span class="token punctuation">,</span> genericTypesMap<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> actualParams <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+        <span class="token comment" spellcheck="true">// 1.Bind parameter types:</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">let</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> params<span class="token punctuation">.</span>length<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> <span class="token punctuation">[</span>paramName<span class="token punctuation">,</span> paramType<span class="token punctuation">]</span> <span class="token operator">=</span> params<span class="token punctuation">[</span>i<span class="token punctuation">]</span>
+
+            <span class="token keyword">let</span> actualParamType <span class="token operator">=</span> paramType
+
+            <span class="token comment" spellcheck="true">// Generic type -> rewrite to actual.</span>
+            <span class="token comment" spellcheck="true">// genericTypesMap({K: number})</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>genericTypesMap<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>paramType<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                actualParamType <span class="token operator">=</span> genericTypesMap<span class="token punctuation">.</span><span class="token keyword">get</span><span class="token punctuation">(</span>paramType<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+
+            actualParams<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token punctuation">[</span>paramName<span class="token punctuation">,</span> actualParamType<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 2.Bind return type:</span>
+        <span class="token keyword">let</span> actualReturnType <span class="token operator">=</span> returnType
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>genericTypesMap<span class="token punctuation">.</span><span class="token function">has</span><span class="token punctuation">(</span>returnType<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            actualReturnType <span class="token operator">=</span> genericTypesMap<span class="token punctuation">.</span><span class="token keyword">get</span><span class="token punctuation">(</span>returnType<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> <span class="token punctuation">[</span>actualParams<span class="token punctuation">,</span> actualReturnType<span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Extracts types for generic parameter types.
+     * (combine &lt;string> "hello")
+     */</span>
+    <span class="token function">_extractActualCallTypes</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> data <span class="token operator">=</span> <span class="token regex">/^&lt;([^>]+)>$/</span><span class="token punctuation">.</span><span class="token function">exec</span><span class="token punctuation">(</span>exp<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>data <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token template-string"><span class="token string">`No actual types provided in generic call: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>exp<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">.`</span></span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> data<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">split</span><span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/generic-test.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>test<span class="token punctuation">,</span> exec<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./test-utils'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> Type <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Types'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> eva <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// Generic function</span>
+    <span class="token function">exec</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        // (def combine ((x number) (y number)) -> number (+ x y))
+        // (def combine ((x string) (y string)) -> string (+ x y))
+        
+        (def combine &lt;K> ((x K) (y K)) -> K (+ x y))
+    `</span></span><span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (combine &lt;number> 2 3)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        (combine &lt;string> "hello" " world")
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>string<span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        ((lambda &lt;K> ((x K)) -> K (+ x x)) &lt;number> 2)
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>number<span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span>eva<span class="token punctuation">,</span> <span class="token template-string"><span class="token string">`
+        ((lambda &lt;K> ((x K)) -> K (+ x x)) &lt;string> "hello")
+    `</span></span><span class="token punctuation">,</span> Type<span class="token punctuation">.</span>string<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="5-Final-executable"><a href="#5-Final-executable" class="headerlink" title="5. Final executable"></a>5. Final executable</h2><pre class=" language-eva"><code class="language-eva">/**
+ * Class declaration.
+ */
+
+(class Point null
+  (begin
+
+    (var (x number) 0)
+    (var (y number) 0)
+
+    (def constructor ((self Point) (x number) (y number)) -> Point
+      (begin
+        (set (prop self x) x)
+        (set (prop self y) y)
+        self))
+
+    (def calc ((self Point)) -> number
+      (+ (prop self x) (prop self y)))))
+
+(var (p Point) (new Point 10 20))
+
+((prop p calc) p)
+
+/**
+ * Child class.
+ */
+
+(class Point3D Point
+  (begin
+
+    (var (z number) 0)
+
+    (def constructor ((self Point3D) (x number) (y number) (z number)) -> Point3D
+      (begin
+        ((prop (super Point3D) constructor) self x y)
+        (set (prop self z) z)
+        self))
+
+    (def calc ((self Point3D)) -> number
+      (+ ((prop (super Point3D) calc) self)
+         (prop self z)))))
+
+(var (p Point3D) (new Point3D 10 20 30))
+
+((prop p calc) p)
+
+
+/*
+
+What's next?
+
+1. Shapes (aka Objects, aka Interfaces)
+
+(type User
+  (object
+    (name string)
+    (age number)))
+
+(var (user User)
+  (object
+    (name "John")
+    (age 25)))
+
+// (interface <name> ...) -> syntactic sugar for (type <name> (object ...))
+
+(interface User
+  (name string)
+  (age number))
+
+(class <name> <parent> <interface-list> <body>)
+
+2. Async functions
+
+(async def fetch <params> <body>)
+
+3. Array literals:
+
+(array ...)
+
+4. Type: valueBelongs, isOperationSupported
+
+
+5. Values union
+
+(type names (or "alex" "john"))
+
+6. Infer types for generic calls:
+
+(combine <number> 2 3) -> (combine 2 3)
+
+7. etc
+*/
+</code></pre>
+<pre class=" language-js"><code class="language-js">#<span class="token operator">!</span><span class="token operator">/</span>usr<span class="token operator">/</span>bin<span class="token operator">/</span>env node
+<span class="token comment" spellcheck="true">// bin/eva-tc.js</span>
+<span class="token string">'use strict'</span>
+
+<span class="token keyword">const</span> EvaTC <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"../src/EvaTC"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> evaParser <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"../parser/evaParser"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> fs <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"fs"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function">tcGlobal</span><span class="token punctuation">(</span>src<span class="token punctuation">,</span> eva<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> exp <span class="token operator">=</span> evaParser<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`(begin </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>src<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">)`</span></span><span class="token punctuation">)</span>
+
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+        eva<span class="token punctuation">.</span><span class="token function">tcGlobal</span><span class="token punctuation">(</span>exp<span class="token punctuation">)</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'No errors!'</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span><span class="token class-name">e</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        console<span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span>e<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/**
+ * Examples:
+ *
+ * ./bin/eva-tc -e (2 3)'
+ * ./bin/eva-tc -f ~/test.eva
+ */</span>
+<span class="token keyword">function</span> <span class="token function">main</span><span class="token punctuation">(</span>argv<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> <span class="token punctuation">[</span>_node<span class="token punctuation">,</span> _path<span class="token punctuation">,</span> mode<span class="token punctuation">,</span> exp<span class="token punctuation">]</span> <span class="token operator">=</span> argv
+
+    <span class="token keyword">const</span> eva <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">EvaTC</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// 1.Direct expression:</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mode <span class="token operator">===</span> <span class="token string">'-e'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token function">tcGlobal</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> eva<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 2.Eva file:</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>mode <span class="token operator">===</span> <span class="token string">'-f'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> src <span class="token operator">=</span> fs<span class="token punctuation">.</span><span class="token function">readFileSync</span><span class="token punctuation">(</span>exp<span class="token punctuation">,</span> <span class="token string">'utf8'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token function">tcGlobal</span><span class="token punctuation">(</span>src<span class="token punctuation">,</span> eva<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">main</span><span class="token punctuation">(</span>process<span class="token punctuation">.</span>argv<span class="token punctuation">)</span>
+</code></pre>
+
             </div>
             <hr/>
 
@@ -1876,7 +3349,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">685.1k</span>
+                <span class="white-color">690.6k</span>
             
 
             

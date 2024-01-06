@@ -367,14 +367,14 @@ extends C">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        178
+                        407
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        1 分
+                        2 分
                     </div>
                     
                 
@@ -424,7 +424,51 @@ func get_movement_vector():
 </code></pre>
 <p><img src="09225a63.png" alt="点击回到2D"><img src="86b2e2ba.png"><img src="0acd478d.png" alt="添加角色用来移动的场景"><br><img src="436dc678.png" alt="重命名为Main"><img src="8c7b4170.png" alt="ctrl+s保存"><img src="4ab6ace0.png"><img src="82fb81e0.png"><br><img src="04d86fe4.png"><img src="cf715c33.png" alt="按w, 小人身上出现箭头, 拖动小人到右下角, 点击f5或运行按钮-> 提示没有场景-> 点击选择当前-> 运行"><br><img src="e17183d9.png"></p>
 <h2 id="4-Creating-a-TileMap"><a href="#4-Creating-a-TileMap" class="headerlink" title="4. Creating a TileMap"></a>4. Creating a TileMap</h2><p><img src="3d94b241.png" alt="项目设置 -> 设置游戏窗口大小"><img src="c2287b74.png" alt="mode=='viewpoint' -> 低分辨率显示, 更像素化"><br><img src="27164116.png" alt="高级设置->默认窗口大小(我的电脑屏幕比较小, 用1280x720)"><img src="4efcbc5d.png"><img src="7f9295c5.png"><br><img src="22529337.png"><img src="37a3cfb4.png"><img src="1444fda0.png"><img src="c3e12477.png"><br><img src="800ddd6e.png"><img src="17206aec.png"><img src="2d2fdff1.png"><br><img src="fbacdc1f.png" alt="拖动tilemap_packed.png到godot项目"><img src="c3fafa18.png"><img src="f3deaae0.png"><br><img src="66ae1f71.png" alt="拖动tilemap_packed.png到tileset编辑窗口 -> click no"><img src="7e4b5840.png" alt="单击选择"><br><img src="5c9adc4d.png" alt="terrain sets -> add element"><img src="588f85b8.png"><img src="5a07a79a.png"><br><img src="cddaffb4.png"><img src="837ee320.png" alt="点击图块里的小格"><img src="45a5c24f.png"><br><img src="ba1fbdc4.png" alt="切换到概率, 输入概率值后点击图块, 设置该图块被平铺的概率"><img src="cb9eba1e.png"><br><img src="ebf7ea47.png"><img src="5d999e92.png"><img src="22729578.png"><img src="90715291.png"><br><img src="d01c1c38.png" alt="同时选中tileset, tilemap, 地形栏才有东西"><img src="659af17d.png" alt="左上角切为箭头, 开始绘制地板"><br><img src="5faedd22.png" alt="点击小方框图标, 可以大范围绘制"></p>
-<h2 id="5-Game-Camera"><a href="#5-Game-Camera" class="headerlink" title="5. Game Camera"></a>5. Game Camera</h2>
+<h2 id="5-Game-Camera"><a href="#5-Game-Camera" class="headerlink" title="5. Game Camera"></a>5. Game Camera</h2><p><img src="3bd45faf.png" alt="ctrl+n"><img src="f43ae596.png" alt="ctrl+a"><img src="0feb263a.png" alt="ctrl+s"><img src="30c25bdd.png"><br><img src="4b08ef28.png"><img src="81d6905d.png"><img src="53966b09.png" alt="ctrl+shift+o"><br><img src="224c0975.png"><img src="1ccd1159.png"><img src="3f3656fb.png" alt="group的作用是可以从任何地方访问的标识符"></p>
+<pre class=" language-gd"><code class="language-gd"># game_camera.gd
+extends Camera2D
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+    make_current()
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta):
+    # 获取当前场景树, 获取树中节点
+    var player_nodes = get_tree().get_nodes_in_group("player")
+    if player_nodes.size() > 0:
+        var player = player_nodes[0] as Node2D
+        global_position = player.global_position
+</code></pre>
+<p><img src="d07cdb62.png" alt="camera添加到场景"><img src="75b08ed0.png"><img src="adefe8ef.png"><img src="e2dba9f6.png"><br>让镜头比人物慢一点, 显得更自然, 我们可以使用独立的帧率来实现</p>
+<pre class=" language-gd"><code class="language-gd"># game_camera.gd
+extends Camera2D
+
+var target_position = Vector2.ZERO
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+    make_current()
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta):
+    acquire_target()
+    # lerp 线性插值 有开始和结束点, 用百分比来表示两个位置的距离的百分比
+    # 每一帧都会移动到离target_position 1.0 - exp(-delta * 10)的位置
+    global_position = global_position.lerp(target_position, 1.0 - exp(-delta * 10))
+    
+func acquire_target():
+    # 获取当前场景树, 获取树中节点
+    var player_nodes = get_tree().get_nodes_in_group("player")
+    if player_nodes.size() > 0:
+        var player = player_nodes[0] as Node2D
+        target_position = player.global_position
+        global_position = player.global_position
+</code></pre>
+<h1 id="2-Building-the-Foundation"><a href="#2-Building-the-Foundation" class="headerlink" title="2. Building the Foundation"></a>2. Building the Foundation</h1><h2 id=""><a href="#" class="headerlink" title=""></a></h2>
             </div>
             <hr/>
 
@@ -1076,7 +1120,7 @@ c</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">685.1k</span>
+                <span class="white-color">690.6k</span>
             
 
             

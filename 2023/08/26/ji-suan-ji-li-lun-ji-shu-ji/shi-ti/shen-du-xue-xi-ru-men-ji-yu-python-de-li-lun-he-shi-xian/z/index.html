@@ -368,14 +368,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        26.4k
+                        26.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        105 分
+                        106 分
                     </div>
                     
                 
@@ -2916,7 +2916,38 @@ sys<span class="token punctuation">.</span>path<span class="token punctuation">.
 <blockquote>
 <p>将神经网络的层保存为有序字典很重要，这样一来，神经网络的正向传播只需要按照添加元素的顺序调用各层的 forward 方法，而反向传播则按照相反的顺序调用各层即可。像这样模块化地构建神经网络，非常简单快捷。</p>
 </blockquote>
+<h3 id="5-7-3-误差反向传播法的梯度确认"><a href="#5-7-3-误差反向传播法的梯度确认" class="headerlink" title="5.7.3 误差反向传播法的梯度确认"></a>5.7.3 误差反向传播法的梯度确认</h3><p>数值微分的优点是简单, 一般情况下不容易出错, 所以用来做<strong>梯度确认</strong>(确认数值微分求出的梯度结果和误差反向传播求出的结果是否一致)</p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> sys<span class="token punctuation">,</span> os
 
+sys<span class="token punctuation">.</span>path<span class="token punctuation">.</span>append<span class="token punctuation">(</span>os<span class="token punctuation">.</span>pardir<span class="token punctuation">)</span>
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> dataset<span class="token punctuation">.</span>mnist <span class="token keyword">import</span> load_mnist
+<span class="token keyword">from</span> two_layer_net <span class="token keyword">import</span> TwoLayerNet
+
+<span class="token comment" spellcheck="true"># 读入数据</span>
+<span class="token punctuation">(</span>x_train<span class="token punctuation">,</span> t_train<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>x_test<span class="token punctuation">,</span> y_test<span class="token punctuation">)</span> <span class="token operator">=</span> \
+    load_mnist<span class="token punctuation">(</span>normalize<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> one_hot_label<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+network <span class="token operator">=</span> TwoLayerNet<span class="token punctuation">(</span>input_size<span class="token operator">=</span><span class="token number">784</span><span class="token punctuation">,</span> hidden_size<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">,</span> output_size<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+
+x_batch <span class="token operator">=</span> x_train<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span>
+t_batch <span class="token operator">=</span> t_train<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">3</span><span class="token punctuation">]</span>
+
+grad_numerical <span class="token operator">=</span> network<span class="token punctuation">.</span>numerical_gradient<span class="token punctuation">(</span>x_batch<span class="token punctuation">,</span> t_batch<span class="token punctuation">)</span>
+grad_backprop <span class="token operator">=</span> network<span class="token punctuation">.</span>gradient<span class="token punctuation">(</span>x_batch<span class="token punctuation">,</span> t_batch<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 求各个权重的绝对误差的平均值</span>
+<span class="token keyword">for</span> key <span class="token keyword">in</span> grad_numerical<span class="token punctuation">.</span>keys<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    diff <span class="token operator">=</span> np<span class="token punctuation">.</span>average<span class="token punctuation">(</span>np<span class="token punctuation">.</span>abs<span class="token punctuation">(</span>grad_backprop<span class="token punctuation">[</span>key<span class="token punctuation">]</span> <span class="token operator">-</span> grad_numerical<span class="token punctuation">[</span>key<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>key <span class="token operator">+</span> <span class="token string">":"</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>diff<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 结果</span>
+W1<span class="token punctuation">:</span><span class="token number">1.8113681777006966e-10</span>
+b1<span class="token punctuation">:</span><span class="token number">8.844119984470098e-10</span>
+W2<span class="token punctuation">:</span><span class="token number">6.888036763008642e-08</span>
+b2<span class="token punctuation">:</span><span class="token number">1.378154677281196e-07</span>
+</code></pre>
+<h3 id="5-7-4-使用误差反向传播法的学习"><a href="#5-7-4-使用误差反向传播法的学习" class="headerlink" title="5.7.4 使用误差反向传播法的学习"></a>5.7.4 使用误差反向传播法的学习</h3>
             </div>
             <hr/>
 
@@ -3584,7 +3615,7 @@ kaggle
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">685.1k</span>
+                <span class="white-color">690.6k</span>
             
 
             
