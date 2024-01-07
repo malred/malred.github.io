@@ -31,7 +31,11 @@ c">
     </style>
     <script src="https://sdk.jinrishici.com/v2/browser/jinrishici.js" charset="utf-8"></script>
     <script src="/libs/jquery/jquery-2.2.0.min.js"></script>
-<meta name="generator" content="Hexo 5.4.2">
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 5.4.2">
 <style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
 <link rel="stylesheet" href="/css/prism-tomorrow.css" type="text/css"></head>
 
@@ -366,14 +370,14 @@ c">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        90
+                        1k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        1 分
+                        6 分
                     </div>
                     
                 
@@ -446,7 +450,655 @@ module<span class="token punctuation">.</span>exports <span class="token operato
     Parser
 <span class="token punctuation">}</span>
 </code></pre>
-<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
+<h2 id="002-Numbers-Strings"><a href="#002-Numbers-Strings" class="headerlink" title="002 Numbers  Strings"></a>002 Numbers  Strings</h2><p><img src="5e708805.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Tokenizer.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Tokenizer class.
+ *
+ * Lazily pulls a token from a stream.
+ */</span>
+<span class="token keyword">class</span> <span class="token class-name">Tokenizer</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/**
+     * Initializes the string.
+     */</span>
+    <span class="token function">init</span><span class="token punctuation">(</span>string<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_string <span class="token operator">=</span> string
+        <span class="token comment" spellcheck="true">// 指针, 指向当前解析字符位置</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_cursor <span class="token operator">=</span> <span class="token number">0</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token function">hasMoreTokens</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_cursor <span class="token operator">&lt;</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_string<span class="token punctuation">.</span>length<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Whther the tokenizer reached EOF.
+     */</span>
+    <span class="token function">isEOF</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_cursor <span class="token operator">===</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_string<span class="token punctuation">.</span>length<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Obtains next token.
+     */</span>
+    <span class="token function">getNextToken</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">hasMoreTokens</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token keyword">null</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 从当前指针处开始</span>
+        <span class="token keyword">const</span> string <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_string<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_cursor<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// Numbers</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>Number<span class="token punctuation">.</span><span class="token function">isNaN</span><span class="token punctuation">(</span><span class="token function">Number</span><span class="token punctuation">(</span>string<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">let</span> number <span class="token operator">=</span> <span class="token string">''</span>
+            <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token operator">!</span>Number<span class="token punctuation">.</span><span class="token function">isNaN</span><span class="token punctuation">(</span><span class="token function">Number</span><span class="token punctuation">(</span>string<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>_cursor<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                number <span class="token operator">+</span><span class="token operator">=</span> string<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>_cursor<span class="token operator">++</span><span class="token punctuation">]</span>
+            <span class="token punctuation">}</span>
+            <span class="token keyword">return</span> <span class="token punctuation">{</span>
+                type<span class="token punctuation">:</span> <span class="token string">'NUMBER'</span><span class="token punctuation">,</span>
+                value<span class="token punctuation">:</span> number
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// String</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>string<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">===</span> <span class="token string">'"'</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">let</span> s <span class="token operator">=</span> <span class="token string">''</span>
+            <span class="token keyword">do</span> <span class="token punctuation">{</span>
+                s <span class="token operator">+</span><span class="token operator">=</span> string<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>_cursor<span class="token operator">++</span><span class="token punctuation">]</span>
+            <span class="token punctuation">}</span> <span class="token keyword">while</span> <span class="token punctuation">(</span>string<span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span>_cursor<span class="token punctuation">]</span> <span class="token operator">!==</span> <span class="token string">'"'</span> <span class="token operator">&amp;&amp;</span> <span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">isEOF</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            s <span class="token operator">+</span><span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_cursor<span class="token operator">++</span> <span class="token comment" spellcheck="true">// skip "</span>
+            <span class="token keyword">return</span> <span class="token punctuation">{</span>
+                type<span class="token punctuation">:</span> <span class="token string">'STRING'</span><span class="token punctuation">,</span>
+                value<span class="token punctuation">:</span> s
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+    Tokenizer
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Parser.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Letter parser: recursive descent implementation
+ */</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>Tokenizer<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./Tokenizer'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">class</span> <span class="token class-name">Parser</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/**
+     * Initializes the parser.
+     */</span>
+    <span class="token function">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_string <span class="token operator">=</span> <span class="token string">''</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_tokenizer <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Tokenizer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+
+    <span class="token comment" spellcheck="true">/**
+     * Parses a string into an AST
+     */</span>
+    <span class="token function">parse</span><span class="token punctuation">(</span>string<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_string <span class="token operator">=</span> string
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_tokenizer<span class="token punctuation">.</span><span class="token function">init</span><span class="token punctuation">(</span>string<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// Prime the tokenizer to obtain the frist</span>
+        <span class="token comment" spellcheck="true">// token which is our lookahead.The lookahead is</span>
+        <span class="token comment" spellcheck="true">// used for predictive parsing.</span>
+        <span class="token comment" spellcheck="true">// 预测解析 向后看一个char LL(1)</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_tokenizer<span class="token punctuation">.</span><span class="token function">getNextToken</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true">// Parse recursively starting from the main</span>
+        <span class="token comment" spellcheck="true">// entry point, the Program</span>
+
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Program</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Main entry point
+     *
+     * Program
+     *      : Literal
+     *      ;
+     */</span>
+    <span class="token function">Program</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'Program'</span><span class="token punctuation">,</span>
+            body<span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Literal</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Literal
+     *      : NumericLiteral
+     *      : StringLiteral
+     *      ;
+     */</span>
+    <span class="token function">Literal</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead<span class="token punctuation">.</span>type<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> <span class="token string">'NUMBER'</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">NumericLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">case</span> <span class="token string">'STRING'</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">StringLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">SyntaxError</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`Literal: unexpected literal production`</span></span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * StringLiteral
+     *      : STRING
+     *      ;
+     */</span>
+    <span class="token function">StringLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> token <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">'STRING'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'StringLiteral'</span><span class="token punctuation">,</span>
+            <span class="token comment" spellcheck="true">// 去除 " "</span>
+            value<span class="token punctuation">:</span> token<span class="token punctuation">.</span>value<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * NumericLiteral
+     *      : NUMBER
+     *      ;
+     */</span>
+    <span class="token function">NumericLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// _eat 消耗当前token, 让解析器前移</span>
+        <span class="token keyword">const</span> token <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">'NUMBER'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'NumericLiteral'</span><span class="token punctuation">,</span>
+            value<span class="token punctuation">:</span> <span class="token function">Number</span><span class="token punctuation">(</span>token<span class="token punctuation">.</span>value<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Expects a token of a given type.
+     */</span>
+    <span class="token function">_eat</span><span class="token punctuation">(</span>tokenType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> token <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>token <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">SyntaxError</span><span class="token punctuation">(</span>
+                <span class="token template-string"><span class="token string">`Unexpected end of input, expected: "</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>tokenType<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">"`</span></span>
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>token<span class="token punctuation">.</span>type <span class="token operator">!==</span> tokenType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">SyntaxError</span><span class="token punctuation">(</span>
+                <span class="token template-string"><span class="token string">`Unexpected token: "</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>token<span class="token punctuation">.</span>value<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">", expected: "</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>tokenType<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">"`</span></span>
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// Advance to next token.</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_tokenizer<span class="token punctuation">.</span><span class="token function">getNextToken</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> token
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+    Parser
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="003-From-State-Machines-to-Regular-Expressions"><a href="#003-From-State-Machines-to-Regular-Expressions" class="headerlink" title="003 From State Machines to Regular Expressions"></a>003 From State Machines to Regular Expressions</h2><p><img src="6e2823a0.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Tokenizer.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Tokenizer spec.
+ */</span>
+<span class="token keyword">const</span> Spec <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token comment" spellcheck="true">// Whitespace:</span>
+    <span class="token punctuation">[</span><span class="token regex">/^\s+/</span><span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// Comments</span>
+    <span class="token comment" spellcheck="true">// Skip single-line comments:</span>
+    <span class="token punctuation">[</span><span class="token regex">/^\/\/.*/</span><span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// Skip multi-line comments:</span>
+    <span class="token punctuation">[</span><span class="token regex">/^\/\*[\s\S]*?\*\//</span><span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// Numbers:</span>
+    <span class="token punctuation">[</span><span class="token regex">/^\d+/</span><span class="token punctuation">,</span> <span class="token string">'NUMBER'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// STRING</span>
+    <span class="token punctuation">[</span><span class="token regex">/^"[^"]*"/</span><span class="token punctuation">,</span> <span class="token string">'STRING'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token operator">/</span><span class="token operator">^</span><span class="token string">'[^'</span><span class="token punctuation">]</span><span class="token operator">*</span><span class="token string">'/, '</span>STRING'<span class="token punctuation">]</span>
+<span class="token punctuation">]</span>
+
+<span class="token comment" spellcheck="true">/**
+ * Tokenizer class.
+ *
+ * Lazily pulls a token from a stream.
+ */</span>
+<span class="token keyword">class</span> <span class="token class-name">Tokenizer</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Obtains next token.
+     */</span>
+    <span class="token function">getNextToken</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">hasMoreTokens</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token keyword">null</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 从当前指针处开始</span>
+        <span class="token keyword">const</span> string <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_string<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_cursor<span class="token punctuation">)</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token punctuation">[</span>regexp<span class="token punctuation">,</span> tokenType<span class="token punctuation">]</span> <span class="token keyword">of</span> Spec<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">const</span> tokenValue <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_match</span><span class="token punctuation">(</span>regexp<span class="token punctuation">,</span> string<span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// Coun't match this rule,continue.</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>tokenValue <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">continue</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// Should skip token,e.g.whitespace.</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>tokenType <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">getNextToken</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token keyword">return</span> <span class="token punctuation">{</span>
+                type<span class="token punctuation">:</span> tokenType<span class="token punctuation">,</span>
+                value<span class="token punctuation">:</span> tokenValue
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">SyntaxError</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`Unexpected token: "</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>string<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">"`</span></span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Matches a token for a regular expression.
+     */</span>
+    <span class="token function">_match</span><span class="token punctuation">(</span>regexp<span class="token punctuation">,</span> string<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> matched <span class="token operator">=</span> regexp<span class="token punctuation">.</span><span class="token function">exec</span><span class="token punctuation">(</span>string<span class="token punctuation">)</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>matched <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token keyword">null</span>
+        <span class="token punctuation">}</span>
+        <span class="token comment" spellcheck="true">// 推进cursor</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_cursor <span class="token operator">+</span><span class="token operator">=</span> matched<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>length
+        <span class="token keyword">return</span> matched<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+    Tokenizer
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="02-Program-structure"><a href="#02-Program-structure" class="headerlink" title="02 - Program structure"></a>02 - Program structure</h1><h2 id="001-Statements-and-Statement-list"><a href="#001-Statements-and-Statement-list" class="headerlink" title="001 Statements and Statement list"></a>001 Statements and Statement list</h2><p><img src="91def56b.png"><img src="c97ca9a5.png"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/run.js</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>Parser<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'../src/Parser'</span><span class="token punctuation">)</span>
+<span class="token keyword">const</span> assert <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">"assert"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">const</span> parser <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">Parser</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">/**
+ * List of tests
+ */</span>
+<span class="token keyword">const</span> tests <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./literals-test'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./statement-list-test'</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+<span class="token comment" spellcheck="true">/**
+ * For manual tests
+ */</span>
+<span class="token keyword">function</span> <span class="token function">exec</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> program <span class="token operator">=</span> <span class="token template-string"><span class="token string">`
+    /**
+     * start
+     */
+    // number
+    42;
+    // string
+    "a";
+    'b';
+    
+`</span></span>
+
+    <span class="token keyword">const</span> ast <span class="token operator">=</span> parser<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span>program<span class="token punctuation">)</span>
+
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>JSON<span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>ast<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// Manual test</span>
+<span class="token comment" spellcheck="true">// exec()</span>
+
+<span class="token comment" spellcheck="true">/**
+ * test function
+ */</span>
+<span class="token keyword">function</span> <span class="token function">test</span><span class="token punctuation">(</span>program<span class="token punctuation">,</span> expected<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> ast <span class="token operator">=</span> parser<span class="token punctuation">.</span><span class="token function">parse</span><span class="token punctuation">(</span>program<span class="token punctuation">)</span>
+    assert<span class="token punctuation">.</span><span class="token function">deepEqual</span><span class="token punctuation">(</span>ast<span class="token punctuation">,</span> expected<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+tests<span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>testRun <span class="token operator">=</span><span class="token operator">></span> <span class="token function">testRun</span><span class="token punctuation">(</span>test<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'All assertions passed!'</span><span class="token punctuation">)</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Parser.js</span>
+<span class="token keyword">class</span> <span class="token class-name">Parser</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token function">Program</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'Program'</span><span class="token punctuation">,</span>
+            body<span class="token punctuation">:</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">StatementList</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * 涉及到左递归，但是递归下降的无法实现
+     * StatementList
+     *      : Statement
+     *      重构为右递归
+     *      : StatementList Statement -> Statement Statement Statement Statement
+     *      ;
+     */</span>
+    <span class="token function">StatementList</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> statementList <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Statement</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+        <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead <span class="token operator">!=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            statementList<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Statement</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> statementList
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Statement
+     *     : ExpressionStatement
+     *     ;
+     */</span>
+    <span class="token function">Statement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">ExpressionStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * ExpressionStatement
+     *      : Expression ';'
+     *      ;
+     */</span>
+    <span class="token function">ExpressionStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> expression <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Expression</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'ExpressionStatement'</span><span class="token punctuation">,</span>
+            expression
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Expression
+     *      : Literal
+     *      ;
+     */</span>
+    <span class="token function">Expression</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Literal</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Tokenizer.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Tokenizer spec.
+ */</span>
+<span class="token keyword">const</span> Spec <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// Symbols,delimiters:</span>
+    <span class="token punctuation">[</span><span class="token regex">/^;/</span><span class="token punctuation">,</span> <span class="token string">';'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">]</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/statement-list-test.js</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> test <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token function">test</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">` 
+        /**
+         * start
+         */
+        // number
+        42;
+        // string
+        "a";
+        'b';
+    `</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"Program"</span><span class="token punctuation">,</span>
+        <span class="token string">"body"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+            <span class="token punctuation">{</span>
+                <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"ExpressionStatement"</span><span class="token punctuation">,</span>
+                <span class="token string">"expression"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                    <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"NumericLiteral"</span><span class="token punctuation">,</span>
+                    <span class="token string">"value"</span><span class="token punctuation">:</span> <span class="token number">42</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">{</span>
+                <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"ExpressionStatement"</span><span class="token punctuation">,</span>
+                <span class="token string">"expression"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                    <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"StringLiteral"</span><span class="token punctuation">,</span>
+                    <span class="token string">"value"</span><span class="token punctuation">:</span> <span class="token string">"a"</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">{</span>
+                <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"ExpressionStatement"</span><span class="token punctuation">,</span>
+                <span class="token string">"expression"</span><span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                    <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"StringLiteral"</span><span class="token punctuation">,</span>
+                    <span class="token string">"value"</span><span class="token punctuation">:</span> <span class="token string">"b"</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/literals-test.js</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> test <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// NumericLiteral</span>
+    <span class="token function">test</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`42;`</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+            <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"Program"</span><span class="token punctuation">,</span>
+            <span class="token string">"body"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">{</span>
+                    expression<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                        type<span class="token punctuation">:</span> <span class="token string">'NumericLiteral'</span><span class="token punctuation">,</span>
+                        value<span class="token punctuation">:</span> <span class="token number">42</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    type<span class="token punctuation">:</span> <span class="token string">'ExpressionStatement'</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// StringLiteral</span>
+    <span class="token function">test</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`"a";`</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+            <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"Program"</span><span class="token punctuation">,</span>
+            <span class="token string">"body"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">{</span>
+                    expression<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                        type<span class="token punctuation">:</span> <span class="token string">'StringLiteral'</span><span class="token punctuation">,</span>
+                        value<span class="token punctuation">:</span> <span class="token string">'a'</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    type<span class="token punctuation">:</span> <span class="token string">'ExpressionStatement'</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">)</span>
+    <span class="token function">test</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`'b';`</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+            <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"Program"</span><span class="token punctuation">,</span>
+            <span class="token string">"body"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">{</span>
+                    expression<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                        type<span class="token punctuation">:</span> <span class="token string">'StringLiteral'</span><span class="token punctuation">,</span>
+                        value<span class="token punctuation">:</span> <span class="token string">'b'</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    type<span class="token punctuation">:</span> <span class="token string">'ExpressionStatement'</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="002-Blocks-nested-scopes"><a href="#002-Blocks-nested-scopes" class="headerlink" title="002 Blocks nested scopes"></a>002 Blocks nested scopes</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/empty-statement-test.js</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> test <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token function">test</span><span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        type<span class="token punctuation">:</span> <span class="token string">'Program'</span><span class="token punctuation">,</span>
+        body<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+            <span class="token punctuation">{</span>
+                type<span class="token punctuation">:</span> <span class="token string">'EmptyStatement'</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// __test__/block-test.js</span>
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> test <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token function">test</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`
+        {
+            42;
+            
+            "hello";
+        }
+    `</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        type<span class="token punctuation">:</span> <span class="token string">'Program'</span><span class="token punctuation">,</span>
+        body<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+            <span class="token punctuation">{</span>
+                type<span class="token punctuation">:</span> <span class="token string">'BlockStatement'</span><span class="token punctuation">,</span>
+                body<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                    <span class="token punctuation">{</span>
+                        type<span class="token punctuation">:</span> <span class="token string">'ExpressionStatement'</span><span class="token punctuation">,</span>
+                        expression<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                            type<span class="token punctuation">:</span> <span class="token string">'NumericLiteral'</span><span class="token punctuation">,</span>
+                            value<span class="token punctuation">:</span> <span class="token number">42</span>
+                        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">{</span>
+                        type<span class="token punctuation">:</span> <span class="token string">'ExpressionStatement'</span><span class="token punctuation">,</span>
+                        expression<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                            type<span class="token punctuation">:</span> <span class="token string">'StringLiteral'</span><span class="token punctuation">,</span>
+                            value<span class="token punctuation">:</span> <span class="token string">'hello'</span>
+                        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">]</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// empty block</span>
+    <span class="token function">test</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`
+        { 
+        
+        }
+    `</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        type<span class="token punctuation">:</span> <span class="token string">'Program'</span><span class="token punctuation">,</span>
+        body<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+            <span class="token punctuation">{</span>
+                type<span class="token punctuation">:</span> <span class="token string">'BlockStatement'</span><span class="token punctuation">,</span>
+                body<span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// nest block</span>
+
+    <span class="token function">test</span><span class="token punctuation">(</span><span class="token template-string"><span class="token string">`
+        {
+            42;
+            {
+                "hello";
+            }
+        }
+    `</span></span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+        type<span class="token punctuation">:</span> <span class="token string">'Program'</span><span class="token punctuation">,</span>
+        body<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+            <span class="token punctuation">{</span>
+                type<span class="token punctuation">:</span> <span class="token string">'BlockStatement'</span><span class="token punctuation">,</span>
+                body<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                    <span class="token punctuation">{</span>
+                        expression<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                            type<span class="token punctuation">:</span> <span class="token string">'NumericLiteral'</span><span class="token punctuation">,</span>
+                            value<span class="token punctuation">:</span> <span class="token number">42</span>
+                        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                        type<span class="token punctuation">:</span> <span class="token string">'ExpressionStatement'</span>
+                    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                    <span class="token punctuation">{</span>
+                        body<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                            <span class="token punctuation">{</span>
+                                expression<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+                                    type<span class="token punctuation">:</span> <span class="token string">'StringLiteral'</span><span class="token punctuation">,</span>
+                                    value<span class="token punctuation">:</span> <span class="token string">'hello'</span>
+                                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+                                type<span class="token punctuation">:</span> <span class="token string">'ExpressionStatement'</span>
+                            <span class="token punctuation">}</span>
+                        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+                        type<span class="token punctuation">:</span> <span class="token string">'BlockStatement'</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token punctuation">}</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Tokenizer.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Tokenizer spec.
+ */</span>
+<span class="token keyword">const</span> Spec <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token comment" spellcheck="true">// Symbols,delimiters:</span>
+    <span class="token punctuation">[</span><span class="token regex">/^;/</span><span class="token punctuation">,</span> <span class="token string">';'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token regex">/^\{/</span><span class="token punctuation">,</span> <span class="token string">'{'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token punctuation">[</span><span class="token regex">/^\}/</span><span class="token punctuation">,</span> <span class="token string">'}'</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">]</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Parser.js</span>
+<span class="token keyword">class</span> <span class="token class-name">Parser</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+    <span class="token function">StatementList</span><span class="token punctuation">(</span>stopLookahead <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> statementList <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Statement</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+        <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead <span class="token operator">!=</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead<span class="token punctuation">.</span>type <span class="token operator">!==</span> stopLookahead<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            statementList<span class="token punctuation">.</span><span class="token function">push</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Statement</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">return</span> statementList
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Statement
+     *     : ExpressionStatement
+     *     | BlockStatement
+     *     | EmptyStatement
+     *     ;
+     */</span>
+    <span class="token function">Statement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead<span class="token punctuation">.</span>type<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> <span class="token string">';'</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">EmptyStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">case</span> <span class="token string">'{'</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">BlockStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">default</span><span class="token punctuation">:</span>
+                <span class="token keyword">return</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">ExpressionStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * EmptyStatement
+     *      : ';'
+     *      ;
+     */</span>
+    <span class="token function">EmptyStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'EmptyStatement'</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * BlockStatement
+     *      : '{' OptStatementList '}'
+     *      ;
+     */</span>
+    <span class="token function">BlockStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">'{'</span><span class="token punctuation">)</span>
+        <span class="token keyword">const</span> body <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead<span class="token punctuation">.</span>type <span class="token operator">!==</span> <span class="token string">'}'</span> <span class="token operator">?</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">StatementList</span><span class="token punctuation">(</span><span class="token string">'}'</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">'}'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'BlockStatement'</span><span class="token punctuation">,</span>
+            body
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span> 
+</code></pre>
+<h2 id="003-Different-AST-formats"><a href="#003-Different-AST-formats" class="headerlink" title="003 Different AST formats"></a>003 Different AST formats</h2>
             </div>
             <hr/>
 
@@ -1093,7 +1745,7 @@ extends C</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">690.6k</span>
+                <span class="white-color">692.7k</span>
             
 
             
