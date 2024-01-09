@@ -370,14 +370,14 @@ c">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        1k
+                        1.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        6 分
+                        7 分
                     </div>
                     
                 
@@ -1098,7 +1098,169 @@ module<span class="token punctuation">.</span>exports <span class="token operato
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span> 
 </code></pre>
-<h2 id="003-Different-AST-formats"><a href="#003-Different-AST-formats" class="headerlink" title="003 Different AST formats"></a>003 Different AST formats</h2>
+<h2 id="003-Different-AST-formats"><a href="#003-Different-AST-formats" class="headerlink" title="003 Different AST formats"></a>003 Different AST formats</h2><pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// src/Parser.js</span>
+<span class="token comment" spellcheck="true">/**
+ * Letter parser: recursive descent implementation
+ */</span>
+<span class="token keyword">const</span> <span class="token punctuation">{</span>Tokenizer<span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">require</span><span class="token punctuation">(</span><span class="token string">'./Tokenizer'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// Default AST node factories</span>
+<span class="token keyword">const</span> DefaultFactory <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token function">Program</span><span class="token punctuation">(</span>body<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'Program'</span><span class="token punctuation">,</span>
+            body
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">EmptyStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'EmptyStatement'</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">BlockStatement</span><span class="token punctuation">(</span>body<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'BlockStatement'</span><span class="token punctuation">,</span>
+            body
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">ExpressionStatement</span><span class="token punctuation">(</span>expression<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'ExpressionStatement'</span><span class="token punctuation">,</span>
+            expression
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">StringLiteral</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'StringLiteral'</span><span class="token punctuation">,</span>
+            value
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">NumericLiteral</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span>
+            type<span class="token punctuation">:</span> <span class="token string">'NumericLiteral'</span><span class="token punctuation">,</span>
+            value
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// S-expression AST node factories</span>
+<span class="token keyword">const</span> SExpressionFactory <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token function">Program</span><span class="token punctuation">(</span>body<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token string">'begin'</span><span class="token punctuation">,</span> body<span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">EmptyStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">BlockStatement</span><span class="token punctuation">(</span>body<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token punctuation">[</span><span class="token string">'begin'</span><span class="token punctuation">,</span> body<span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">ExpressionStatement</span><span class="token punctuation">(</span>expression<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> expression
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">StringLiteral</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token template-string"><span class="token string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>value<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">`</span></span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+
+    <span class="token function">NumericLiteral</span><span class="token punctuation">(</span>value<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> value
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">const</span> AST_MODE <span class="token operator">=</span> <span class="token string">'default'</span>
+<span class="token keyword">const</span> factory <span class="token operator">=</span>
+    AST_MODE <span class="token operator">===</span> <span class="token string">'default'</span> <span class="token operator">?</span>
+        DefaultFactory <span class="token punctuation">:</span> SExpressionFactory
+
+<span class="token keyword">class</span> <span class="token class-name">Parser</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Main entry point
+     *
+     * Program
+     *      : Literal
+     *      ;
+     */</span>
+    <span class="token function">Program</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> factory<span class="token punctuation">.</span><span class="token function">Program</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">StatementList</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * EmptyStatement
+     *      : ';'
+     *      ;
+     */</span>
+    <span class="token function">EmptyStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> factory<span class="token punctuation">.</span><span class="token function">EmptyStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * BlockStatement
+     *      : '{' OptStatementList '}'
+     *      ;
+     */</span>
+    <span class="token function">BlockStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">'{'</span><span class="token punctuation">)</span>
+        <span class="token keyword">const</span> body <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span>_lookahead<span class="token punctuation">.</span>type <span class="token operator">!==</span> <span class="token string">'}'</span> <span class="token operator">?</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">StatementList</span><span class="token punctuation">(</span><span class="token string">'}'</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">'}'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> factory<span class="token punctuation">.</span><span class="token function">BlockStatement</span><span class="token punctuation">(</span>body<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * ExpressionStatement
+     *      : Expression ';'
+     *      ;
+     */</span>
+    <span class="token function">ExpressionStatement</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> expression <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">Expression</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">';'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> factory<span class="token punctuation">.</span><span class="token function">ExpressionStatement</span><span class="token punctuation">(</span>expression<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * StringLiteral
+     *      : STRING
+     *      ;
+     */</span>
+    <span class="token function">StringLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> token <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">'STRING'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> factory<span class="token punctuation">.</span><span class="token function">StringLiteral</span><span class="token punctuation">(</span>token<span class="token punctuation">.</span>value<span class="token punctuation">.</span><span class="token function">slice</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * NumericLiteral
+     *      : NUMBER
+     *      ;
+     */</span>
+    <span class="token function">NumericLiteral</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// _eat 消耗当前token, 让解析器前移</span>
+        <span class="token keyword">const</span> token <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">.</span><span class="token function">_eat</span><span class="token punctuation">(</span><span class="token string">'NUMBER'</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> factory<span class="token punctuation">.</span><span class="token function">NumericLiteral</span><span class="token punctuation">(</span><span class="token function">Number</span><span class="token punctuation">(</span>token<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// ...</span>
+<span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> <span class="token punctuation">{</span>
+    Parser
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="004-Binary-Expressions"><a href="#004-Binary-Expressions" class="headerlink" title="004 Binary Expressions"></a>004 Binary Expressions</h2>
             </div>
             <hr/>
 
@@ -1745,7 +1907,7 @@ extends C</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">692.7k</span>
+                <span class="white-color">698.5k</span>
             
 
             

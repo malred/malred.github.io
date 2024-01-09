@@ -385,14 +385,14 @@ pages.json 和 tabBar案例
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        6k
+                        8.3k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        33 分
+                        46 分
                     </div>
                     
                 
@@ -2395,8 +2395,484 @@ T <span class="token operator">></span> <span class="token punctuation">(</span>
 <span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
 </code></pre>
 <p><img src="f66603f2.png"></p>
-<h1 id="day3"><a href="#day3" class="headerlink" title="day3"></a>day3</h1><h2 id="首页-骨架屏"><a href="#首页-骨架屏" class="headerlink" title="首页 - 骨架屏"></a>首页 - 骨架屏</h2><p><img src="zzzzz/f05f8a96.png"></p>
+<h1 id="day3"><a href="#day3" class="headerlink" title="day3"></a>day3</h1><h2 id="首页-骨架屏"><a href="#首页-骨架屏" class="headerlink" title="首页 - 骨架屏"></a>首页 - 骨架屏</h2><p><img src="f05f8a96.png"><img src="8268dab9.png"><img src="d9d1084a.png" alt="复制生成的骨架文件, 复制到vue文件"></p>
+<pre><code>&lt;!--src/pages/index/index.vue--&gt;
+&lt;script setup lang="ts"&gt;
+    // ...
+import PageSkeleton from "@/pages/index/components/PageSkeleton.vue";
 
+    // ...
+
+// 是否加载中标记
+const isLoading = ref(false)
+
+// 页面加载
+onLoad(async () =&gt; {
+  isLoading.value = true
+  await Promise.all([
+    getHomeBannerData(),
+    getHomeCategoryData(),
+    getHomeHotData()
+  ])
+  isLoading.value = false
+})
+
+    // ...
+    
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;!-- 自定义导航栏 --&gt;
+  &lt;CustomNavbar/&gt;
+  &lt;scroll-view
+    refresher-enabled
+    @refresherrefresh="onRefresherrefresh"
+    :refresher-triggered="isTriggered"
+    class="scroll-view"
+    @scrolltolower="onScrollToLower"
+    scroll-y
+  &gt;
+    &lt;!--  数据未加载时显示: 骨架屏  --&gt;
+    &lt;PageSkeleton v-if="isLoading"/&gt;
+    &lt;template v-else&gt;
+      &lt;!-- 自定义轮播图 --&gt;
+      &lt;XtxSwiper :list="bannerList"/&gt;
+      &lt;!-- 分类面板 --&gt;
+      &lt;CategoryPanel :list="categoryList"/&gt;
+      &lt;!-- 热门推荐 --&gt;
+      &lt;HotPanel :list="hotList"/&gt;
+      &lt;!-- 猜你喜欢 --&gt;
+      &lt;XtxGuess ref="guessRef"/&gt;
+    &lt;/template&gt;
+  &lt;/scroll-view&gt;
+&lt;/template&gt;
+
+// ...</code></pre>
+
+<pre><code>&lt;!--src/pages/index/components/PageSkeleton.vue--&gt;
+&lt;template&gt;
+    &lt;view class="sk-container"&gt;
+        &lt;scroll-view :refresher-enabled="true" :scroll-y="true" class="scroll-view scroll-view"&gt;
+        &lt;view is="components/XtxSwiper"&gt;
+            &lt;view class="carousel XtxSwiper--carousel"&gt;
+                &lt;swiper :circular="true" :interval="3000" :current="0" :autoplay="false"&gt;
+                &lt;swiper-item style="position: absolute; width: 100%; height: 100%; transform: translate(0%, 0px) translateZ(0px);"&gt;
+                    &lt;navigator class="navigator XtxSwiper--navigator" hover-class="none"&gt;
+                        &lt;image class="image XtxSwiper--image sk-image" mode="aspectFill"&gt;&lt;/image&gt;
+                    &lt;/navigator&gt;
+                &lt;/swiper-item&gt;
+            &lt;/swiper&gt;
+            &lt;view class="indicator XtxSwiper--indicator"&gt;
+                &lt;text class="dot XtxSwiper--dot active XtxSwiper--active"&gt;&lt;/text&gt;
+                &lt;text class="dot XtxSwiper--dot"&gt;&lt;/text&gt;
+                &lt;text class="dot XtxSwiper--dot"&gt;&lt;/text&gt;
+                &lt;text class="dot XtxSwiper--dot"&gt;&lt;/text&gt;
+                &lt;text class="dot XtxSwiper--dot"&gt;&lt;/text&gt;
+            &lt;/view&gt;
+        &lt;/view&gt;
+    &lt;/view&gt;
+    &lt;view is="pages/index/components/CategoryPanel"&gt;
+        &lt;view class="category CategoryPanel--category"&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-979 sk-text"&gt;居家&lt;/text&gt;
+            &lt;/navigator&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-430 sk-text"&gt;锦鲤&lt;/text&gt;
+            &lt;/navigator&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-352 sk-text"&gt;服饰&lt;/text&gt;
+            &lt;/navigator&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-550 sk-text"&gt;母婴&lt;/text&gt;
+            &lt;/navigator&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-772 sk-text"&gt;个护&lt;/text&gt;
+            &lt;/navigator&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-247 sk-text"&gt;严选&lt;/text&gt;
+            &lt;/navigator&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-512 sk-text"&gt;数码&lt;/text&gt;
+            &lt;/navigator&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-956 sk-text"&gt;运动&lt;/text&gt;
+            &lt;/navigator&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-19 sk-text"&gt;杂项&lt;/text&gt;
+            &lt;/navigator&gt;
+            &lt;navigator class="category-item CategoryPanel--category-item" hover-class="none"&gt;
+                &lt;image class="icon CategoryPanel--icon sk-image"&gt;&lt;/image&gt;
+                &lt;text class="text CategoryPanel--text sk-transparent sk-text-14-2857-105 sk-text"&gt;品牌&lt;/text&gt;
+            &lt;/navigator&gt;
+        &lt;/view&gt;
+    &lt;/view&gt;
+    &lt;view is="pages/index/components/HotPanel"&gt;
+        &lt;view class="panel HotPanel--panel hot HotPanel--hot"&gt;
+            &lt;view class="item HotPanel--item"&gt;
+                &lt;view class="title HotPanel--title"&gt;
+                    &lt;text class="title-text HotPanel--title-text sk-transparent sk-text-14-2857-278 sk-text"&gt;特惠推荐&lt;/text&gt;
+                    &lt;text class="title-desc HotPanel--title-desc sk-transparent sk-text-14-2857-515 sk-text"&gt;精选全攻略&lt;/text&gt;
+                &lt;/view&gt;
+                &lt;navigator class="cards HotPanel--cards" hover-class="none"&gt;
+                    &lt;image class="image HotPanel--image sk-image" mode="aspectFit"&gt;&lt;/image&gt;
+                    &lt;image class="image HotPanel--image sk-image" mode="aspectFit"&gt;&lt;/image&gt;
+                &lt;/navigator&gt;
+            &lt;/view&gt;
+            &lt;view class="item HotPanel--item"&gt;
+                &lt;view class="title HotPanel--title"&gt;
+                    &lt;text class="title-text HotPanel--title-text sk-transparent sk-text-14-2857-463 sk-text"&gt;爆款推荐&lt;/text&gt;
+                    &lt;text class="title-desc HotPanel--title-desc sk-transparent sk-text-14-2857-998 sk-text"&gt;最受欢迎&lt;/text&gt;
+                &lt;/view&gt;
+                &lt;navigator class="cards HotPanel--cards" hover-class="none"&gt;
+                    &lt;image class="image HotPanel--image sk-image" mode="aspectFit"&gt;&lt;/image&gt;
+                    &lt;image class="image HotPanel--image sk-image" mode="aspectFit"&gt;&lt;/image&gt;
+                &lt;/navigator&gt;
+            &lt;/view&gt;
+            &lt;view class="item HotPanel--item"&gt;
+                &lt;view class="title HotPanel--title"&gt;
+                    &lt;text class="title-text HotPanel--title-text sk-transparent sk-text-14-2857-982 sk-text"&gt;一站买全&lt;/text&gt;
+                    &lt;text class="title-desc HotPanel--title-desc sk-transparent sk-text-14-2857-757 sk-text"&gt;精心优选&lt;/text&gt;
+                &lt;/view&gt;
+                &lt;navigator class="cards HotPanel--cards" hover-class="none"&gt;
+                    &lt;image class="image HotPanel--image sk-image" mode="aspectFit"&gt;&lt;/image&gt;
+                    &lt;image class="image HotPanel--image sk-image" mode="aspectFit"&gt;&lt;/image&gt;
+                &lt;/navigator&gt;
+            &lt;/view&gt;
+            &lt;view class="item HotPanel--item"&gt;
+                &lt;view class="title HotPanel--title"&gt;
+                    &lt;text class="title-text HotPanel--title-text sk-transparent sk-text-14-2857-722 sk-text"&gt;新鲜好物&lt;/text&gt;
+                    &lt;text class="title-desc HotPanel--title-desc sk-transparent sk-text-14-2857-632 sk-text"&gt;生活加分项&lt;/text&gt;
+                &lt;/view&gt;
+                &lt;navigator class="cards HotPanel--cards" hover-class="none"&gt;
+                    &lt;image class="image HotPanel--image sk-image" mode="aspectFit"&gt;&lt;/image&gt;
+                    &lt;image class="image HotPanel--image sk-image" mode="aspectFit"&gt;&lt;/image&gt;
+                &lt;/navigator&gt;
+            &lt;/view&gt;
+        &lt;/view&gt;
+    &lt;/view&gt;
+&lt;/scroll-view&gt;
+&lt;/view&gt;
+&lt;/template&gt;</code></pre>
+<p><img src="1cb638e4.png"></p>
+<h2 id="热门推荐-1"><a href="#热门推荐-1" class="headerlink" title="热门推荐"></a>热门推荐</h2><h3 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h3><p><img src="ccc4b0c4.png"></p>
+<pre><code>&lt;!--src/pages/index/components/HotPanel.vue--&gt;
+&lt;script setup lang="ts"&gt;
+//  
+&lt;/script&gt;
+&lt;template&gt;
+  &lt;!-- 推荐专区 --&gt;
+  &lt;view class="panel hot"&gt;
+    &lt;view class="item" v-for="item in list" :key="item.id"&gt;
+      &lt;!-- --&gt;
+      &lt;navigator hover-class="none" :url="`/pages/hot/hot?type=${item.type}`" class="cards"&gt;
+        &lt;image
+          v-for="src in item.pictures"
+          :key="src"
+          class="image"
+          mode="aspectFit"
+          :src="src"
+        &gt;&lt;/image&gt;
+      &lt;/navigator&gt;
+    &lt;/view&gt;
+  &lt;/view&gt;
+&lt;/template&gt; </code></pre>
+
+<pre class=" language-js"><code class="language-js"><span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span>src<span class="token operator">/</span>pages<span class="token operator">/</span>hot<span class="token operator">/</span>hot<span class="token punctuation">.</span>vue<span class="token operator">--</span><span class="token operator">></span>
+<span class="token operator">&lt;</span>script setup lang<span class="token operator">=</span><span class="token string">"ts"</span><span class="token operator">></span>
+    <span class="token comment" spellcheck="true">// 热门推荐页 标题和url</span>
+    <span class="token keyword">const</span> hotMap <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>type<span class="token punctuation">:</span> <span class="token string">'1'</span><span class="token punctuation">,</span> title<span class="token punctuation">:</span> <span class="token string">'特惠推荐'</span><span class="token punctuation">,</span> url<span class="token punctuation">:</span> <span class="token string">'/hot/preference'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>type<span class="token punctuation">:</span> <span class="token string">'2'</span><span class="token punctuation">,</span> title<span class="token punctuation">:</span> <span class="token string">'爆款推荐'</span><span class="token punctuation">,</span> url<span class="token punctuation">:</span> <span class="token string">'/hot/inVogue'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>type<span class="token punctuation">:</span> <span class="token string">'3'</span><span class="token punctuation">,</span> title<span class="token punctuation">:</span> <span class="token string">'一站买全'</span><span class="token punctuation">,</span> url<span class="token punctuation">:</span> <span class="token string">'/hot/oneStop'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>type<span class="token punctuation">:</span> <span class="token string">'4'</span><span class="token punctuation">,</span> title<span class="token punctuation">:</span> <span class="token string">'新鲜好物'</span><span class="token punctuation">,</span> url<span class="token punctuation">:</span> <span class="token string">'/hot/new'</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">]</span>
+
+    <span class="token comment" spellcheck="true">// uniapp 获取url页面参数</span>
+    <span class="token keyword">const</span> query <span class="token operator">=</span> defineProps
+    <span class="token operator">&lt;</span>
+    <span class="token punctuation">{</span>
+    type<span class="token punctuation">:</span> string
+    <span class="token punctuation">}</span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">const</span> curHotMap <span class="token operator">=</span> hotMap<span class="token punctuation">.</span><span class="token function">find</span><span class="token punctuation">(</span>v <span class="token operator">=</span><span class="token operator">></span> v<span class="token punctuation">.</span>type <span class="token operator">===</span> query<span class="token punctuation">.</span>type<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">// 动态设置标题</span>
+    uni<span class="token punctuation">.</span><span class="token function">setNavigationBarTitle</span><span class="token punctuation">(</span><span class="token punctuation">{</span>title<span class="token punctuation">:</span> curHotMap<span class="token operator">!</span><span class="token punctuation">.</span>title<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>script<span class="token operator">></span>
+<span class="token operator">&lt;</span>template<span class="token operator">></span>
+    <span class="token operator">&lt;</span>view <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"viewport"</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span> 推荐封面图 <span class="token operator">--</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>view <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"cover"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>image
+                src<span class="token operator">=</span><span class="token string">"http://yjy-xiaotuxian-dev.oss-cn-beijing.aliyuncs.com/picture/2021-05-20/84abb5b1-8344-49ae-afc1-9cb932f3d593.jpg"</span>
+            <span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>image<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>view<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span> 推荐选项 <span class="token operator">--</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>view <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"tabs"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>text <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text active"</span><span class="token operator">></span>抢先尝鲜<span class="token operator">&lt;</span><span class="token operator">/</span>text<span class="token operator">></span>
+            <span class="token operator">&lt;</span>text <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"text"</span><span class="token operator">></span>新品预告<span class="token operator">&lt;</span><span class="token operator">/</span>text<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">/</span>view<span class="token operator">></span>
+        <span class="token operator">&lt;</span><span class="token operator">!</span><span class="token operator">--</span> 推荐列表 <span class="token operator">--</span><span class="token operator">></span>
+        <span class="token operator">&lt;</span>scroll<span class="token operator">-</span>view scroll<span class="token operator">-</span>y <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"scroll-view"</span><span class="token operator">></span>
+            <span class="token operator">&lt;</span>view <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"goods"</span><span class="token operator">></span>
+                <span class="token operator">&lt;</span>navigator
+                    hover<span class="token operator">-</span><span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"none"</span>
+                    <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"navigator"</span>
+                    v<span class="token operator">-</span><span class="token keyword">for</span><span class="token operator">=</span><span class="token string">"goods in 10"</span>
+                <span class="token punctuation">:</span>key<span class="token operator">=</span><span class="token string">"goods"</span>
+                <span class="token punctuation">:</span>url<span class="token operator">=</span><span class="token string">"`/pages/goods/goods?id=`"</span>
+                <span class="token operator">></span>
+                <span class="token operator">&lt;</span>image
+                    <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"thumb"</span>
+                    src<span class="token operator">=</span><span class="token string">"https://yanxuan-item.nosdn.127.net/5e7864647286c7447eeee7f0025f8c11.png"</span>
+                <span class="token operator">></span><span class="token operator">&lt;</span><span class="token operator">/</span>image<span class="token operator">></span>
+                <span class="token operator">&lt;</span>view <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"name ellipsis"</span><span class="token operator">></span>不含酒精，使用安心爽肤清洁湿巾<span class="token operator">&lt;</span><span class="token operator">/</span>view<span class="token operator">></span>
+                <span class="token operator">&lt;</span>view <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"price"</span><span class="token operator">></span>
+                    <span class="token operator">&lt;</span>text <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"symbol"</span><span class="token operator">></span>¥<span class="token operator">&lt;</span><span class="token operator">/</span>text<span class="token operator">></span>
+                    <span class="token operator">&lt;</span>text <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"number"</span><span class="token operator">></span><span class="token number">29.90</span><span class="token operator">&lt;</span><span class="token operator">/</span>text<span class="token operator">></span>
+                <span class="token operator">&lt;</span><span class="token operator">/</span>view<span class="token operator">></span>
+            <span class="token operator">&lt;</span><span class="token operator">/</span>navigator<span class="token operator">></span>
+    <span class="token operator">&lt;</span><span class="token operator">/</span>view<span class="token operator">></span>
+    <span class="token operator">&lt;</span>view <span class="token keyword">class</span><span class="token operator">=</span><span class="token string">"loading-text"</span><span class="token operator">></span>正在加载<span class="token operator">...</span><span class="token operator">&lt;</span><span class="token operator">/</span>view<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>scroll<span class="token operator">-</span>view<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>view<span class="token operator">></span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>template<span class="token operator">></span>
+<span class="token operator">&lt;</span>style lang<span class="token operator">=</span><span class="token string">"scss"</span><span class="token operator">></span>
+    page <span class="token punctuation">{</span>
+    height<span class="token punctuation">:</span> <span class="token number">100</span><span class="token operator">%</span><span class="token punctuation">;</span>
+    background<span class="token operator">-</span>color<span class="token punctuation">:</span> #f4f4f4<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>viewport <span class="token punctuation">{</span>
+    display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+    flex<span class="token operator">-</span>direction<span class="token punctuation">:</span> column<span class="token punctuation">;</span>
+    height<span class="token punctuation">:</span> <span class="token number">100</span><span class="token operator">%</span><span class="token punctuation">;</span>
+    padding<span class="token punctuation">:</span> 180rpx <span class="token number">0</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    position<span class="token punctuation">:</span> relative<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>cover <span class="token punctuation">{</span>
+    width<span class="token punctuation">:</span> 750rpx<span class="token punctuation">;</span>
+    height<span class="token punctuation">:</span> 225rpx<span class="token punctuation">;</span>
+    border<span class="token operator">-</span>radius<span class="token punctuation">:</span> <span class="token number">0</span> <span class="token number">0</span> 40rpx 40rpx<span class="token punctuation">;</span>
+    overflow<span class="token punctuation">:</span> hidden<span class="token punctuation">;</span>
+    position<span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+    left<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+    top<span class="token punctuation">:</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>scroll<span class="token operator">-</span>view <span class="token punctuation">{</span>
+    flex<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>tabs <span class="token punctuation">{</span>
+    display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+    justify<span class="token operator">-</span>content<span class="token punctuation">:</span> space<span class="token operator">-</span>evenly<span class="token punctuation">;</span>
+    height<span class="token punctuation">:</span> 100rpx<span class="token punctuation">;</span>
+    line<span class="token operator">-</span>height<span class="token punctuation">:</span> 90rpx<span class="token punctuation">;</span>
+    margin<span class="token punctuation">:</span> <span class="token number">0</span> 20rpx<span class="token punctuation">;</span>
+    font<span class="token operator">-</span>size<span class="token punctuation">:</span> 28rpx<span class="token punctuation">;</span>
+    border<span class="token operator">-</span>radius<span class="token punctuation">:</span> 10rpx<span class="token punctuation">;</span>
+    box<span class="token operator">-</span>shadow<span class="token punctuation">:</span> <span class="token number">0</span> 4rpx 5rpx <span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">200</span><span class="token punctuation">,</span> <span class="token number">200</span><span class="token punctuation">,</span> <span class="token number">200</span><span class="token punctuation">,</span> <span class="token number">0.3</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    color<span class="token punctuation">:</span> #<span class="token number">333</span><span class="token punctuation">;</span>
+    background<span class="token operator">-</span>color<span class="token punctuation">:</span> #fff<span class="token punctuation">;</span>
+    position<span class="token punctuation">:</span> relative<span class="token punctuation">;</span>
+    z<span class="token operator">-</span>index<span class="token punctuation">:</span> <span class="token number">9</span><span class="token punctuation">;</span>
+
+    <span class="token punctuation">.</span>text <span class="token punctuation">{</span>
+    margin<span class="token punctuation">:</span> <span class="token number">0</span> 20rpx<span class="token punctuation">;</span>
+    position<span class="token punctuation">:</span> relative<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>active <span class="token punctuation">{</span>
+    <span class="token operator">&amp;</span><span class="token punctuation">:</span><span class="token punctuation">:</span>after <span class="token punctuation">{</span>
+    content<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">;</span>
+    width<span class="token punctuation">:</span> 40rpx<span class="token punctuation">;</span>
+    height<span class="token punctuation">:</span> 4rpx<span class="token punctuation">;</span>
+    transform<span class="token punctuation">:</span> <span class="token function">translate</span><span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">50</span><span class="token operator">%</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    background<span class="token operator">-</span>color<span class="token punctuation">:</span> #27ba9b<span class="token punctuation">;</span>
+    position<span class="token punctuation">:</span> absolute<span class="token punctuation">;</span>
+    left<span class="token punctuation">:</span> <span class="token number">50</span><span class="token operator">%</span><span class="token punctuation">;</span>
+    bottom<span class="token punctuation">:</span> 24rpx<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>goods <span class="token punctuation">{</span>
+    display<span class="token punctuation">:</span> flex<span class="token punctuation">;</span>
+    flex<span class="token operator">-</span>wrap<span class="token punctuation">:</span> wrap<span class="token punctuation">;</span>
+    justify<span class="token operator">-</span>content<span class="token punctuation">:</span> space<span class="token operator">-</span>between<span class="token punctuation">;</span>
+    padding<span class="token punctuation">:</span> <span class="token number">0</span> 20rpx 20rpx<span class="token punctuation">;</span>
+
+    <span class="token punctuation">.</span>navigator <span class="token punctuation">{</span>
+    width<span class="token punctuation">:</span> 345rpx<span class="token punctuation">;</span>
+    padding<span class="token punctuation">:</span> 20rpx<span class="token punctuation">;</span>
+    margin<span class="token operator">-</span>top<span class="token punctuation">:</span> 20rpx<span class="token punctuation">;</span>
+    border<span class="token operator">-</span>radius<span class="token punctuation">:</span> 10rpx<span class="token punctuation">;</span>
+    background<span class="token operator">-</span>color<span class="token punctuation">:</span> #fff<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>thumb <span class="token punctuation">{</span>
+    width<span class="token punctuation">:</span> 305rpx<span class="token punctuation">;</span>
+    height<span class="token punctuation">:</span> 305rpx<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>name <span class="token punctuation">{</span>
+    height<span class="token punctuation">:</span> 88rpx<span class="token punctuation">;</span>
+    font<span class="token operator">-</span>size<span class="token punctuation">:</span> 26rpx<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>price <span class="token punctuation">{</span>
+    line<span class="token operator">-</span>height<span class="token punctuation">:</span> <span class="token number">1</span><span class="token punctuation">;</span>
+    color<span class="token punctuation">:</span> #cf4444<span class="token punctuation">;</span>
+    font<span class="token operator">-</span>size<span class="token punctuation">:</span> 30rpx<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>symbol <span class="token punctuation">{</span>
+    font<span class="token operator">-</span>size<span class="token punctuation">:</span> <span class="token number">70</span><span class="token operator">%</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>decimal <span class="token punctuation">{</span>
+    font<span class="token operator">-</span>size<span class="token punctuation">:</span> <span class="token number">70</span><span class="token operator">%</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+    <span class="token punctuation">.</span>loading<span class="token operator">-</span>text <span class="token punctuation">{</span>
+    text <span class="token operator">-</span> align<span class="token punctuation">:</span> center<span class="token punctuation">;</span>
+    font<span class="token operator">-</span>size<span class="token punctuation">:</span> 28rpx<span class="token punctuation">;</span>
+    color<span class="token punctuation">:</span> #<span class="token number">666</span><span class="token punctuation">;</span>
+    padding<span class="token punctuation">:</span> 20rpx <span class="token number">0</span> 50rpx<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+<span class="token operator">&lt;</span><span class="token operator">/</span>style<span class="token operator">></span>
+</code></pre>
+<p><img src="2037039f.png"></p>
+<h3 id="获取数据-2"><a href="#获取数据-2" class="headerlink" title="获取数据"></a>获取数据</h3><p><img src="071b99c8.png"><img src="d792af7e.png"></p>
+<pre class=" language-html"><code class="language-html"><span class="token comment" spellcheck="true">&lt;!--src/pages/hot/hot.vue--></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>script</span> <span class="token attr-name">setup</span> <span class="token attr-name">lang</span><span class="token attr-value"><span class="token punctuation">=</span><span class="token punctuation">"</span>ts<span class="token punctuation">"</span></span><span class="token punctuation">></span></span><span class="token script language-javascript">
+    <span class="token comment" spellcheck="true">// ...</span>
+
+    <span class="token comment" spellcheck="true">// 获取热门推荐数据</span>
+    <span class="token keyword">const</span> getHotRecommendData <span class="token operator">=</span> <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token keyword">const</span> res <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">getHotRecommendAPI</span><span class="token punctuation">(</span>curHotMap
+        <span class="token operator">!</span>
+    <span class="token punctuation">.</span>
+        url
+    <span class="token punctuation">)</span>
+        console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 页面加载</span>
+    <span class="token function">onLoad</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+        <span class="token function">getHotRecommendData</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+</span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>script</span><span class="token punctuation">></span></span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// src/services/hot.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span>http<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@/utils/http"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> type <span class="token punctuation">{</span>PageParams<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@/types/global"</span><span class="token punctuation">;</span>
+
+<span class="token comment" spellcheck="true">// &amp; 将类型扩展</span>
+type HotParams <span class="token operator">=</span> PageParams <span class="token operator">&amp;</span> <span class="token punctuation">{</span> subType<span class="token punctuation">:</span> <span class="token keyword">string</span> <span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/**
+ * 通用热门推荐类型
+ * @param url 请求地址
+ * @param data 请求参数
+ */</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> getHotRecommendAPI <span class="token operator">=</span> <span class="token punctuation">(</span>
+    url<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">,</span>
+    data<span class="token operator">?</span><span class="token punctuation">:</span> HotParams
+<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token function">http</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        method<span class="token punctuation">:</span> <span class="token string">'GET'</span><span class="token punctuation">,</span>
+        url<span class="token punctuation">,</span> data
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h3 id="类型定义"><a href="#类型定义" class="headerlink" title="类型定义"></a>类型定义</h3><pre class=" language-ts"><code class="language-ts"><span class="token keyword">import</span> type <span class="token punctuation">{</span>PageResult<span class="token punctuation">,</span> GoodsItem<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'./global'</span>
+
+<span class="token comment" spellcheck="true">/** 热门推荐 */</span>
+<span class="token keyword">export</span> type HotResult <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/** id信息 */</span>
+    id<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token comment" spellcheck="true">/** 活动图片 */</span>
+    bannerPicture<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token comment" spellcheck="true">/** 活动标题 */</span>
+    title<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token comment" spellcheck="true">/** 子类选项 */</span>
+    subTypes<span class="token punctuation">:</span> SubTypeItem<span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/** 热门推荐-子类选项 */</span>
+<span class="token keyword">export</span> type SubTypeItem <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/** 子类id */</span>
+    id<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token comment" spellcheck="true">/** 子类标题 */</span>
+    title<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token comment" spellcheck="true">/** 子类对应的商品集合 */</span>
+    goodsItems<span class="token punctuation">:</span> PageResult<span class="token operator">&lt;</span>GoodsItem<span class="token operator">></span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// src/types/home.d.ts</span>
+<span class="token keyword">import</span> type <span class="token punctuation">{</span>GoodsItem<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@/types/global'</span>
+
+<span class="token comment" spellcheck="true">/** 猜你喜欢-商品类型 */</span>
+<span class="token keyword">export</span> type GuessItem <span class="token operator">=</span> GoodsItem
+
+<span class="token comment" spellcheck="true">// ...</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// src/services/hot.ts</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span>http<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@/utils/http'</span>
+<span class="token keyword">import</span> type <span class="token punctuation">{</span>PageParams<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@/types/global'</span>
+<span class="token keyword">import</span> type <span class="token punctuation">{</span>HotResult<span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">'@/types/hot'</span>
+
+<span class="token comment" spellcheck="true">// &amp; 将类型扩展</span>
+type HotParams <span class="token operator">=</span> PageParams <span class="token operator">&amp;</span> <span class="token punctuation">{</span> subType<span class="token punctuation">:</span> <span class="token keyword">string</span> <span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">/**
+ * 通用热门推荐类型
+ * @param url 请求地址
+ * @param data 请求参数
+ */</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> getHotRecommendAPI <span class="token operator">=</span> <span class="token punctuation">(</span>url<span class="token punctuation">:</span> <span class="token keyword">string</span><span class="token punctuation">,</span> data<span class="token operator">?</span><span class="token punctuation">:</span> HotParams<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> http<span class="token operator">&lt;</span>HotResult<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+        method<span class="token punctuation">:</span> <span class="token string">'GET'</span><span class="token punctuation">,</span>
+        url<span class="token punctuation">,</span>
+        data<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// src/types/global.d.ts</span>
+<span class="token comment" spellcheck="true">// ...</span>
+
+<span class="token comment" spellcheck="true">/** 通用商品类型 */</span>
+<span class="token keyword">export</span> type GoodsItem <span class="token operator">=</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/** 商品描述 */</span>
+    desc<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token comment" spellcheck="true">/** 商品折扣 */</span>
+    discount<span class="token punctuation">:</span> <span class="token keyword">number</span>
+    <span class="token comment" spellcheck="true">/** id */</span>
+    id<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token comment" spellcheck="true">/** 商品名称 */</span>
+    name<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token comment" spellcheck="true">/** 商品已下单数量 */</span>
+    orderNum<span class="token punctuation">:</span> <span class="token keyword">number</span>
+    <span class="token comment" spellcheck="true">/** 商品图片 */</span>
+    picture<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    <span class="token comment" spellcheck="true">/** 商品价格 */</span>
+    price<span class="token punctuation">:</span> <span class="token keyword">number</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="eb2fa6d3.png"></p>
+<h3 id=""><a href="#" class="headerlink" title=""></a></h3>
             </div>
             <hr/>
 
@@ -3044,7 +3520,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">692.7k</span>
+                <span class="white-color">698.5k</span>
             
 
             

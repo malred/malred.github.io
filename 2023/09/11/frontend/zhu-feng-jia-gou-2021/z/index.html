@@ -371,14 +371,14 @@ pnpm i typescript rollup rollup">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        8.4k
+                        9.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        43 分
+                        47 分
                     </div>
                     
                 
@@ -669,8 +669,132 @@ pnpm i typescript rollup rollup">
 <span class="token function">runParallel</span><span class="token punctuation">(</span>targets<span class="token punctuation">,</span> build<span class="token punctuation">)</span>
 </code></pre>
 <p><img src="97f3460e.png"><img src="2d2e584f.png" alt="(yarn)打包完成后, 运行, 可以将packages下的文件加入node_modules"><img src="12689a8c.png"><br><img src="2b183558.png" alt="pnpm安装workspace的项目, 修改依赖, 然后运行 pnpm install"><img src="0a85df95.png"></p>
-<h2 id="任务5：5-reactiveApi实现"><a href="#任务5：5-reactiveApi实现" class="headerlink" title="任务5：5.reactiveApi实现"></a>任务5：5.reactiveApi实现</h2><p><img src="z/1b3608f8.png"><br>#</p>
-<h1 id="webpack-202011-架构-全"><a href="#webpack-202011-架构-全" class="headerlink" title="webpack(202011)(架构)(全)"></a>webpack(202011)(架构)(全)</h1><h2 id="任务-1：1-201122-webpack-的核心概念-【海量资源-：www-1-com】"><a href="#任务-1：1-201122-webpack-的核心概念-【海量资源-：www-1-com】" class="headerlink" title="任务 1：1.201122.webpack 的核心概念_【海量资源-：www.1.com】"></a>任务 1：1.201122.webpack 的核心概念_【海量资源-：<a target="_blank" rel="noopener" href="http://www.1.com】/">www.1.com】</a></h2><p><img src="20230914065228.png"><br><img src="20230914065249.png"><br><img src="20230914065428.png"></p>
+<h2 id="任务5：5-reactiveApi实现"><a href="#任务5：5-reactiveApi实现" class="headerlink" title="任务5：5.reactiveApi实现"></a>任务5：5.reactiveApi实现</h2><p><img src="z/1b3608f8.png"></p>
+<h1 id="202103Node架构课-全"><a href="#202103Node架构课-全" class="headerlink" title="202103Node架构课(全)"></a>202103Node架构课(全)</h1><h2 id="任务1：1-高阶函数逇使用"><a href="#任务1：1-高阶函数逇使用" class="headerlink" title="任务1：1.高阶函数逇使用"></a>任务1：1.高阶函数逇使用</h2><p><img src="b0ba8bdc.png" alt="回调函数也是高阶函数的一种"></p>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// 1_高阶函数.js</span>
+<span class="token comment" spellcheck="true">// 高阶函数的概念：1.一个函数返回一个函数2.一个函数可以参数接受一个函数高阶函数</span>
+<span class="token comment" spellcheck="true">// 这两个条件满足任何一个均可promisel内部肯定也是回调函数（内部包含着高阶函数</span>
+
+<span class="token comment" spellcheck="true">// 扩展方法 会用到高阶函数</span>
+<span class="token keyword">function</span> <span class="token function">core</span><span class="token punctuation">(</span><span class="token operator">...</span>args<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">// 核心代码</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'core'</span><span class="token punctuation">,</span> <span class="token operator">...</span>args<span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// 给core函数增加一些额外的逻辑但是不能更改核心代码</span>
+Function<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span>before <span class="token operator">=</span> <span class="token keyword">function</span> <span class="token punctuation">(</span>cb<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">// 扩展原型链</span>
+    <span class="token comment" spellcheck="true">// this = core (箭头函数, 谁调用, this就指向谁)</span>
+    <span class="token comment" spellcheck="true">// ...args 剩余运算符 可以把多个参数转化成数组</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token operator">...</span>args<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">// newCore</span>
+        <span class="token function">cb</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true">// ... 可以把数组展开</span>
+        <span class="token keyword">this</span><span class="token punctuation">(</span><span class="token operator">...</span>args<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> newCore <span class="token operator">=</span> core<span class="token punctuation">.</span><span class="token function">before</span><span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">'before'</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+<span class="token function">newCore</span><span class="token punctuation">(</span><span class="token string">'a'</span><span class="token punctuation">,</span> <span class="token string">'b'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// 高阶函数可以用来扩展已有函数</span>
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">// 2_函数柯里化.js</span>
+<span class="token comment" spellcheck="true">// 函数柯里化 多个参数的传入 把他转化成 n个函数 可以暂存变量</span>
+<span class="token comment" spellcheck="true">// 一般柯里化参数要求 都是一个个的传 => 偏函数</span>
+
+<span class="token keyword">function</span> <span class="token function">fn</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token keyword">function</span> <span class="token function">a</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> <span class="token keyword">function</span> <span class="token function">a</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> a <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">,</span> b <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">,</span> c <span class="token operator">=</span> <span class="token number">3</span>
+<span class="token function">fn</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">,</span> c<span class="token punctuation">)</span>
+
+<span class="token keyword">let</span> f1 <span class="token operator">=</span> <span class="token function">fn</span><span class="token punctuation">(</span>a<span class="token punctuation">)</span>
+<span class="token keyword">let</span> f2 <span class="token operator">=</span> <span class="token function">fn</span><span class="token punctuation">(</span>b<span class="token punctuation">)</span>
+<span class="token keyword">let</span> f3 <span class="token operator">=</span> <span class="token function">fn</span><span class="token punctuation">(</span>c<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">// 判断一个变量的类型 (代码的实现 类型是基本条件)</span>
+<span class="token comment" spellcheck="true">// typeof我们一般用于判断基础类型</span>
+<span class="token comment" spellcheck="true">// instanceof xxx是谁的实例 原理</span>
+<span class="token comment" spellcheck="true">// Object.prototype.toString.call 判断具体类型返回的是一个字符串</span>
+<span class="token comment" spellcheck="true">// coustructor 深拷贝</span>
+
+<span class="token keyword">function</span> <span class="token function">isType</span><span class="token punctuation">(</span>val<span class="token punctuation">,</span> typing<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> Object<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span>toString<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token template-string"><span class="token string">`[object </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>typing<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">]`</span></span>
+<span class="token punctuation">}</span>
+
+<span class="token comment" spellcheck="true">// // 如果用户的typing字段写错了? 这种常量, 我们不希望用户自己写</span>
+<span class="token comment" spellcheck="true">// console.log(isType('null', 'String'))</span>
+<span class="token comment" spellcheck="true">// console.log(isType(null, 'String'))</span>
+
+<span class="token comment" spellcheck="true">// 我们的柯里化登场：让函数变得更具体一些，反柯里化：让函数范围变的更大一些</span>
+<span class="token comment" spellcheck="true">// function isString(typing) {</span>
+<span class="token comment" spellcheck="true">//     return function (val) {</span>
+<span class="token comment" spellcheck="true">//         return Object.prototype.toString.call(val) == `[object ${typing}]`</span>
+<span class="token comment" spellcheck="true">//     }</span>
+<span class="token comment" spellcheck="true">// }</span>
+<span class="token comment" spellcheck="true">// function isString(typing) {</span>
+<span class="token comment" spellcheck="true">//     return function (val) {</span>
+<span class="token comment" spellcheck="true">//         return isType(val, typing)</span>
+<span class="token comment" spellcheck="true">//     }</span>
+<span class="token comment" spellcheck="true">// }</span>
+<span class="token comment" spellcheck="true">//</span>
+<span class="token comment" spellcheck="true">// let myIsString = isString('String')</span>
+<span class="token comment" spellcheck="true">// console.log(myIsString('abc'));</span>
+<span class="token comment" spellcheck="true">// console.log(myIsString(123));</span>
+
+<span class="token comment" spellcheck="true">// 实现通用的柯里化函数：高阶函数</span>
+
+<span class="token comment" spellcheck="true">// 要记录每次调用时传入的参数，并且和函数的参数个数进行比较，</span>
+<span class="token comment" spellcheck="true">// 如果不满足总个数就返回新函数，如果传入的个数和参数一致执行原来的函数</span>
+
+<span class="token keyword">function</span> <span class="token function">curring</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 存储每次调用的时候传入的变量</span>
+    <span class="token keyword">const</span> inner <span class="token operator">=</span> <span class="token punctuation">(</span>args <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span> <span class="token comment" spellcheck="true">// 存储每次调用时传入的参数</span>
+        <span class="token keyword">return</span> args<span class="token punctuation">.</span>length <span class="token operator">>=</span> fn<span class="token punctuation">.</span>length <span class="token operator">?</span> <span class="token function">fn</span><span class="token punctuation">(</span><span class="token operator">...</span>args<span class="token punctuation">)</span>
+            <span class="token comment" spellcheck="true">// args保存到新函数里了</span>
+            <span class="token punctuation">:</span> <span class="token punctuation">(</span><span class="token operator">...</span>userArgs<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">></span> <span class="token function">inner</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token operator">...</span>args<span class="token punctuation">,</span> <span class="token operator">...</span>userArgs<span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 递归</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token function">inner</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">isType_r</span><span class="token punctuation">(</span>typing<span class="token punctuation">,</span> val<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> Object<span class="token punctuation">.</span>prototype<span class="token punctuation">.</span>toString<span class="token punctuation">.</span><span class="token function">call</span><span class="token punctuation">(</span>val<span class="token punctuation">)</span> <span class="token operator">==</span> <span class="token template-string"><span class="token string">`[object </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>typing<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">]`</span></span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">sum</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">,</span> c<span class="token punctuation">,</span> d<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> a <span class="token operator">+</span> b <span class="token operator">+</span> c <span class="token operator">+</span> d
+<span class="token punctuation">}</span>
+
+<span class="token keyword">let</span> sum1 <span class="token operator">=</span> <span class="token function">curring</span><span class="token punctuation">(</span>sum<span class="token punctuation">)</span>
+<span class="token keyword">let</span> sum2 <span class="token operator">=</span> <span class="token function">sum1</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token keyword">let</span> sum3 <span class="token operator">=</span> <span class="token function">sum2</span><span class="token punctuation">(</span><span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span>
+<span class="token keyword">let</span> result <span class="token operator">=</span> <span class="token function">sum3</span><span class="token punctuation">(</span><span class="token number">4</span><span class="token punctuation">)</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span>
+
+<span class="token keyword">let</span> isString <span class="token operator">=</span> <span class="token function">curring</span><span class="token punctuation">(</span>isType_r<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token string">'String'</span><span class="token punctuation">)</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">isString</span><span class="token punctuation">(</span><span class="token string">'123'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">isString</span><span class="token punctuation">(</span><span class="token number">123</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">let</span> isNumber <span class="token operator">=</span> <span class="token function">curring</span><span class="token punctuation">(</span>isType_r<span class="token punctuation">)</span><span class="token punctuation">(</span><span class="token string">'Number'</span><span class="token punctuation">)</span>
+
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">isNumber</span><span class="token punctuation">(</span><span class="token string">'123'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token function">isNumber</span><span class="token punctuation">(</span><span class="token number">123</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">let</span> util <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 加分号, 下面的[]才能被识别为数组</span>
+
+<span class="token comment" spellcheck="true">// let types = ['String', 'Number', 'Boolean', 'Null', 'Undefined']</span>
+<span class="token punctuation">[</span><span class="token string">'String'</span><span class="token punctuation">,</span> <span class="token string">'Number'</span><span class="token punctuation">,</span> <span class="token string">'Boolean'</span><span class="token punctuation">,</span> <span class="token string">'Null'</span><span class="token punctuation">,</span> <span class="token string">'Undefined'</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">forEach</span><span class="token punctuation">(</span>type <span class="token operator">=</span><span class="token operator">></span> <span class="token punctuation">{</span>
+    util<span class="token punctuation">[</span><span class="token string">'is'</span> <span class="token operator">+</span> type<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">curring</span><span class="token punctuation">(</span>isType_r<span class="token punctuation">)</span><span class="token punctuation">(</span>type<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span>
+console<span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span>util<span class="token punctuation">.</span><span class="token function">isNumber</span><span class="token punctuation">(</span><span class="token string">'1223'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="任务2：2-发布订阅模式和观察者模式"><a href="#任务2：2-发布订阅模式和观察者模式" class="headerlink" title="任务2：2.发布订阅模式和观察者模式"></a>任务2：2.发布订阅模式和观察者模式</h2><h1 id="webpack-202011-架构-全"><a href="#webpack-202011-架构-全" class="headerlink" title="webpack(202011)(架构)(全)"></a>webpack(202011)(架构)(全)</h1><h2 id="任务-1：1-201122-webpack-的核心概念-【海量资源-：www-1-com】"><a href="#任务-1：1-201122-webpack-的核心概念-【海量资源-：www-1-com】" class="headerlink" title="任务 1：1.201122.webpack 的核心概念_【海量资源-：www.1.com】"></a>任务 1：1.201122.webpack 的核心概念_【海量资源-：<a target="_blank" rel="noopener" href="http://www.1.com】/">www.1.com】</a></h2><p><img src="20230914065228.png"><br><img src="20230914065249.png"><br><img src="20230914065428.png"></p>
 <pre class=" language-shell"><code class="language-shell">npm i webpack webpack-cli --save-dev
 </code></pre>
 <p><img src="641178a2.png"></p>
@@ -3308,7 +3432,7 @@ import "github.com/beego/beego/v2/serve</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">692.7k</span>
+                <span class="white-color">698.5k</span>
             
 
             
