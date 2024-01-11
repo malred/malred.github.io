@@ -372,14 +372,14 @@ import (
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        26.2k
+                        27k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        146 分
+                        149 分
                     </div>
                     
                 
@@ -7866,7 +7866,138 @@ message SellInfo <span class="token punctuation">{</span>
 <span class="token punctuation">}</span>
 </code></pre>
 <h4 id="2-7基于mysql的乐观锁实现原理"><a href="#2-7基于mysql的乐观锁实现原理" class="headerlink" title="2-7基于mysql的乐观锁实现原理"></a>2-7基于mysql的乐观锁实现原理</h4><p><img src="bbbfda88.png" alt="乐观锁严格上说不是一种锁, 而是一种解决数据不一致的方案, 可以提升性能"><br><img src="5730792f.png"></p>
-<h4 id="2-8gorm实现基于mysql的乐观锁"><a href="#2-8gorm实现基于mysql的乐观锁" class="headerlink" title="2-8gorm实现基于mysql的乐观锁"></a>2-8gorm实现基于mysql的乐观锁</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
+<h4 id="2-8gorm实现基于mysql的乐观锁"><a href="#2-8gorm实现基于mysql的乐观锁" class="headerlink" title="2-8gorm实现基于mysql的乐观锁"></a>2-8gorm实现基于mysql的乐观锁</h4><pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>InventoryServer<span class="token punctuation">)</span> <span class="token function">Sell</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> in <span class="token operator">*</span>proto<span class="token punctuation">.</span>SellInfo<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 整个订单的库存扣除应该是一整个事务, 要么都成功, 要么都失败</span>
+    <span class="token comment" spellcheck="true">// 并发之下可能出现超卖</span>
+    tx <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动事务(本地)</span>
+    <span class="token comment" spellcheck="true">//m.Lock()                // 加锁</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> goodInfo <span class="token operator">:=</span> <span class="token keyword">range</span> in<span class="token punctuation">.</span>GoodsInfo <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> inv model<span class="token punctuation">.</span>Inventory
+        <span class="token comment" spellcheck="true">//if result := global.DB.Where(&amp;model.Inventory{Goods: goodInfo.GoodsId}).First(&amp;inv); result.RowsAffected == 0 {</span>
+
+        <span class="token comment" spellcheck="true">// 扣减失败循环重试</span>
+        <span class="token keyword">for</span> <span class="token punctuation">{</span>
+            <span class="token keyword">if</span> result <span class="token operator">:=</span>
+                <span class="token comment" spellcheck="true">// gorm实现mysql的forupdate悲观锁</span>
+                tx<span class="token punctuation">.</span><span class="token function">Clauses</span><span class="token punctuation">(</span>clause<span class="token punctuation">.</span>Locking<span class="token punctuation">{</span>Strength<span class="token punctuation">:</span> <span class="token string">"UPDATE"</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                    <span class="token function">Where</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span>Goods<span class="token punctuation">:</span> goodInfo<span class="token punctuation">.</span>GoodsId<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                    <span class="token function">First</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span><span class="token punctuation">;</span> result<span class="token punctuation">.</span>RowsAffected <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+                tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 回滚之前的操作</span>
+                <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>InvalidArgument<span class="token punctuation">,</span> <span class="token string">"库存信息不存在"</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            <span class="token comment" spellcheck="true">// 库存不够</span>
+            <span class="token keyword">if</span> inv<span class="token punctuation">.</span>Stocks <span class="token operator">&lt;</span> goodInfo<span class="token punctuation">.</span>Num <span class="token punctuation">{</span>
+                tx<span class="token punctuation">.</span><span class="token function">Rollback</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 回滚之前的操作</span>
+                <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>ResourceExhausted<span class="token punctuation">,</span> <span class="token string">"库存不足"</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            <span class="token comment" spellcheck="true">// 扣减 可能出现数据不一致 -> 锁 分布式锁</span>
+            inv<span class="token punctuation">.</span>Stocks <span class="token operator">-=</span> goodInfo<span class="token punctuation">.</span>Num
+
+            <span class="token comment" spellcheck="true">// update inventory set stocks stocks-1,version=version+1 where goods=goods and version=version</span>
+            <span class="token keyword">if</span> result <span class="token operator">:=</span> tx<span class="token punctuation">.</span><span class="token function">Model</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                <span class="token function">Where</span><span class="token punctuation">(</span><span class="token string">"goods=? and version=?"</span><span class="token punctuation">,</span> goodInfo<span class="token punctuation">.</span>GoodsId<span class="token punctuation">,</span> inv<span class="token punctuation">.</span>Version<span class="token punctuation">)</span><span class="token punctuation">.</span>
+                <span class="token comment" spellcheck="true">// 强制字段零值也能更新</span>
+                <span class="token function">Select</span><span class="token punctuation">(</span><span class="token string">"Stocks"</span><span class="token punctuation">,</span> <span class="token string">"Version"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>
+                <span class="token comment" spellcheck="true">//这种写法有瑕疵，为什么？ -> 案例: 剩1个, 10个人抢, 全都成功, 库存却还是为1, -> set 0 被gorm忽略</span>
+                <span class="token comment" spellcheck="true">//零值对于int类型来说默认值是0 (update stocks: 0) 这种会被gorm给忽略掉</span>
+                <span class="token function">Updates</span><span class="token punctuation">(</span>model<span class="token punctuation">.</span>Inventory<span class="token punctuation">{</span>Stocks<span class="token punctuation">:</span> inv<span class="token punctuation">.</span>Stocks<span class="token punctuation">,</span> Version<span class="token punctuation">:</span> inv<span class="token punctuation">.</span>Version <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span> result<span class="token punctuation">.</span>RowsAffected <span class="token operator">==</span> <span class="token number">0</span> <span class="token punctuation">{</span>
+                zap<span class="token punctuation">.</span><span class="token function">S</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">Info</span><span class="token punctuation">(</span><span class="token string">"库存扣减失败"</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span> <span class="token keyword">else</span> <span class="token punctuation">{</span>
+                <span class="token keyword">break</span>
+            <span class="token punctuation">}</span>
+            <span class="token comment" spellcheck="true">//tx.Save(&amp;inv)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    tx<span class="token punctuation">.</span><span class="token function">Commit</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动提交</span>
+    <span class="token comment" spellcheck="true">//m.Unlock()  // (真正操作完数据库时)解锁</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="2-9基于redsync的分布式锁实现同步"><a href="#2-9基于redsync的分布式锁实现同步" class="headerlink" title="2-9基于redsync的分布式锁实现同步"></a>2-9基于redsync的分布式锁实现同步</h4><pre class=" language-go"><code class="language-go"><span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token string">"fmt"</span>
+    goredislib <span class="token string">"github.com/go-redis/redis/v8"</span>
+    <span class="token string">"github.com/go-redsync/redsync/v4"</span>
+    <span class="token string">"github.com/go-redsync/redsync/v4/redis/goredis/v8"</span>
+    <span class="token string">"sync"</span>
+    <span class="token string">"time"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    client <span class="token operator">:=</span> goredislib<span class="token punctuation">.</span><span class="token function">NewClient</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>goredislib<span class="token punctuation">.</span>Options<span class="token punctuation">{</span>
+        Addr<span class="token punctuation">:</span> <span class="token string">"localhost:6379"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    pool <span class="token operator">:=</span> goredis<span class="token punctuation">.</span><span class="token function">NewPool</span><span class="token punctuation">(</span>client<span class="token punctuation">)</span>
+    rs <span class="token operator">:=</span> redsync<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>pool<span class="token punctuation">)</span>
+
+    gNum <span class="token operator">:=</span> <span class="token number">2</span>
+    <span class="token comment" spellcheck="true">// 锁</span>
+    mutexname <span class="token operator">:=</span> <span class="token string">"421"</span>
+
+    <span class="token keyword">var</span> wg sync<span class="token punctuation">.</span>WaitGroup
+    wg<span class="token punctuation">.</span><span class="token function">Add</span><span class="token punctuation">(</span>gNum<span class="token punctuation">)</span>
+    <span class="token keyword">for</span> i <span class="token operator">:=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> gNum<span class="token punctuation">;</span> i<span class="token operator">++</span> <span class="token punctuation">{</span>
+        <span class="token keyword">go</span> <span class="token keyword">func</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token keyword">defer</span> wg<span class="token punctuation">.</span><span class="token function">Done</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            mutex <span class="token operator">:=</span> rs<span class="token punctuation">.</span><span class="token function">NewMutex</span><span class="token punctuation">(</span>mutexname<span class="token punctuation">)</span>
+
+            fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"开始获取锁"</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> err <span class="token operator">:=</span> mutex<span class="token punctuation">.</span><span class="token function">Lock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"获取锁成功"</span><span class="token punctuation">)</span>
+
+            <span class="token comment" spellcheck="true">// do work</span>
+            time<span class="token punctuation">.</span><span class="token function">Sleep</span><span class="token punctuation">(</span>time<span class="token punctuation">.</span>Second <span class="token operator">*</span> <span class="token number">5</span><span class="token punctuation">)</span>
+
+            fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"开始释放锁"</span><span class="token punctuation">)</span>
+            <span class="token keyword">if</span> ok<span class="token punctuation">,</span> err <span class="token operator">:=</span> mutex<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token operator">!</span>ok <span class="token operator">||</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+                <span class="token function">panic</span><span class="token punctuation">(</span><span class="token string">"Unlock failed"</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span>
+            fmt<span class="token punctuation">.</span><span class="token function">Println</span><span class="token punctuation">(</span><span class="token string">"释放锁成功"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+    wg<span class="token punctuation">.</span><span class="token function">Wait</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="2-10redsync集成到库存服务中"><a href="#2-10redsync集成到库存服务中" class="headerlink" title="2-10redsync集成到库存服务中"></a>2-10redsync集成到库存服务中</h4><p><img src="fe0623e9.png"></p>
+<pre class=" language-go"><code class="language-go"><span class="token keyword">func</span> <span class="token punctuation">(</span>i <span class="token operator">*</span>InventoryServer<span class="token punctuation">)</span> <span class="token function">Sell</span><span class="token punctuation">(</span>ctx context<span class="token punctuation">.</span>Context<span class="token punctuation">,</span> in <span class="token operator">*</span>proto<span class="token punctuation">.</span>SellInfo<span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token operator">*</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">,</span> <span class="token builtin">error</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">//client := goredislib.NewClient(&amp;goredislib.Options{</span>
+    <span class="token comment" spellcheck="true">//    Addr: "localhost:6379",</span>
+    <span class="token comment" spellcheck="true">//})</span>
+    <span class="token comment" spellcheck="true">//pool := goredis.NewPool(client)</span>
+    <span class="token comment" spellcheck="true">//rs := redsync.New(pool)</span>
+
+    <span class="token comment" spellcheck="true">// 整个订单的库存扣除应该是一整个事务, 要么都成功, 要么都失败</span>
+    <span class="token comment" spellcheck="true">// 并发之下可能出现超卖</span>
+    tx <span class="token operator">:=</span> global<span class="token punctuation">.</span>DB<span class="token punctuation">.</span><span class="token function">Begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动事务(本地)</span>
+    <span class="token comment" spellcheck="true">//m.Lock()                // 加锁</span>
+    <span class="token keyword">for</span> <span class="token boolean">_</span><span class="token punctuation">,</span> goodInfo <span class="token operator">:=</span> <span class="token keyword">range</span> in<span class="token punctuation">.</span>GoodsInfo <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> inv model<span class="token punctuation">.</span>Inventory
+        <span class="token comment" spellcheck="true">//if result := global.DB.Where(&amp;model.Inventory{Goods: goodInfo.GoodsId}).First(&amp;inv); result.RowsAffected == 0 {</span>
+ 
+        <span class="token comment" spellcheck="true">//for {</span>
+        <span class="token comment" spellcheck="true">// ...</span>
+        <span class="token comment" spellcheck="true">// 扣减 可能出现数据不一致 -> 锁 分布式锁</span>
+        inv<span class="token punctuation">.</span>Stocks <span class="token operator">-=</span> goodInfo<span class="token punctuation">.</span>Num
+        tx<span class="token punctuation">.</span><span class="token function">Save</span><span class="token punctuation">(</span><span class="token operator">&amp;</span>inv<span class="token punctuation">)</span>
+
+        <span class="token keyword">if</span> ok<span class="token punctuation">,</span> err <span class="token operator">:=</span> mutex<span class="token punctuation">.</span><span class="token function">Unlock</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token operator">!</span>ok <span class="token operator">||</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+            <span class="token keyword">return</span> <span class="token boolean">nil</span><span class="token punctuation">,</span> status<span class="token punctuation">.</span><span class="token function">Errorf</span><span class="token punctuation">(</span>codes<span class="token punctuation">.</span>Internal<span class="token punctuation">,</span> <span class="token string">"释放redis分布式锁异常"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span> 
+    <span class="token punctuation">}</span>
+    tx<span class="token punctuation">.</span><span class="token function">Commit</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token comment" spellcheck="true">// 手动提交</span>
+    <span class="token comment" spellcheck="true">//m.Unlock()  // (真正操作完数据库时)解锁</span>
+    <span class="token keyword">return</span> <span class="token operator">&amp;</span>emptypb<span class="token punctuation">.</span>Empty<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span> <span class="token boolean">nil</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h4 id="2-11redis分布式锁源码解析-setnx的作用"><a href="#2-11redis分布式锁源码解析-setnx的作用" class="headerlink" title="2-11redis分布式锁源码解析-setnx的作用"></a>2-11redis分布式锁源码解析-setnx的作用</h4><p><img src="681f5419.png" alt="这里的判断和设值是两个操作(非原子), 无法保证一致性"><img src="8406ea4b.png"><img src="5dcced62.png"><br><img src="73230bb9.png"><img src="251eb908.png"><img src="47ff30c5.png"></p>
+<h4 id="2-12redis分布式锁源码解析-过期时间和延长锁过期时间机制"><a href="#2-12redis分布式锁源码解析-过期时间和延长锁过期时间机制" class="headerlink" title="2-12redis分布式锁源码解析-过期时间和延长锁过期时间机制"></a>2-12redis分布式锁源码解析-过期时间和延长锁过期时间机制</h4><p><img src="311571a3.png" alt="设置了过期时间, 防止死锁"><img src="6337046b.png"><img src="2cd7249a.png"><img src="76ac4fa6.png"><br><img src="ce4d139a.png"><img src="2758bd85.png" alt="使用lua脚本判断是否延长过期时间(lua脚本代表一个原子操作)"><img src="2d8c5877.png"></p>
+<h4 id="2-13redis分布式锁源码解析-如何防止锁被其他的gorou"><a href="#2-13redis分布式锁源码解析-如何防止锁被其他的gorou" class="headerlink" title="2-13redis分布式锁源码解析-如何防止锁被其他的gorou"></a>2-13redis分布式锁源码解析-如何防止锁被其他的gorou</h4><p><img src="9204df85.png"><img src="7394dd9c.png"><img src="a751a949.png"><img src="cff28505.png"><img src="f3560691.png"><br><img src="a4bdf39a.png"><img src="af5b4a0a.png"><img src="7e0a4d04.png" alt="lock时生成随机值"><img src="32729add.png"></p>
+<h4 id="2-14redis的分布式锁在集群环境之下容易出现的问题"><a href="#2-14redis的分布式锁在集群环境之下容易出现的问题" class="headerlink" title="2-14redis的分布式锁在集群环境之下容易出现的问题"></a>2-14redis的分布式锁在集群环境之下容易出现的问题</h4><p><img src="1867b442.png" alt="master宕机, 新选的master来不及同步and加锁(或者前一个master接收加锁请求时宕机), 后一个服务就会拿到锁"><br><img src="271efd7a.png"></p>
+<h4 id="2-15redlock源码分析"><a href="#2-15redlock源码分析" class="headerlink" title="2-15redlock源码分析"></a>2-15redlock源码分析</h4><p><img src="2f708fbf.png"><img src="346e29ad.png"><img src="3618cf6e.png"><img src="b0aea66c.png"><img src="0ea33357.png"><img src="2a63e68d.png"><br><img src="b8f3d537.png"><img src="5a85cf95.png"><img src="5a341e91.png"><img src="a0aea209.png"><img src="a085e867.png"><br><img src="94cc3626.png"><img src="ddba2797.png"><img src="aeedb639.png" alt="时间影响因子"><img src="97c4a00c.png"><img src="db899f79.png"><img src="ab3cb7cf.png"><br><img src="b85791c9.png"></p>
+<h2 id="第14周-和购物车微服务"><a href="#第14周-和购物车微服务" class="headerlink" title="第14周 和购物车微服务"></a>第14周 和购物车微服务</h2><h3 id="第1章订单和购物车服务-service"><a href="#第1章订单和购物车服务-service" class="headerlink" title="第1章订单和购物车服务-service"></a>第1章订单和购物车服务-service</h3><h4 id="1-1需求分析"><a href="#1-1需求分析" class="headerlink" title="1-1需求分析"></a>1-1需求分析</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
             </div>
             <hr/>
 
@@ -8526,7 +8657,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">698.5k</span>
+                <span class="white-color">702.4k</span>
             
 
             

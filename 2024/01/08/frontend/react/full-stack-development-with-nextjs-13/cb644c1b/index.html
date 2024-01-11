@@ -370,14 +370,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        2.6k
+                        2.9k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        15 分
+                        17 分
                     </div>
                     
                 
@@ -1497,7 +1497,212 @@ function User({user, href}: { user: UserI, href?: string }) {
 
 export default User
 </code></pre>
-<h2 id="11-Display-User-Avatar"><a href="#11-Display-User-Avatar" class="headerlink" title="11. Display User Avatar"></a>11. Display User Avatar</h2>
+<h2 id="11-Display-User-Avatar"><a href="#11-Display-User-Avatar" class="headerlink" title="11. Display User Avatar"></a>11. Display User Avatar</h2><p><img src="d37c8109.png" alt="将图片的域名添加到配置, 允许请求"></p>
+<pre class=" language-tsx"><code class="language-tsx">// app/components/user.tsx
+import {UserI} from "@/app/types";
+import Link from "next/link";
+import React from "react";
+import Image from 'next/image'
+
+function User({user, href}: { user: UserI, href?: string }) {
+    return (
+        <div>
+            <Link href={`${href || user.username}`} className={'flex flex-row items-center'}>
+                <div>
+                    {user.avatar && (
+                        <Image
+                            src={user.avatar} width={50} height={50} alt={user.username}
+                            className={'rounded-full mr-3'}/>
+                    )}
+                    {!user.avatar && (
+                        <div style={{width: 50, height: 50}}
+                             className={'bg-amber-600 rounded-full mr-3'}></div>
+                    )}
+                </div>
+                <div>{user.username}</div>
+            </Link>
+        </div>
+    )
+}
+
+export default User
+</code></pre>
+<pre class=" language-js"><code class="language-js"><span class="token comment" spellcheck="true">/** @type {import('next').NextConfig} */</span>
+<span class="token keyword">const</span> nextConfig <span class="token operator">=</span> <span class="token punctuation">{</span>
+        images<span class="token punctuation">:</span> <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 允许载入的图片域名</span>
+            remotePatterns<span class="token punctuation">:</span> <span class="token punctuation">[</span>
+                <span class="token punctuation">{</span>
+                    protocol<span class="token punctuation">:</span> <span class="token string">'https'</span><span class="token punctuation">,</span>
+                    hostname<span class="token punctuation">:</span> <span class="token string">'t.mwm.moe'</span><span class="token punctuation">,</span>
+                    port<span class="token punctuation">:</span> <span class="token string">''</span><span class="token punctuation">,</span>
+                    pathname<span class="token punctuation">:</span> <span class="token string">'/**'</span><span class="token punctuation">,</span>
+                <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+module<span class="token punctuation">.</span>exports <span class="token operator">=</span> nextConfig
+</code></pre>
+<pre class=" language-ts"><code class="language-ts"><span class="token comment" spellcheck="true">// app/types.ts</span>
+<span class="token keyword">export</span> <span class="token keyword">interface</span> <span class="token class-name">UserI</span> <span class="token punctuation">{</span>
+    id<span class="token punctuation">:</span> <span class="token keyword">number</span>
+    username<span class="token punctuation">:</span> <span class="token keyword">string</span>
+    avatar<span class="token punctuation">:</span> <span class="token keyword">string</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-tsx"><code class="language-tsx">// app/(private)/header.tsx
+'use client' // useSWR要客户端组件才能用, 否则报错useSWR is not a function
+import useSWR from "swr";
+import User from "@/app/components/user";
+
+export default function Header() {
+    // ...
+
+    return (
+        <header
+            className={'flex flex-row w-full p-5 bg-blue-200 ' +
+                'rounded-lg my-2 justify-between items-center'}
+        >
+            <div>
+                <h1 className={'font-mono text-lg'}>Strings</h1>
+            </div>
+            <div>
+                <User user={data.data} href={"account"}/>
+            </div>
+        </header>
+    )
+}
+</code></pre>
+<h2 id="13-Center-the-Private-Layout"><a href="#13-Center-the-Private-Layout" class="headerlink" title="13. Center the Private Layout"></a>13. Center the Private Layout</h2><pre class=" language-tsx"><code class="language-tsx">// app/(private)/layout.tsx
+'use client'
+import React from "react";
+import Footer from "@/app/(private)/footer";
+import Header from "@/app/(private)/header";
+import NavBar from "@/app/(private)/navbar";
+import {SWRConfig} from "swr";
+import fetcher from "@/app/util/fetcher";
+
+export default function PrivateLayout(
+    {
+        children,
+    }: {
+        children: React.ReactNode
+    }
+) {
+    return (
+        // 配置后子元素swr使用不需要再导入fetcher
+        <SWRConfig
+            value={{fetcher: fetcher}}
+        >
+            <div className={'flex flex-col min-h-screen max-w-md m-auto items-center justify-center'}>
+                <Header/>
+                <NavBar/>
+                <main className={'w-full p-5 bg-blue-400 rounded-lg my-2'}>
+                    {children}
+                </main>
+                <Footer/>
+            </div>
+        </SWRConfig>
+    )
+}
+</code></pre>
+<h2 id="14-NavBar-and-Footer"><a href="#14-NavBar-and-Footer" class="headerlink" title="14. NavBar and Footer"></a>14. NavBar and Footer</h2><pre class=" language-tsx"><code class="language-tsx">// app/(private)/navbar.tsx
+import Link from "next/link";
+
+export default function NavBar() {
+    return (
+        <nav className={'flex max-w-md w-full p-5 bg-blue-300 rounded-lg my-2'}>
+            <ul className={'flex flex-row justify-around w-full'}>
+                <li>
+                    <Link href={'/feed'} className={''}>Feed</Link>
+                </li>
+                <li>
+                    <Link href={'/profile'} className={''}>Profile</Link>
+                </li>
+                <li>
+                    <Link href={'/following'} className={''}>Following</Link>
+                </li>
+                <li>
+                    <Link href={'/followers'} className={''}>Followers</Link>
+                </li>
+            </ul>
+        </nav>
+    )
+}
+</code></pre>
+<pre class=" language-tsx"><code class="language-tsx">// app/(private)/footer.tsx
+export default function Footer() {
+    return (
+        <footer>
+            &copy; Strings {new Date().getFullYear()}
+        </footer>
+    )
+}
+</code></pre>
+<h2 id="15-Page-Stubs-for-Private-Layout"><a href="#15-Page-Stubs-for-Private-Layout" class="headerlink" title="15. Page Stubs for Private Layout"></a>15. Page Stubs for Private Layout</h2><pre class=" language-tsx"><code class="language-tsx">// app/(private)/profile/page.tsx
+export default async function Profile() {
+    return (
+        <main>
+            <h2>Profile</h2>
+        </main>
+    )
+}
+
+// app/(private)/following/page.tsx
+export default async function Following() {
+    return (
+        <main>
+            <h2>Following</h2>
+        </main>
+    )
+}
+
+// app/(private)/followers/page.tsx
+export default async function Followers() {
+    return (
+        <main>
+            <h2>Followers</h2>
+        </main>
+    )
+}
+</code></pre>
+<h2 id="16-Highlight-Active-Link"><a href="#16-Highlight-Active-Link" class="headerlink" title="16. Highlight Active Link"></a>16. Highlight Active Link</h2><pre class=" language-tsx"><code class="language-tsx">// app/(private)/navbar.tsx
+import Link from "next/link";
+import {usePathname} from "next/navigation";
+
+export default function NavBar() {
+    const pathname = usePathname()
+
+    return (
+        <nav className={'flex max-w-md w-full p-5 bg-blue-300 rounded-lg my-2'}>
+            <ul className={'flex flex-row justify-around w-full'}>
+                <li>
+                    <Link href={'/feed'}
+                          className={pathname.startsWith('/feed') ? 'text-yellow-300' : ''}
+                    >Feed</Link>
+                </li>
+                <li>
+                    <Link href={'/profile'}
+                          className={pathname.startsWith('/profile') ? 'text-yellow-300' : ''}
+                    >Profile</Link>
+                </li>
+                <li>
+                    <Link href={'/following'}
+                          className={pathname.startsWith('/following') ? 'text-yellow-300' : ''}
+                    >Following</Link>
+                </li>
+                <li>
+                    <Link href={'/followers'}
+                          className={pathname.startsWith('/followers') ? 'text-yellow-300' : ''}
+                    >Followers</Link>
+                </li>
+            </ul>
+        </nav>
+    )
+}
+</code></pre>
+<h2 id="17-Check-In-Active-Link"><a href="#17-Check-In-Active-Link" class="headerlink" title="17. Check In Active Link"></a>17. Check In Active Link</h2><h1 id="9-Feed-Page"><a href="#9-Feed-Page" class="headerlink" title="9. Feed Page"></a>9. Feed Page</h1><h2 id=""><a href="#" class="headerlink" title=""></a></h2>
             </div>
             <hr/>
 
@@ -1990,28 +2195,50 @@ gitment.render('gitment-content');
             <div class="article-badge left-badge text-color">
                 <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2024/01/08/cb644c1b-1/">
+                <a href="/2024/01/08/ai/js-ml5-ai/cb644c1b-1/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/3.jpg" class="responsive-img" alt="cb644c1b">
+                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="国外最火的机器学习教程，还是用JavaScript写的">
                         
-                        <span class="card-title">cb644c1b</span>
+                        <span class="card-title">国外最火的机器学习教程，还是用JavaScript写的</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary"></div>
+                    <div class="summary">
+
+ml5 image classification with model net</div>
                     <div class="publish-info">
                         <span class="publish-date">
                             <i class="fa fa-clock-o fa-fw icon-date"></i>2024-01-08
                         </span>
                         <span class="publish-author">
                             
-                            <i class="fa fa-user fa-fw"></i>
-                            malred
+                            <i class="fa fa-bookmark fa-fw icon-category"></i>
+                            
+                            <a href="/categories/ai/" class="post-category" target="_blank">
+                                    ai
+                                </a>
+                            
+                            <a href="/categories/ai/js/" class="post-category" target="_blank">
+                                    js
+                                </a>
+                            
                             
                         </span>
                     </div>
+                </div>
+                
+                <div class="card-action article-tags">
+                    
+                    <a href="/tags/js/" target="_blank">
+                        <span class="chip bg-color">js</span>
+                    </a>
+                    
+                    <a href="/tags/ai/" target="_blank">
+                        <span class="chip bg-color">ai</span>
+                    </a>
+                    
                 </div>
                 
             </div>
@@ -2137,7 +2364,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">698.5k</span>
+                <span class="white-color">702.4k</span>
             
 
             
