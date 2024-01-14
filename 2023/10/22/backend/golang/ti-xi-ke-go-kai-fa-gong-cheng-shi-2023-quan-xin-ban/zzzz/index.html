@@ -372,14 +372,14 @@ import (
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        27k
+                        27.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        149 分
+                        150 分
                     </div>
                     
                 
@@ -7997,7 +7997,55 @@ message SellInfo <span class="token punctuation">{</span>
 <h4 id="2-13redis分布式锁源码解析-如何防止锁被其他的gorou"><a href="#2-13redis分布式锁源码解析-如何防止锁被其他的gorou" class="headerlink" title="2-13redis分布式锁源码解析-如何防止锁被其他的gorou"></a>2-13redis分布式锁源码解析-如何防止锁被其他的gorou</h4><p><img src="9204df85.png"><img src="7394dd9c.png"><img src="a751a949.png"><img src="cff28505.png"><img src="f3560691.png"><br><img src="a4bdf39a.png"><img src="af5b4a0a.png"><img src="7e0a4d04.png" alt="lock时生成随机值"><img src="32729add.png"></p>
 <h4 id="2-14redis的分布式锁在集群环境之下容易出现的问题"><a href="#2-14redis的分布式锁在集群环境之下容易出现的问题" class="headerlink" title="2-14redis的分布式锁在集群环境之下容易出现的问题"></a>2-14redis的分布式锁在集群环境之下容易出现的问题</h4><p><img src="1867b442.png" alt="master宕机, 新选的master来不及同步and加锁(或者前一个master接收加锁请求时宕机), 后一个服务就会拿到锁"><br><img src="271efd7a.png"></p>
 <h4 id="2-15redlock源码分析"><a href="#2-15redlock源码分析" class="headerlink" title="2-15redlock源码分析"></a>2-15redlock源码分析</h4><p><img src="2f708fbf.png"><img src="346e29ad.png"><img src="3618cf6e.png"><img src="b0aea66c.png"><img src="0ea33357.png"><img src="2a63e68d.png"><br><img src="b8f3d537.png"><img src="5a85cf95.png"><img src="5a341e91.png"><img src="a0aea209.png"><img src="a085e867.png"><br><img src="94cc3626.png"><img src="ddba2797.png"><img src="aeedb639.png" alt="时间影响因子"><img src="97c4a00c.png"><img src="db899f79.png"><img src="ab3cb7cf.png"><br><img src="b85791c9.png"></p>
-<h2 id="第14周-和购物车微服务"><a href="#第14周-和购物车微服务" class="headerlink" title="第14周 和购物车微服务"></a>第14周 和购物车微服务</h2><h3 id="第1章订单和购物车服务-service"><a href="#第1章订单和购物车服务-service" class="headerlink" title="第1章订单和购物车服务-service"></a>第1章订单和购物车服务-service</h3><h4 id="1-1需求分析"><a href="#1-1需求分析" class="headerlink" title="1-1需求分析"></a>1-1需求分析</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
+<h2 id="第14周-和购物车微服务"><a href="#第14周-和购物车微服务" class="headerlink" title="第14周 和购物车微服务"></a>第14周 和购物车微服务</h2><h3 id="第1章订单和购物车服务-service"><a href="#第1章订单和购物车服务-service" class="headerlink" title="第1章订单和购物车服务-service"></a>第1章订单和购物车服务-service</h3><h4 id="1-1需求分析"><a href="#1-1需求分析" class="headerlink" title="1-1需求分析"></a>1-1需求分析</h4><p><img src="94bb2e2d.png"></p>
+<h4 id="1-2订单相关表结构设计"><a href="#1-2订单相关表结构设计" class="headerlink" title="1-2订单相关表结构设计"></a>1-2订单相关表结构设计</h4><pre class=" language-go"><code class="language-go"><span class="token comment" spellcheck="true">// order_srv/model/main/main.go</span>
+<span class="token keyword">package</span> main
+
+<span class="token keyword">import</span> <span class="token punctuation">(</span>
+    <span class="token boolean">_</span> <span class="token string">"github.com/anaskhan96/go-password-encoder"</span>
+    <span class="token string">"gorm.io/driver/mysql"</span>
+    <span class="token string">"gorm.io/gorm"</span>
+    <span class="token string">"gorm.io/gorm/logger"</span>
+    <span class="token string">"gorm.io/gorm/schema"</span>
+    <span class="token string">"log"</span>
+    <span class="token string">"mxshop_srvs/order_srv/model"</span>
+    <span class="token string">"os"</span>
+    <span class="token string">"time"</span>
+<span class="token punctuation">)</span>
+
+<span class="token keyword">func</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    dsn <span class="token operator">:=</span> <span class="token string">"root:123456@tcp(127.0.0.1:3307)/mxshop_order_srv?charset=utf8mb4&amp;parseTime=True&amp;loc=Local"</span>
+
+    newLogger <span class="token operator">:=</span> logger<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>
+        log<span class="token punctuation">.</span><span class="token function">New</span><span class="token punctuation">(</span>os<span class="token punctuation">.</span>Stdout<span class="token punctuation">,</span> <span class="token string">"\r\n"</span><span class="token punctuation">,</span> log<span class="token punctuation">.</span>LstdFlags<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// io writer</span>
+        logger<span class="token punctuation">.</span>Config<span class="token punctuation">{</span>
+            SlowThreshold<span class="token punctuation">:</span> time<span class="token punctuation">.</span>Second<span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 慢 SQL 阈值</span>
+            LogLevel<span class="token punctuation">:</span>      logger<span class="token punctuation">.</span>Info<span class="token punctuation">,</span>
+            Colorful<span class="token punctuation">:</span>      <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token comment" spellcheck="true">// 禁用彩色打印</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true">// 全局模式</span>
+    db<span class="token punctuation">,</span> err <span class="token operator">:=</span> gorm<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span>mysql<span class="token punctuation">.</span><span class="token function">Open</span><span class="token punctuation">(</span>dsn<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token operator">&amp;</span>gorm<span class="token punctuation">.</span>Config<span class="token punctuation">{</span>
+        NamingStrategy<span class="token punctuation">:</span> schema<span class="token punctuation">.</span>NamingStrategy<span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 为false会根据 结构体名+s 作为表名</span>
+            SingularTable<span class="token punctuation">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        Logger<span class="token punctuation">:</span> newLogger<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> err <span class="token operator">!=</span> <span class="token boolean">nil</span> <span class="token punctuation">{</span>
+        <span class="token function">panic</span><span class="token punctuation">(</span>err<span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 定义一个表结构, 生成对应表</span>
+    <span class="token boolean">_</span> <span class="token operator">=</span> db<span class="token punctuation">.</span><span class="token function">AutoMigrate</span><span class="token punctuation">(</span>
+        <span class="token operator">&amp;</span>model<span class="token punctuation">.</span>ShoppingCart<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token operator">&amp;</span>model<span class="token punctuation">.</span>OrderInfo<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token operator">&amp;</span>model<span class="token punctuation">.</span>OrderGoods<span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+<span class="token punctuation">}</span> 
+</code></pre>
+<h4 id="1-3proto接口定义"><a href="#1-3proto接口定义" class="headerlink" title="1-3proto接口定义"></a>1-3proto接口定义</h4><h1 id="07-阶段七：效率工具开发"><a href="#07-阶段七：效率工具开发" class="headerlink" title="07-阶段七：效率工具开发"></a>07-阶段七：效率工具开发</h1>
             </div>
             <hr/>
 
@@ -8657,7 +8705,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">702.4k</span>
+                <span class="white-color">704.6k</span>
             
 
             

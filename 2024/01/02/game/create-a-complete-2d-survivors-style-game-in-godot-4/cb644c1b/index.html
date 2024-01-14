@@ -371,14 +371,14 @@ extends C">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        483
+                        748
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        2 分
+                        4 分
                     </div>
                     
                 
@@ -495,7 +495,80 @@ func get_direction_to_player():
     return Vector2.ZERO
 </code></pre>
 <p><img src="d1099c10.png" alt="main场景，按ctrl+shift+a，将敌人添加到场景"><img src="e8b53eab.png"><br><img src="99ec7cf1.png"><img src="972252b0.png"><img src="0feaab33.png"><img src="0703ea1c.png"><br><img src="d7ce3382.png"><img src="2044debd.png" alt="现在碰撞后不会粘在一起，可以移动过去"></p>
-<h2 id="2-Creating-the-First-Sword-Ability"><a href="#2-Creating-the-First-Sword-Ability" class="headerlink" title="2. Creating the First Sword Ability"></a>2. Creating the First Sword Ability</h2>
+<h2 id="2-Creating-the-First-Sword-Ability"><a href="#2-Creating-the-First-Sword-Ability" class="headerlink" title="2. Creating the First Sword Ability"></a>2. Creating the First Sword Ability</h2><p><img src="ffc702ef.png"><img src="c185425c.png"><img src="5ec00edc.png" alt="新建2d场景"><img src="a447b09d.png"><br><img src="595bb10f.png"><img src="d54949d2.png"><img src="123a57a5.png"><img src="81ab5ff7.png" alt="ctrl+按住中间的点, 可以旋转"><br><img src="40d64808.png"><img src="b385fade.png"><img src="6ed4181e.png"><img src="d07dea95.png" alt="新建场景"><br><img src="8a9a36ec.png" alt="创建脚本"><img src="af00b12a.png" alt="export属性, 保存后出现一个新的inspector属性"><img src="ba326a02.png"><br><img src="94f18c75.png" alt="+子节点timer"><img src="b3ef051d.png"><img src="2a9f0564.png" alt="ctrl+shift+a, 添加实例化子节点"><br><img src="a630144d.png" alt="关掉, 否则定时器只触发一次"></p>
+<pre class=" language-gd"><code class="language-gd">extends Node
+
+# 导出全局变量
+@export var sword_ability: PackedScene
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+    #get_node('Timer')
+    $Timer.timeout.connect(on_timer_timeout)
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta):
+    pass 
+
+# 每次触发计时器执行的操作
+func on_timer_timeout():
+    var player = get_tree().get_first_node_in_group("player") as Node2D
+    if player == null:
+        return
+        
+    # 插入到scene: main
+    var sword_instance = sword_ability.instantiate() as Node2D
+    player.get_parent().add_child(sword_instance)
+    sword_instance.global_position = player.global_position
+</code></pre>
+<p><img src="8151f563.png"></p>
+<h2 id="3-Introduction-to-AnimationPlayer"><a href="#3-Introduction-to-AnimationPlayer" class="headerlink" title="3. Introduction to AnimationPlayer"></a>3. Introduction to AnimationPlayer</h2><p><img src="3b31d5e5.png" alt="添加animationPlayer, 实现剑的动画效果"><img src="68535a6a.png"><img src="5efa02ea.png"><br><img src="f383f397.png"><img src="6fe20496.png"><img src="316f5e25.png"><img src="93f94403.png"><br><img src="9ec14e5c.png"><img src="1b6a1eee.png"><img src="255e0ef0.png"><img src="4dddde62.png" alt="点击小点会出来这个界面"><br><img src="8f29cac2.png" alt="单击第一个"><img src="0a543da3.png"><img src="125d293a.png"><img src="8340058d.png"><br><img src="a92bbaca.png"><img src="b6d4c19d.png"><img src="8d9981ad.png"><img src="98df9f53.png"><img src="f241d854.png"><br><img src="3f47675c.png"><img src="b56a8692.png" alt="动画改为0.5s, shift拖动出蓝框, 范围选中关键帧, 然后点按拖动到后面"><br><img src="70551f52.png"><img src="8f7a7c16.png"><img src="0124084d.png"><img src="0b0c1c1f.png"><img src="b3e47549.png"><br><img src="8afafa6f.png"><img src="147a4fdc.png"><img src="f0ba5410.png"><img src="6ce12aec.png"><br><img src="a3501269.png"><img src="b131c28c.png"><img src="8e264702.png"><img src="4882371e.png"><br><img src="547fb414.png"><img src="df686d42.png" alt="我们需要让动画结束后, 从场景树中移除"><img src="b6d4c19d.png"><br><img src="e0747e8a.png" alt="右键->插入关键帧"><img src="9a703618.png" alt="在下一个空闲帧时移除"><img src="a4dcba55.png"><br><img src="dd4a1c9e.png" alt="运行游戏, 然后暂停, 点击remote查看当前场景树, 动画被自动移除"><img src="a47b530c.png"></p>
+<h2 id="4-Targeting-Enemies-With-Sword-Ability"><a href="#4-Targeting-Enemies-With-Sword-Ability" class="headerlink" title="4. Targeting Enemies With Sword Ability"></a>4. Targeting Enemies With Sword Ability</h2><p><img src="7945e123.png" alt="给enemy添加分组, 这样就可以在其他节点访问该节点, 获取位置"><img src="e9cfca8e.png"></p>
+<pre class=" language-gd"><code class="language-gd">extends Node
+
+const MAX_RANGE = 150 
+
+# 导出全局变量
+@export var sword_ability: PackedScene
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+    #get_node('Timer')
+    $Timer.timeout.connect(on_timer_timeout)
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta):
+    pass
+
+# 每次触发计时器执行的操作
+func on_timer_timeout():
+    var player = get_tree().get_first_node_in_group("player") as Node2D
+    if player == null:
+        return
+        
+    var enemies = get_tree().get_nodes_in_group("enemy")
+        
+    # 过滤掉距离玩家超过150方圆的敌人
+    enemies = enemies.filter(func(enemy: Node2D): 
+        return enemy.global_position.distance_squared_to(player.global_position) < pow(MAX_RANGE, 2)
+    )
+    if enemies.size() == 0:
+        return
+    
+    enemies.sort_custom(func(a: Node2D, b: Node2D):
+        var a_distance = a.global_position.distance_squared_to(player.global_position)
+        var b_distance = b.global_position.distance_squared_to(player.global_position)
+        return a_distance < b_distance
+    )
+        
+    # 插入到scene: main
+    var sword_instance = sword_ability.instantiate() as Node2D
+    player.get_parent().add_child(sword_instance)
+    sword_instance.global_position = enemies[0].global_position
+</code></pre>
+<h2 id="5-Destroying-Enemies"><a href="#5-Destroying-Enemies" class="headerlink" title="5. Destroying Enemies"></a>5. Destroying Enemies</h2>
             </div>
             <hr/>
 
@@ -1023,12 +1096,12 @@ gitment.render('gitment-content');
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/nextjs/" target="_blank">
-                        <span class="chip bg-color">nextjs</span>
-                    </a>
-                    
                     <a href="/tags/react/" target="_blank">
                         <span class="chip bg-color">react</span>
+                    </a>
+                    
+                    <a href="/tags/nextjs/" target="_blank">
+                        <span class="chip bg-color">nextjs</span>
                     </a>
                     
                 </div>
@@ -1150,7 +1223,7 @@ c</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">702.4k</span>
+                <span class="white-color">704.6k</span>
             
 
             
