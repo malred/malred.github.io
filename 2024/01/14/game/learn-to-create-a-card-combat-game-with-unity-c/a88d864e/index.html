@@ -370,14 +370,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        678
+                        3.4k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        4 分
+                        19 分
                     </div>
                     
                 
@@ -663,7 +663,1240 @@ public class HandController : MonoBehaviour
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span>
 </code></pre>
-<h2 id="5-Raising-Cards-While-Hovering"><a href="#5-Raising-Cards-While-Hovering" class="headerlink" title="5. Raising Cards While Hovering"></a>5. Raising Cards While Hovering</h2>
+<h2 id="5-Raising-Cards-While-Hovering"><a href="#5-Raising-Cards-While-Hovering" class="headerlink" title="5. Raising Cards While Hovering"></a>5. Raising Cards While Hovering</h2><p><img src="191507f9.png" alt="3d->spherep->向上移动一点->add component->rigidbody"><img src="9af41923.png"><br><img src="0b9ad7c8.png" alt="小球和card碰撞测试"><img src="73350c8c.png"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Unity<span class="token punctuation">.</span>Mathematics<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">.</span>UI<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Card</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+    
+    <span class="token keyword">public</span> <span class="token keyword">bool</span> inHand<span class="token punctuation">;</span> 
+    <span class="token keyword">public</span> <span class="token keyword">int</span> handPosition<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> HandController theHC<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Start is called before the first frame update</span>
+    <span class="token keyword">void</span> <span class="token function">Start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">setupCard</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        theHC <span class="token operator">=</span> <span class="token generic-method function">FindObjectOfType<span class="token punctuation">&lt;</span>HandController<span class="token punctuation">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">OnMouseOver</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>inHand<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 该卡的位置向y(上)移动</span>
+            <span class="token function">MoveToPoint</span><span class="token punctuation">(</span>
+                theHC<span class="token punctuation">.</span>cardPositions<span class="token punctuation">[</span>handPosition<span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token keyword">new</span> <span class="token class-name">Vector3</span><span class="token punctuation">(</span><span class="token number">0f</span><span class="token punctuation">,</span> <span class="token number">1f</span><span class="token punctuation">,</span> <span class="token punctuation">.</span><span class="token number">5f</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                quaternion<span class="token punctuation">.</span>identity
+            <span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">OnMouseExit</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>inHand<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 该卡的位置向y(上)移动</span>
+            <span class="token function">MoveToPoint</span><span class="token punctuation">(</span>
+                theHC<span class="token punctuation">.</span>cardPositions<span class="token punctuation">[</span>handPosition<span class="token punctuation">]</span><span class="token punctuation">,</span>
+                theHC<span class="token punctuation">.</span>minPos<span class="token punctuation">.</span>rotation
+            <span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">HandController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">SetCardPositionsInHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">///</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> heldCards<span class="token punctuation">.</span>Count<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            cardPositions<span class="token punctuation">.</span><span class="token function">Add</span><span class="token punctuation">(</span>minPos<span class="token punctuation">.</span>position <span class="token operator">+</span> <span class="token punctuation">(</span>distanceBetweenPoints <span class="token operator">*</span> i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token comment" spellcheck="true">// heldCards[i].transform.position = cardPositions[i];</span>
+            <span class="token comment" spellcheck="true">// 卡片倾斜, 防止叠在一起穿模</span>
+            <span class="token comment" spellcheck="true">// heldCards[i].transform.rotation = minPos.rotation;</span>
+            <span class="token comment" spellcheck="true">// 移动卡片</span>
+            heldCards<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token function">MoveToPoint</span><span class="token punctuation">(</span>cardPositions<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">,</span> minPos<span class="token punctuation">.</span>rotation<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            heldCards<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>inHand <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+            heldCards<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">.</span>handPosition <span class="token operator">=</span> i<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="5-Pick-amp-Place"><a href="#5-Pick-amp-Place" class="headerlink" title="5. Pick &amp; Place"></a>5. Pick &amp; Place</h1><h2 id="1-Selecting-Cards"><a href="#1-Selecting-Cards" class="headerlink" title="1. Selecting Cards"></a>1. Selecting Cards</h2><p><img src="b691a426.png"><img src="75b195f5.png"><img src="0fd6c5a3.png"><img src="6ad84ec4.png"><br><img src="e85f2c28.png"><img src="97563a42.png"><img src="09bbbc47.png"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Unity<span class="token punctuation">.</span>Mathematics<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">.</span>UI<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Card</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">bool</span> inHand<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 是否在手上</span>
+    <span class="token keyword">public</span> <span class="token keyword">int</span> handPosition<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> HandController theHC<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">bool</span> _isSelected<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// 碰撞</span>
+    <span class="token keyword">private</span> Collider _theCol<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> LayerMask whatIsDesktop<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Start is called before the first frame update</span>
+    <span class="token keyword">void</span> <span class="token function">Start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">setupCard</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        theHC <span class="token operator">=</span> <span class="token generic-method function">FindObjectOfType<span class="token punctuation">&lt;</span>HandController<span class="token punctuation">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        _theCol <span class="token operator">=</span> <span class="token generic-method function">GetComponent<span class="token punctuation">&lt;</span>Collider<span class="token punctuation">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        transform<span class="token punctuation">.</span>position <span class="token operator">=</span> Vector3<span class="token punctuation">.</span><span class="token function">Lerp</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> _targetPoint<span class="token punctuation">,</span> moveSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        transform<span class="token punctuation">.</span>rotation <span class="token operator">=</span>
+            Quaternion<span class="token punctuation">.</span><span class="token function">RotateTowards</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>rotation<span class="token punctuation">,</span> _targetRot<span class="token punctuation">,</span> rotateSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_isSelected<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 射线 -> 鼠标</span>
+            Ray ray <span class="token operator">=</span> Camera<span class="token punctuation">.</span>main<span class="token punctuation">.</span><span class="token function">ScreenPointToRay</span><span class="token punctuation">(</span>Input<span class="token punctuation">.</span>mousePosition<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            RaycastHit hit<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Physics<span class="token punctuation">.</span><span class="token function">Raycast</span><span class="token punctuation">(</span>ray<span class="token punctuation">,</span> <span class="token keyword">out</span> hit<span class="token punctuation">,</span> <span class="token number">100f</span><span class="token punctuation">,</span> whatIsDesktop<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">// hit: 射线命中的对象</span>
+                <span class="token comment" spellcheck="true">// 移动到鼠标所在位置</span>
+                <span class="token function">MoveToPoint</span><span class="token punctuation">(</span>hit<span class="token punctuation">.</span>point <span class="token operator">+</span> <span class="token keyword">new</span> <span class="token class-name">Vector3</span><span class="token punctuation">(</span><span class="token number">0f</span><span class="token punctuation">,</span> <span class="token number">2f</span><span class="token punctuation">,</span> <span class="token number">0f</span><span class="token punctuation">)</span><span class="token punctuation">,</span> quaternion<span class="token punctuation">.</span>identity<span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span> 
+    
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">OnMouseDown</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>inHand<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            _isSelected <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">// 无法再hold浮起</span>
+            _theCol<span class="token punctuation">.</span>enabled <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="2-Returning-A-Card-To-Hand"><a href="#2-Returning-A-Card-To-Hand" class="headerlink" title="2. Returning A Card To Hand"></a>2. Returning A Card To Hand</h2><pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Unity<span class="token punctuation">.</span>Mathematics<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">.</span>UI<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Card</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+    
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        transform<span class="token punctuation">.</span>position <span class="token operator">=</span> Vector3<span class="token punctuation">.</span><span class="token function">Lerp</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> _targetPoint<span class="token punctuation">,</span> moveSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        transform<span class="token punctuation">.</span>rotation <span class="token operator">=</span>
+            Quaternion<span class="token punctuation">.</span><span class="token function">RotateTowards</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>rotation<span class="token punctuation">,</span> _targetRot<span class="token punctuation">,</span> rotateSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_isSelected<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 射线 -> 鼠标</span>
+            Ray ray <span class="token operator">=</span> Camera<span class="token punctuation">.</span>main<span class="token punctuation">.</span><span class="token function">ScreenPointToRay</span><span class="token punctuation">(</span>Input<span class="token punctuation">.</span>mousePosition<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            RaycastHit hit<span class="token punctuation">;</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Physics<span class="token punctuation">.</span><span class="token function">Raycast</span><span class="token punctuation">(</span>ray<span class="token punctuation">,</span> <span class="token keyword">out</span> hit<span class="token punctuation">,</span> <span class="token number">100f</span><span class="token punctuation">,</span> whatIsDesktop<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token comment" spellcheck="true">///</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// 右键单击</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetMouseButtonDown</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        _isSelected <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+        _theCol<span class="token punctuation">.</span>enabled <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+
+        <span class="token function">MoveToPoint</span><span class="token punctuation">(</span>theHC<span class="token punctuation">.</span>cardPositions<span class="token punctuation">[</span>handPosition<span class="token punctuation">]</span><span class="token punctuation">,</span> theHC<span class="token punctuation">.</span>minPos<span class="token punctuation">.</span>rotation<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-Creating-Card-Placement-Areas"><a href="#3-Creating-Card-Placement-Areas" class="headerlink" title="3. Creating Card Placement Areas"></a>3. Creating Card Placement Areas</h2><p><img src="8115cfef.png"><img src="1d532e5e.png"><img src="6d7cc788.png"><img src="15d12ffe.png" alt="新建图层"><br><img src="3a632153.png"><img src="d17674f0.png"><img src="5fc2ae4a.png" alt="调整位置(从左到右的顺序), 然后重命名"><br><img src="fda7cb2c.png" alt="新建脚本"><img src="e8b506ef.png" alt="给这五个绑定脚本"><br><img src="cb212185.png" alt="复制->改名 enemy card points->拖动->改色(黑)"><img src="4d97560f.png"><br><img src="b8f1edb0.png" alt="isPlayerPoint check"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">CardPlacePoint</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token keyword">public</span> Card activeCard<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> <span class="token keyword">bool</span> isPlayerPoint<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="4-Placing-A-Card-On-The-Board"><a href="#4-Placing-A-Card-On-The-Board" class="headerlink" title="4. Placing A Card On The Board"></a>4. Placing A Card On The Board</h2><p><img src="d3f1636c.png"><img src="5b71159c.png"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Unity<span class="token punctuation">.</span>Mathematics<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">.</span>UI<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Card</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> LayerMask whatIsDesktop<span class="token punctuation">;</span>
+    <span class="token keyword">public</span> LayerMask whatIsPlacement<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">bool</span> _justPressed<span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> CardPlacePoint assignedPlace<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        transform<span class="token punctuation">.</span>position <span class="token operator">=</span> Vector3<span class="token punctuation">.</span><span class="token function">Lerp</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> _targetPoint<span class="token punctuation">,</span> moveSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        transform<span class="token punctuation">.</span>rotation <span class="token operator">=</span>
+            Quaternion<span class="token punctuation">.</span><span class="token function">RotateTowards</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>rotation<span class="token punctuation">,</span> _targetRot<span class="token punctuation">,</span> rotateSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_isSelected<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">///</span>
+
+            <span class="token comment" spellcheck="true">// 右键单击</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetMouseButtonDown</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+
+            <span class="token comment" spellcheck="true">// 左键单击</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetMouseButtonDown</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> _justPressed <span class="token operator">==</span> <span class="token keyword">false</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>Physics<span class="token punctuation">.</span><span class="token function">Raycast</span><span class="token punctuation">(</span>ray<span class="token punctuation">,</span> <span class="token keyword">out</span> hit<span class="token punctuation">,</span> <span class="token number">100f</span><span class="token punctuation">,</span> whatIsPlacement<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">// 当前选中的point</span>
+                    CardPlacePoint selectedPoint <span class="token operator">=</span> hit<span class="token punctuation">.</span>collider<span class="token punctuation">.</span><span class="token generic-method function">GetComponent<span class="token punctuation">&lt;</span>CardPlacePoint<span class="token punctuation">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                    <span class="token comment" spellcheck="true">// 当前选中的point没有卡, 并且是玩家这边的</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>selectedPoint<span class="token punctuation">.</span>activeCard <span class="token operator">==</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> selectedPoint<span class="token punctuation">.</span>isPlayerPoint<span class="token punctuation">)</span>
+                    <span class="token punctuation">{</span>
+                        selectedPoint<span class="token punctuation">.</span>activeCard <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">;</span>
+                        <span class="token comment" spellcheck="true">// 记录放在哪个位置</span>
+                        assignedPlace <span class="token operator">=</span> selectedPoint<span class="token punctuation">;</span>
+
+                        <span class="token comment" spellcheck="true">// 放入场地</span>
+                        <span class="token function">MoveToPoint</span><span class="token punctuation">(</span>selectedPoint<span class="token punctuation">.</span>transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> quaternion<span class="token punctuation">.</span>identity<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                        inHand <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+
+                        _isSelected <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                    <span class="token keyword">else</span>
+                    <span class="token punctuation">{</span>
+                        <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">else</span>
+                <span class="token punctuation">{</span>
+                    <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 隔一段时间没左键 就可以 再次左键 然后触发返回</span>
+        _justPressed <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> 
+    
+    <span class="token comment" spellcheck="true">///</span>
+    
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">OnMouseDown</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>inHand<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            _isSelected <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">// 无法再hold浮起</span>
+            _theCol<span class="token punctuation">.</span>enabled <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">// 让card可以浮动</span>
+            _justPressed <span class="token operator">=</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span> 
+    <span class="token comment" spellcheck="true">///</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="5-Removing-Card-From-Hand"><a href="#5-Removing-Card-From-Hand" class="headerlink" title="5. Removing Card From Hand"></a>5. Removing Card From Hand</h2><pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">HandController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">RemoveCardFromHand</span><span class="token punctuation">(</span>Card cardToRemove<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>heldCards<span class="token punctuation">[</span>cardToRemove<span class="token punctuation">.</span>handPosition<span class="token punctuation">]</span> <span class="token operator">==</span> cardToRemove<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            heldCards<span class="token punctuation">.</span><span class="token function">RemoveAt</span><span class="token punctuation">(</span>cardToRemove<span class="token punctuation">.</span>handPosition<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">else</span>
+        <span class="token punctuation">{</span>
+            Debug<span class="token punctuation">.</span><span class="token function">LogError</span><span class="token punctuation">(</span><span class="token string">"Card at position "</span> <span class="token operator">+</span> cardToRemove<span class="token punctuation">.</span>handPosition <span class="token operator">+</span>
+                           <span class="token string">" is not the card being removed from hand"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        
+        <span class="token comment" spellcheck="true">// 重新分配卡片位置</span>
+        <span class="token function">SetCardPositionsInHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Unity<span class="token punctuation">.</span>Mathematics<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">.</span>UI<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Card</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        transform<span class="token punctuation">.</span>position <span class="token operator">=</span> Vector3<span class="token punctuation">.</span><span class="token function">Lerp</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> _targetPoint<span class="token punctuation">,</span> moveSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        transform<span class="token punctuation">.</span>rotation <span class="token operator">=</span>
+            Quaternion<span class="token punctuation">.</span><span class="token function">RotateTowards</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>rotation<span class="token punctuation">,</span> _targetRot<span class="token punctuation">,</span> rotateSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_isSelected<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">///</span>
+
+            <span class="token comment" spellcheck="true">// 左键单击</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetMouseButtonDown</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> _justPressed <span class="token operator">==</span> <span class="token keyword">false</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>Physics<span class="token punctuation">.</span><span class="token function">Raycast</span><span class="token punctuation">(</span>ray<span class="token punctuation">,</span> <span class="token keyword">out</span> hit<span class="token punctuation">,</span> <span class="token number">100f</span><span class="token punctuation">,</span> whatIsPlacement<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">// 当前选中的point</span>
+                    CardPlacePoint selectedPoint <span class="token operator">=</span> hit<span class="token punctuation">.</span>collider<span class="token punctuation">.</span><span class="token generic-method function">GetComponent<span class="token punctuation">&lt;</span>CardPlacePoint<span class="token punctuation">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                    <span class="token comment" spellcheck="true">// 当前选中的point没有卡, 并且是玩家这边的</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>selectedPoint<span class="token punctuation">.</span>activeCard <span class="token operator">==</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> selectedPoint<span class="token punctuation">.</span>isPlayerPoint<span class="token punctuation">)</span>
+                    <span class="token punctuation">{</span>
+                        <span class="token comment" spellcheck="true">///</span>
+
+                        _isSelected <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+                        
+                        <span class="token comment" spellcheck="true">// 将卡牌移出数组(list)</span>
+                        theHC<span class="token punctuation">.</span><span class="token function">RemoveCardFromHand</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                    <span class="token keyword">else</span>
+                    <span class="token punctuation">{</span>
+                        <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">else</span>
+                <span class="token punctuation">{</span>
+                    <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 隔一段时间没左键 就可以 再次左键 然后触发返回</span>
+        _justPressed <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="f3969289.png" alt="打出一张牌, 看到hand controller的held cards的数量-1"></p>
+<h1 id="6-Mana-System"><a href="#6-Mana-System" class="headerlink" title="6. Mana System"></a>6. Mana System</h1><h2 id="1-Spending-Mana"><a href="#1-Spending-Mana" class="headerlink" title="1. Spending Mana"></a>1. Spending Mana</h2><p><img src="d7ec8460.png" alt="新脚本"><img src="7853c953.png" alt="empty object"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BattleController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 单例</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> BattleController instance<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Awake</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        instance <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">int</span> startingMana <span class="token operator">=</span> <span class="token number">4</span><span class="token punctuation">,</span> maxMana <span class="token operator">=</span> <span class="token number">12</span><span class="token punctuation">;</span>
+    <span class="token keyword">public</span> <span class="token keyword">int</span> playerMana<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Start is called before the first frame update</span>
+    <span class="token keyword">void</span> <span class="token function">Start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        playerMana <span class="token operator">=</span> startingMana<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">SpendPlayerMana</span><span class="token punctuation">(</span><span class="token keyword">int</span> amountToSpend<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        playerMana <span class="token operator">=</span> playerMana <span class="token operator">-</span> amountToSpend<span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// 防止意外情况</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>playerMana <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            playerMana <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Unity<span class="token punctuation">.</span>Mathematics<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">.</span>UI<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Card</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        transform<span class="token punctuation">.</span>position <span class="token operator">=</span> Vector3<span class="token punctuation">.</span><span class="token function">Lerp</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> _targetPoint<span class="token punctuation">,</span> moveSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        transform<span class="token punctuation">.</span>rotation <span class="token operator">=</span>
+            Quaternion<span class="token punctuation">.</span><span class="token function">RotateTowards</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>rotation<span class="token punctuation">,</span> _targetRot<span class="token punctuation">,</span> rotateSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_isSelected<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">///</span>
+
+            <span class="token comment" spellcheck="true">// 左键单击</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetMouseButtonDown</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> _justPressed <span class="token operator">==</span> <span class="token keyword">false</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>Physics<span class="token punctuation">.</span><span class="token function">Raycast</span><span class="token punctuation">(</span>ray<span class="token punctuation">,</span> <span class="token keyword">out</span> hit<span class="token punctuation">,</span> <span class="token number">100f</span><span class="token punctuation">,</span> whatIsPlacement<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">// 当前选中的point</span>
+                    CardPlacePoint selectedPoint <span class="token operator">=</span> hit<span class="token punctuation">.</span>collider<span class="token punctuation">.</span><span class="token generic-method function">GetComponent<span class="token punctuation">&lt;</span>CardPlacePoint<span class="token punctuation">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                    <span class="token comment" spellcheck="true">// 当前选中的point没有卡, 并且是玩家这边的</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>selectedPoint<span class="token punctuation">.</span>activeCard <span class="token operator">==</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> selectedPoint<span class="token punctuation">.</span>isPlayerPoint<span class="token punctuation">)</span>
+                    <span class="token punctuation">{</span>
+                        <span class="token keyword">if</span> <span class="token punctuation">(</span>BattleController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>playerMana <span class="token operator">&lt;</span> manaCost<span class="token punctuation">)</span>
+                        <span class="token punctuation">{</span>
+                            <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                            <span class="token keyword">return</span><span class="token punctuation">;</span>
+                        <span class="token punctuation">}</span>
+
+                        <span class="token comment" spellcheck="true">///</span>
+
+                        <span class="token comment" spellcheck="true">// 将卡牌移出数组(list)</span>
+                        theHC<span class="token punctuation">.</span><span class="token function">RemoveCardFromHand</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                        <span class="token comment" spellcheck="true">// 花费mana点</span>
+                        BattleController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">SpendPlayerMana</span><span class="token punctuation">(</span>manaCost<span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                    <span class="token keyword">else</span>
+                    <span class="token punctuation">{</span>
+                        <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">else</span>
+                <span class="token punctuation">{</span>
+                    <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 隔一段时间没左键 就可以 再次左键 然后触发返回</span>
+        _justPressed <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="2-Showing-Mana-On-UI"><a href="#2-Showing-Mana-On-UI" class="headerlink" title="2. Showing Mana On UI"></a>2. Showing Mana On UI</h2><p><img src="98738e65.png"><img src="4c8330cf.png"><img src="ff71a97d.png"><img src="00c08e5b.png"><img src="b946af2f.png"><br><img src="559701fb.png"><img src="613861c0.png"><img src="a17770fb.png"><img src="03cc8539.png"><br><img src="f71bf468.png"><img src="f1e23ba8.png" alt="ctrl c v"><img src="41bd3001.png"><img src="8ab2e8c2.png"><br><img src="5c02f3ed.png"><img src="e5501747.png"><img src="e0f4c400.png"><img src="934e284a.png"><br><img src="6be8e938.png"><img src="7b9807ce.png" alt="绑定text"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UIController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">// 单例</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> UIController instance<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Awake</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        instance <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> TMP_Text playerManaText<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Start is called before the first frame update</span>
+    <span class="token keyword">void</span> <span class="token function">Start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">SetPlayerManaText</span><span class="token punctuation">(</span><span class="token keyword">int</span> manaAmount<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        playerManaText<span class="token punctuation">.</span>text <span class="token operator">=</span> <span class="token string">"Mana: "</span> <span class="token operator">+</span> manaAmount<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BattleController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">// Start is called before the first frame update</span>
+    <span class="token keyword">void</span> <span class="token function">Start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        playerMana <span class="token operator">=</span> startingMana<span class="token punctuation">;</span>
+        UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">SetPlayerManaText</span><span class="token punctuation">(</span>playerMana<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">SpendPlayerMana</span><span class="token punctuation">(</span><span class="token keyword">int</span> amountToSpend<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        playerMana <span class="token operator">=</span> playerMana <span class="token operator">-</span> amountToSpend<span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// 防止意外情况</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>playerMana <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            playerMana <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">SetPlayerManaText</span><span class="token punctuation">(</span>playerMana<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-Displaying-A-Low-Mana-Warning"><a href="#3-Displaying-A-Low-Mana-Warning" class="headerlink" title="3. Displaying A Low Mana Warning"></a>3. Displaying A Low Mana Warning</h2><p><img src="746ad545.png" alt="添加警告文字(mana不足)"><img src="91bce079.png"><img src="ae8abd67.png"><br><img src="18991b2e.png" alt="auto size->Alignment: Center->Font Assert: SDF outline->向上移动一点"><br><img src="a2fe0557.png"><img src="bda67c00.png"><img src="e1148d79.png"><br><img src="e8f2f23b.png"><img src="fe1b029b.png"><img src="58f745d3.png" alt="绑定一下"><br><img src="b113755e.png"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UIController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> TMP_Text playerManaText<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 左上角的MANA数量 txt</span>
+    <span class="token keyword">public</span> GameObject manaWarning<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// mana不足提示信息</span>
+    <span class="token keyword">public</span> <span class="token keyword">float</span> manaWarningTime<span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// mana不足的提示信息的显示持续时间</span>
+    <span class="token keyword">private</span> <span class="token keyword">float</span> _manaWarningCounter<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Start is called before the first frame update</span>
+    <span class="token keyword">void</span> <span class="token function">Start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        manaWarning<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_manaWarningCounter <span class="token operator">></span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            _manaWarningCounter <span class="token operator">-</span><span class="token operator">=</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">;</span>
+
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>_manaWarningCounter <span class="token operator">&lt;=</span> <span class="token number">0</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                manaWarning<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">ShowManaWarning</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// ActivatesDeactivates the GameObject,</span>
+        <span class="token comment" spellcheck="true">// depending on the given true or false/ value.</span>
+        manaWarning<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// 启用manaWarning</span>
+        _manaWarningCounter <span class="token operator">=</span> manaWarningTime<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Unity<span class="token punctuation">.</span>Mathematics<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">.</span>UI<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Card</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        transform<span class="token punctuation">.</span>position <span class="token operator">=</span> Vector3<span class="token punctuation">.</span><span class="token function">Lerp</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> _targetPoint<span class="token punctuation">,</span> moveSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        transform<span class="token punctuation">.</span>rotation <span class="token operator">=</span>
+            Quaternion<span class="token punctuation">.</span><span class="token function">RotateTowards</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>rotation<span class="token punctuation">,</span> _targetRot<span class="token punctuation">,</span> rotateSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_isSelected<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">///</span>
+
+            <span class="token comment" spellcheck="true">// 左键单击</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetMouseButtonDown</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> _justPressed <span class="token operator">==</span> <span class="token keyword">false</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>Physics<span class="token punctuation">.</span><span class="token function">Raycast</span><span class="token punctuation">(</span>ray<span class="token punctuation">,</span> <span class="token keyword">out</span> hit<span class="token punctuation">,</span> <span class="token number">100f</span><span class="token punctuation">,</span> whatIsPlacement<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                <span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">// 当前选中的point</span>
+                    CardPlacePoint selectedPoint <span class="token operator">=</span> hit<span class="token punctuation">.</span>collider<span class="token punctuation">.</span><span class="token generic-method function">GetComponent<span class="token punctuation">&lt;</span>CardPlacePoint<span class="token punctuation">></span></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                    <span class="token comment" spellcheck="true">// 当前选中的point没有卡, 并且是玩家这边的</span>
+                    <span class="token keyword">if</span> <span class="token punctuation">(</span>selectedPoint<span class="token punctuation">.</span>activeCard <span class="token operator">==</span> <span class="token keyword">null</span> <span class="token operator">&amp;&amp;</span> selectedPoint<span class="token punctuation">.</span>isPlayerPoint<span class="token punctuation">)</span>
+                    <span class="token punctuation">{</span>
+                        <span class="token keyword">if</span> <span class="token punctuation">(</span>BattleController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>playerMana <span class="token operator">&lt;</span> manaCost<span class="token punctuation">)</span>
+                        <span class="token punctuation">{</span>
+                            <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                            <span class="token comment" spellcheck="true">// 显示mana不足的提示信息</span>
+                            UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">ShowManaWarning</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                            <span class="token keyword">return</span><span class="token punctuation">;</span>
+                        <span class="token punctuation">}</span>
+
+                        <span class="token comment" spellcheck="true">///</span>
+                    <span class="token punctuation">}</span>
+                    <span class="token keyword">else</span>
+                    <span class="token punctuation">{</span>
+                        <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                    <span class="token punctuation">}</span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">else</span>
+                <span class="token punctuation">{</span>
+                    <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 隔一段时间没左键 就可以 再次左键 然后触发返回</span>
+        _justPressed <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="7-Decks"><a href="#7-Decks" class="headerlink" title="7. Decks"></a>7. Decks</h1><h2 id="1-Creating-A-Deck"><a href="#1-Creating-A-Deck" class="headerlink" title="1. Creating A Deck"></a>1. Creating A Deck</h2><p><img src="9f9e3b6c.png"><img src="c91aa84a.png"><img src="4f35411a.png"><img src="4b1256ca.png"></p>
+<pre class=" language-scharp"><code class="language-scharp">using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using Random = UnityEngine.Random;
+
+public class DeskController : MonoBehaviour
+{
+    public static DeskController instance;
+
+    private void Awake()
+    {
+        instance = this;
+    }
+
+    // 我们在unity面板填充的card
+    public List<CardScriptableObject> deskToUse = new List<CardScriptableObject>();
+
+    private List<CardScriptableObject> activeCards = new List<CardScriptableObject>();
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        SetupDesk();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+    }
+
+    public void SetupDesk()
+    {
+        activeCards.Clear();
+
+        // 临时卡堆
+        List<CardScriptableObject> tempDesk = new List<CardScriptableObject>();
+        tempDesk.AddRange(deskToUse);
+
+        int iterations = 0; // 防止无限循环
+        while (tempDesk.Count > 0 && iterations < 500)
+        {
+            // 0~3之间的随机数(不含3)
+            int selected = Random.Range(0, tempDesk.Count);
+            // 加入卡堆
+            activeCards.Add(tempDesk[selected]);
+            tempDesk.RemoveAt(selected);
+
+            iterations++;
+        }
+    }
+}
+</code></pre>
+<p><img src="dda51f9c.png"></p>
+<h2 id="2-Drawing-A-Card"><a href="#2-Drawing-A-Card" class="headerlink" title="2. Drawing A Card"></a>2. Drawing A Card</h2><p><img src="aefdb4b2.png" alt="创建文件夹Prefabs, 将Card拖入, 此时Card成为预制件, 可以重复使用"><img src="7f52645f.png" alt="删除原来的卡片"><br><img src="fcdf316f.png" alt="拖入项目"><img src="170dc123.png" alt="复制3份->填入Hand Controller的heldCards"><br><img src="1542306f.png" alt="预制件实例的override可以改变预制件的属性, 但是我们一般只是为了复用预制件, 没必要更改"><img src="e7232adc.png"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Random <span class="token operator">=</span> UnityEngine<span class="token punctuation">.</span>Random<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">DeskController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> Card cardToSpawn<span class="token punctuation">;</span>
+    
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 按下T</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetKeyDown</span><span class="token punctuation">(</span>KeyCode<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token function">DrawCardToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">DrawCardToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 当前没有手牌, 就填充</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>activeCards<span class="token punctuation">.</span>Count <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token function">SetupDesk</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 创建cardToSpawn的副本</span>
+        Card newCard <span class="token operator">=</span> <span class="token function">Instantiate</span><span class="token punctuation">(</span>cardToSpawn<span class="token punctuation">,</span> transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> transform<span class="token punctuation">.</span>rotation<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        newCard<span class="token punctuation">.</span>cardSO <span class="token operator">=</span> activeCards<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        newCard<span class="token punctuation">.</span><span class="token function">setupCard</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        activeCards<span class="token punctuation">.</span><span class="token function">RemoveAt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="f3d3cf67.png" alt="记得绑定card -- deskController"><img src="ed4ca63e.png" alt="按T, 出现很多副本"></p>
+<h2 id="3-Moving-Card-To-Hand"><a href="#3-Moving-Card-To-Hand" class="headerlink" title="3. Moving Card To Hand"></a>3. Moving Card To Hand</h2><pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">HandController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> HandController instance<span class="token punctuation">;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Awake</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        instance <span class="token operator">=</span> <span class="token keyword">this</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">AddCardToHand</span><span class="token punctuation">(</span>Card cardToAdd<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        heldCards<span class="token punctuation">.</span><span class="token function">Add</span><span class="token punctuation">(</span>cardToAdd<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">SetCardPositionsInHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>   
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Random <span class="token operator">=</span> UnityEngine<span class="token punctuation">.</span>Random<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">DeskController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 按下T</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetKeyDown</span><span class="token punctuation">(</span>KeyCode<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token function">DrawCardToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">DrawCardToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 当前没有手牌, 就填充</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>activeCards<span class="token punctuation">.</span>Count <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 将deskToUse打乱设置到activeCards</span>
+            <span class="token function">SetupDesk</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 创建cardToSpawn的副本</span>
+        Card newCard <span class="token operator">=</span> <span class="token function">Instantiate</span><span class="token punctuation">(</span>cardToSpawn<span class="token punctuation">,</span> transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> transform<span class="token punctuation">.</span>rotation<span class="token punctuation">)</span> <span class="token keyword">as</span> Card<span class="token punctuation">;</span>
+        newCard<span class="token punctuation">.</span>cardSO <span class="token operator">=</span> activeCards<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+        newCard<span class="token punctuation">.</span><span class="token function">setupCard</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        activeCards<span class="token punctuation">.</span><span class="token function">RemoveAt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        
+        HandController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">AddCardToHand</span><span class="token punctuation">(</span>newCard<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="4-Showing-A-Physical-Deck"><a href="#4-Showing-A-Physical-Deck" class="headerlink" title="4. Showing A Physical Deck"></a>4. Showing A Physical Deck</h2><p><img src="174c7a41.png" alt="deskController(transform)移动一下"><img src="7cd7731b.png" alt="拖动CardModel到deskController"><br><img src="8bac630b.png"><img src="d99619b6.png" alt="改变厚度"><img src="8a625f0a.png" alt="scale"><img src="41fad697.png" alt="rotation"><br><img src="7e9304aa.png"><img src="a831b47b.png" alt="cardmodel->transform->y->-0.18, 这样抽牌看起来才是从上面抽"><br><img src="2e8875b7.png" alt="deskController-transform-y"><img src="bd1032d9.png"><img src="5dd84a4f.png" alt="这样看起来牌会先翻过来再放到手中"></p>
+<h2 id="5-Click-To-Draw-Cards"><a href="#5-Click-To-Draw-Cards" class="headerlink" title="5. Click To Draw Cards"></a>5. Click To Draw Cards</h2><p><img src="5fcbca5c.png"><img src="3f2cedda.png"><img src="39d769ab.png"><img src="77c19bfa.png" alt="font(SDF)"><br><img src="b59b2e12.png" alt="auto size"><img src="d1831558.png" alt="拖动blue到source image"><img src="00ae9d2f.png" alt="拖动"><br><img src="6e013c39.png" alt="TextMeshPro Text (Ul)->extra settings->"><img src="a3c66235.png" alt="绑定点击事件"><br><img src="604ee0e1.png"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+<span class="token keyword">using</span> Random <span class="token operator">=</span> UnityEngine<span class="token punctuation">.</span>Random<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">DeskController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 按下T</span>
+        <span class="token comment" spellcheck="true">// if (Input.GetKeyDown(KeyCode.T))</span>
+        <span class="token comment" spellcheck="true">// {</span>
+        <span class="token comment" spellcheck="true">//     DrawCardToHand();</span>
+        <span class="token comment" spellcheck="true">// }</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">DrawCardForMana</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>BattleController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>playerMana <span class="token operator">>=</span> drawCardCost<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// 抽卡</span>
+            <span class="token function">DrawCardToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">// 消耗mana</span>
+            BattleController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">SpendPlayerMana</span><span class="token punctuation">(</span>drawCardCost<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">else</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">// mana不足提示信息</span>
+            UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">ShowManaWarning</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">// 按钮消失</span>
+            UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>drawCardButton<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">using</span> System<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">;</span>
+<span class="token keyword">using</span> System<span class="token punctuation">.</span>Collections<span class="token punctuation">.</span>Generic<span class="token punctuation">;</span>
+<span class="token keyword">using</span> TMPro<span class="token punctuation">;</span>
+<span class="token keyword">using</span> UnityEngine<span class="token punctuation">;</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UIController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">DrawCard</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        DeskController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">DrawCardForMana</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><img src="60f32854.png"></p>
+<h1 id="8-Turns-System"><a href="#8-Turns-System" class="headerlink" title="8. Turns System"></a>8. Turns System</h1><h2 id="1-Setting-Up-The-Turn-Order"><a href="#1-Setting-Up-The-Turn-Order" class="headerlink" title="1. Setting Up The Turn Order"></a>1. Setting Up The Turn Order</h2><p><img src="83fe5929.png"><img src="f0fa4de9.png"><img src="c3a1e0c2.png" alt="遇到bug, 查了下"><img src="a3e72266.png" alt="Window > General > Console打开输出控制台"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BattleController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+    
+    <span class="token keyword">public</span> <span class="token keyword">enum</span> TurnOrder
+    <span class="token punctuation">{</span>
+        playerActive<span class="token punctuation">,</span>
+        playerCardAttacks<span class="token punctuation">,</span>
+        enemyActive<span class="token punctuation">,</span>
+        enemyCardAttacks
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> TurnOrder currentPhase<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetKeyDown</span><span class="token punctuation">(</span>KeyCode<span class="token punctuation">.</span>T<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token comment" spellcheck="true">/// </span>
+    
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        currentPhase<span class="token operator">++</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token punctuation">(</span><span class="token keyword">int</span><span class="token punctuation">)</span>currentPhase <span class="token operator">>=</span> System<span class="token punctuation">.</span>Enum<span class="token punctuation">.</span><span class="token function">GetValues</span><span class="token punctuation">(</span><span class="token keyword">typeof</span><span class="token punctuation">(</span>TurnOrder<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>Length<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            Debug<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"0"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            currentPhase <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>   
+        <span class="token punctuation">}</span>
+
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>currentPhase<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>playerActive<span class="token punctuation">:</span> 
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>playerCardAttacks<span class="token punctuation">:</span>
+                Debug<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"2"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>enemyActive<span class="token punctuation">:</span>
+                Debug<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"3"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>enemyCardAttacks<span class="token punctuation">:</span>
+                Debug<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"4"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="2-Limiting-Actions-To-The-Player’s-Turn"><a href="#2-Limiting-Actions-To-The-Player’s-Turn" class="headerlink" title="2. Limiting Actions To The Player’s Turn"></a>2. Limiting Actions To The Player’s Turn</h2><p>编写玩家回合才能出牌的逻辑</p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BattleController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">///</span>
+
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>currentPhase<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>playerActive<span class="token punctuation">:</span> 
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>playerCardAttacks<span class="token punctuation">:</span>
+                Debug<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"2"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token comment" spellcheck="true">// AdvanceTurn();</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">///</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Card</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/// </span>
+
+    <span class="token comment" spellcheck="true">// Update is called once per frame</span>
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">Update</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        transform<span class="token punctuation">.</span>position <span class="token operator">=</span> Vector3<span class="token punctuation">.</span><span class="token function">Lerp</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>position<span class="token punctuation">,</span> _targetPoint<span class="token punctuation">,</span> moveSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        transform<span class="token punctuation">.</span>rotation <span class="token operator">=</span>
+            Quaternion<span class="token punctuation">.</span><span class="token function">RotateTowards</span><span class="token punctuation">(</span>transform<span class="token punctuation">.</span>rotation<span class="token punctuation">,</span> _targetRot<span class="token punctuation">,</span> rotateSpeed <span class="token operator">*</span> Time<span class="token punctuation">.</span>deltaTime<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>_isSelected<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">///</span>
+
+            <span class="token comment" spellcheck="true">// 左键单击</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>Input<span class="token punctuation">.</span><span class="token function">GetMouseButtonDown</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span> _justPressed <span class="token operator">==</span> <span class="token keyword">false</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>Physics<span class="token punctuation">.</span><span class="token function">Raycast</span><span class="token punctuation">(</span>ray<span class="token punctuation">,</span> <span class="token keyword">out</span> hit<span class="token punctuation">,</span> <span class="token number">100f</span><span class="token punctuation">,</span> whatIsPlacement<span class="token punctuation">)</span> <span class="token operator">&amp;&amp;</span>
+                    <span class="token comment" spellcheck="true">// 玩家回合才能出牌</span>
+                    BattleController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>currentPhase <span class="token operator">==</span> BattleController<span class="token punctuation">.</span>TurnOrder<span class="token punctuation">.</span>playerActive<span class="token punctuation">)</span>
+                <span class="token punctuation">{</span>
+                    <span class="token comment" spellcheck="true">///</span>
+                <span class="token punctuation">}</span>
+                <span class="token keyword">else</span>
+                <span class="token punctuation">{</span>
+                    <span class="token function">ReturnToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+            <span class="token punctuation">}</span> 
+        <span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true">// 隔一段时间没左键 就可以 再次左键 然后触发返回</span>
+        _justPressed <span class="token operator">=</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token comment" spellcheck="true">///</span>
+    
+    <span class="token keyword">private</span> <span class="token keyword">void</span> <span class="token function">OnMouseDown</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 玩家的回合才能出牌</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>inHand <span class="token operator">&amp;&amp;</span> BattleController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>currentPhase <span class="token operator">==</span> BattleController<span class="token punctuation">.</span>TurnOrder<span class="token punctuation">.</span>playerActive<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment" spellcheck="true">///</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="3-Ending-The-Player’s-Turn"><a href="#3-Ending-The-Player’s-Turn" class="headerlink" title="3. Ending The Player’s Turn"></a>3. Ending The Player’s Turn</h2><p>结束回合时禁用两个按钮</p>
+<p><img src="19254799.png" alt="复制一个结束回合的button"><img src="76f05480.png"><img src="3c2db717.png"><br><img src="0848b312.png"><img src="3645a2f5.png"><img src="52fc1905.png" alt="记得绑定按钮"></p>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BattleController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+    
+    <span class="token comment" spellcheck="true">// 回合前进(玩家出牌->玩家卡牌攻击(auto)->敌人出牌->敌人卡牌攻击(auto)</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">///</span>
+
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>currentPhase<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>playerActive<span class="token punctuation">:</span>
+                <span class="token comment" spellcheck="true">// 启用: 结束回合btn 和 取牌btn</span>
+                UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>endTurnButton<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>drawCardButton<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+           <span class="token comment" spellcheck="true">///</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">EndPlayerTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 禁用 结束回合 按钮</span>
+        UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>endTurnButton<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// 禁用 取牌 按钮</span>
+        UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>drawCardButton<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">false</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">UIController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/// </span>
+    
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">EndPlayerTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        BattleController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">EndPlayerTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="4-Refilling-The-Mana-Pool"><a href="#4-Refilling-The-Mana-Pool" class="headerlink" title="4. Refilling The Mana Pool"></a>4. Refilling The Mana Pool</h2><pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">DeskController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+    
+    <span class="token keyword">public</span> <span class="token keyword">float</span> waitBetweenDrawingCards <span class="token operator">=</span> <span class="token punctuation">.</span><span class="token number">25f</span><span class="token punctuation">;</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">DrawMultipleCards</span><span class="token punctuation">(</span><span class="token keyword">int</span> amountToDraw<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token function">StartCoroutine</span><span class="token punctuation">(</span><span class="token function">DrawMultipleCo</span><span class="token punctuation">(</span>amountToDraw<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    IEnumerator <span class="token function">DrawMultipleCo</span><span class="token punctuation">(</span><span class="token keyword">int</span> amountToDraw<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">int</span> i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> amountToDraw<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token function">DrawCardToHand</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+            <span class="token keyword">yield</span> <span class="token keyword">return</span> <span class="token keyword">new</span> <span class="token class-name">WaitForSeconds</span><span class="token punctuation">(</span>waitBetweenDrawingCards<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BattleController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+    <span class="token keyword">public</span> <span class="token keyword">int</span> startingCardsAmount <span class="token operator">=</span> <span class="token number">5</span><span class="token punctuation">;</span>
+    
+    <span class="token comment" spellcheck="true">// Start is called before the first frame update</span>
+    <span class="token keyword">void</span> <span class="token function">Start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// playerMana = startingMana;</span>
+        <span class="token comment" spellcheck="true">// UIController.instance.SetPlayerManaText(playerMana);</span>
+        <span class="token function">FillPlayerMana</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// 初始化: 拿几张卡到手牌</span>
+        DeskController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">DrawMultipleCards</span><span class="token punctuation">(</span>startingCardsAmount<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token comment" spellcheck="true">// 回复玩家的mana</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">FillPlayerMana</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        playerMana <span class="token operator">=</span> startingMana<span class="token punctuation">;</span>
+        UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">SetPlayerManaText</span><span class="token punctuation">(</span>playerMana<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">// 回合前进(玩家出牌->玩家卡牌攻击(auto)->敌人出牌->敌人卡牌攻击(auto)</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">///</span>
+
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>currentPhase<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>playerActive<span class="token punctuation">:</span>
+                <span class="token comment" spellcheck="true">// 启用: 结束回合btn 和 取牌btn</span>
+                UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>endTurnButton<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>drawCardButton<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token comment" spellcheck="true">// 重新填充mana</span>
+                <span class="token function">FillPlayerMana</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>playerCardAttacks<span class="token punctuation">:</span>
+                Debug<span class="token punctuation">.</span><span class="token function">Log</span><span class="token punctuation">(</span><span class="token string">"2"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">///</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="5-Mana-Pool-Growth"><a href="#5-Mana-Pool-Growth" class="headerlink" title="5. Mana Pool Growth"></a>5. Mana Pool Growth</h2><pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BattleController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">///</span>
+    <span class="token comment" spellcheck="true">// 玩家当前最大mana数, 每回合+1</span>
+    <span class="token keyword">private</span> <span class="token keyword">int</span> _currentPlayerMaxMana<span class="token punctuation">;</span>
+    
+    <span class="token comment" spellcheck="true">// Start is called before the first frame update</span>
+    <span class="token keyword">void</span> <span class="token function">Start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// playerMana = startingMana;</span>
+        <span class="token comment" spellcheck="true">// UIController.instance.SetPlayerManaText(playerMana);</span>
+        _currentPlayerMaxMana <span class="token operator">=</span> startingMana<span class="token punctuation">;</span>
+        <span class="token function">FillPlayerMana</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// 初始化: 拿几张卡到手牌</span>
+        DeskController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">DrawMultipleCards</span><span class="token punctuation">(</span>startingCardsAmount<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token comment" spellcheck="true">///</span>
+    
+    <span class="token comment" spellcheck="true">// 回复玩家的mana</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">FillPlayerMana</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// playerMana = startingMana;</span>
+        playerMana <span class="token operator">=</span> _currentPlayerMaxMana<span class="token punctuation">;</span>
+        UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">SetPlayerManaText</span><span class="token punctuation">(</span>playerMana<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token comment" spellcheck="true">// 回合前进(玩家出牌->玩家卡牌攻击(auto)->敌人出牌->敌人卡牌攻击(auto)</span>
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">///</span>
+
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>currentPhase<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>playerActive<span class="token punctuation">:</span>
+                <span class="token comment" spellcheck="true">// 启用: 结束回合btn 和 取牌btn</span>
+                UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>endTurnButton<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+                UIController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span>drawCardButton<span class="token punctuation">.</span><span class="token function">SetActive</span><span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token comment" spellcheck="true">// 回合开始, 玩家mana上限+1</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>_currentPlayerMaxMana <span class="token operator">&lt;</span> maxMana<span class="token punctuation">)</span>
+                <span class="token punctuation">{</span>
+                    _currentPlayerMaxMana<span class="token operator">++</span><span class="token punctuation">;</span>
+                <span class="token punctuation">}</span>
+
+                <span class="token comment" spellcheck="true">// 重新填充mana</span>
+                <span class="token function">FillPlayerMana</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">///</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="6-Drawing-Cards-Each-Turn"><a href="#6-Drawing-Cards-Each-Turn" class="headerlink" title="6. Drawing Cards Each Turn"></a>6. Drawing Cards Each Turn</h2><pre class=" language-csharp"><code class="language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BattleController</span> <span class="token punctuation">:</span> MonoBehaviour
+<span class="token punctuation">{</span>
+    <span class="token comment" spellcheck="true">/// </span>
+    
+    <span class="token comment" spellcheck="true">// 每回合开始抽多少张</span>
+    <span class="token keyword">public</span> <span class="token keyword">int</span> cardsToDrawPerTurn <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+    
+    <span class="token comment" spellcheck="true">// Start is called before the first frame update</span>
+    <span class="token keyword">void</span> <span class="token function">Start</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 可能unity里的设值会覆盖(默认0, 可以自己改为2, 就不用下面这行), 这里手动设置为2</span>
+        cardsToDrawPerTurn <span class="token operator">=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+        
+        <span class="token comment" spellcheck="true">///</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">AdvanceTurn</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">///</span>
+
+        <span class="token keyword">switch</span> <span class="token punctuation">(</span>currentPhase<span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            <span class="token keyword">case</span> TurnOrder<span class="token punctuation">.</span>playerActive<span class="token punctuation">:</span>
+                <span class="token comment" spellcheck="true">///</span>
+
+                <span class="token comment" spellcheck="true">// 重新填充mana</span>
+                <span class="token function">FillPlayerMana</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token comment" spellcheck="true">// 回合开始, 抽卡</span>
+                DeskController<span class="token punctuation">.</span>instance<span class="token punctuation">.</span><span class="token function">DrawMultipleCards</span><span class="token punctuation">(</span>cardsToDrawPerTurn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+                <span class="token keyword">break</span><span class="token punctuation">;</span>
+            <span class="token comment" spellcheck="true">///</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h1 id="9-Doing-Damage"><a href="#9-Doing-Damage" class="headerlink" title="9. Doing Damage"></a>9. Doing Damage</h1>
             </div>
             <hr/>
 
@@ -1324,7 +2557,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">704.6k</span>
+                <span class="white-color">707.4k</span>
             
 
             
