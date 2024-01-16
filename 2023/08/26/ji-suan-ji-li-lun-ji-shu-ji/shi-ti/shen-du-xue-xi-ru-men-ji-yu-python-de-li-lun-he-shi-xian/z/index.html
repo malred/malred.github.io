@@ -372,14 +372,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        28.9k
+                        30k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        116 分
+                        120 分
                     </div>
                     
                 
@@ -3002,7 +3002,7 @@ iter_per_epoch <span class="token operator">=</span> max<span class="token punct
 <li>通过将神经网络的组成元素实现为层，可以高效地计算梯度(反向传播法)</li>
 <li>通过比较数值微分和误差反向传播法的结果，可以确认误差反向传播法的实现是否正确(梯度确认)。</li>
 </ul>
-<h1 id="6-与学习相关的技巧"><a href="#6-与学习相关的技巧" class="headerlink" title="6. 与学习相关的技巧"></a>6. 与学习相关的技巧</h1><h2 id="6-1"><a href="#6-1" class="headerlink" title="6.1"></a>6.1</h2><blockquote>
+<h1 id="6-与学习相关的技巧"><a href="#6-与学习相关的技巧" class="headerlink" title="6. 与学习相关的技巧"></a>6. 与学习相关的技巧</h1><h2 id="6-1-参数的更新"><a href="#6-1-参数的更新" class="headerlink" title="6.1 参数的更新"></a>6.1 参数的更新</h2><blockquote>
 <p>神经网络学习的目的是找到使损失函数尽可能小的参数, 这个过程叫<strong>最优化_(optimization_)</strong>, 但是由于神经网络的参数空间复杂,<br>所以很难求最优解.</p>
 </blockquote>
 <blockquote>
@@ -3211,9 +3211,112 @@ optimizer <span class="token operator">=</span> SGD<span class="token punctuatio
 <p>抑制过拟合, 提高泛化能力的技巧 ———— 权值衰减 _(weight decay_), 简单地说就是一种以减少权重参数的值为目的进行学习的方法<br>如果想减小权重的值, 一开始应该设置较小的初始值, 比如0.01 * np.random.randn((10, 100))这样的,<br>表示用高斯分布生成的值乘以0.01后得到的值 ((标准差为0.01的高斯分布))<br>那么为什么不设置初始值为0或者全都一样的值呢?<br>因为在误差反向传播法中, 假设1、2层的权重都为0, 那么正向传播时, 因为输入层的权重为0, 所以第2层的神经元全部会被传递相同的值.<br>第2层神经元全部输入相同的值, 意味着反向传播时第2层的权重都会进行相同的更新, 权重就被更新为相同的值, 并拥有了对称的值((<br>重复的值))<br>这使得神经网络拥有许多不同的权重的意义丧失了, 为了防止”权重均一化”((严格地说, 为了瓦解权重的对称结构)), 必须随机生成初始值</p>
 </blockquote>
 <h3 id="6-2-2-隐藏层的激活值的分布"><a href="#6-2-2-隐藏层的激活值的分布" class="headerlink" title="6.2.2 隐藏层的激活值的分布"></a>6.2.2 隐藏层的激活值的分布</h3><blockquote>
-<p>观察隐藏层的激活值((激活函数的输出数据))的分布, 观察权重初始值如何影响隐藏层的激活值的分布.<br>实验: 向一个5层神经网络((激活函数为sigmoid))传入随机生成的输入数据, 用直方图绘制各层激活值的数据分布.该实验参考了斯坦福大学CS231n</p>
+<p>观察隐藏层的激活值((激活函数的输出数据))的分布, 观察权重初始值如何影响隐藏层的激活值的分布.</p>
 </blockquote>
+<blockquote>
+<p>实验: 向一个5层神经网络((激活函数为sigmoid))传入随机生成的输入数据, 用直方图绘制各层激活值的数据分布.<br>该实验参考了斯坦福大学CS231n</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># 6_与学习有关的技巧/2_weight_init_activation_histogram.py</span>
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
 
+
+<span class="token keyword">def</span> <span class="token function">sigmoid</span><span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token number">1</span> <span class="token operator">/</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">+</span> np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span><span class="token operator">-</span>x<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+x <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 随机生成1000个数据(1000*100的矩阵)</span>
+node_num <span class="token operator">=</span> <span class="token number">100</span>  <span class="token comment" spellcheck="true"># 各隐藏层的节点(神经元)数</span>
+hidden_layer_size <span class="token operator">=</span> <span class="token number">5</span>  <span class="token comment" spellcheck="true"># 隐藏层有5层</span>
+activations <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token punctuation">}</span>  <span class="token comment" spellcheck="true"># 保存激活值的结果</span>
+
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>hidden_layer_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> i <span class="token operator">!=</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 使用上一层的激活值作为输入</span>
+        x <span class="token operator">=</span> activations<span class="token punctuation">[</span>i <span class="token operator">-</span> <span class="token number">1</span><span class="token punctuation">]</span>
+
+    w <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>node_num<span class="token punctuation">,</span> node_num<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">1</span>
+
+    z <span class="token operator">=</span> np<span class="token punctuation">.</span>dot<span class="token punctuation">(</span>x<span class="token punctuation">,</span> w<span class="token punctuation">)</span>
+    a <span class="token operator">=</span> sigmoid<span class="token punctuation">(</span>z<span class="token punctuation">)</span>
+    activations<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> a
+
+<span class="token comment" spellcheck="true"># 绘制直方图</span>
+<span class="token keyword">for</span> i<span class="token punctuation">,</span> a <span class="token keyword">in</span> activations<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    plt<span class="token punctuation">.</span>subplot<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> len<span class="token punctuation">(</span>activations<span class="token punctuation">)</span><span class="token punctuation">,</span> i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span>str<span class="token punctuation">(</span>i <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">"-layer"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>hist<span class="token punctuation">(</span>a<span class="token punctuation">.</span>flatten<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">30</span><span class="token punctuation">,</span> range<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<blockquote>
+<p>这里设5层神经网络, 每层100个神经元, 随机1000个数据((服从正态((高斯))分布))作为输入, 激活函数用sigmoid</p>
+</blockquote>
+<blockquote>
+<p>这里需要注意权重的尺度, 我们使用标准差为1的高斯分布, 目的是通过改变尺度((标准差)), 观察激活值的分布如何变化</p>
+</blockquote>
+<p><img src="7accd14f.png"></p>
+<blockquote>
+<p>各层的激活值偏向0和1的分布. sigmoid是S型函数, 当输出不断靠近0或1, 它的导数的值逐渐接近0.</p>
+</blockquote>
+<p><img src="6264fa22.png" alt="sigmoid, 来自百度百科"></p>
+<blockquote>
+<p>因此, 偏向0和1的数据分布会造成反向传播中梯度的值不断变小, 最后消失</p>
+</blockquote>
+<blockquote>
+<p>这个问题称为<strong>梯度消失</strong>((gradient vanishing))</p>
+</blockquote>
+<blockquote>
+<p>将标准差设为0.01, 进行相同的实验, 观察结果</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">    <span class="token comment" spellcheck="true"># w = np.random.randn(node_num, node_num) * 1</span>
+    w <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>node_num<span class="token punctuation">,</span> node_num<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">0.01</span>
+</code></pre>
+<p><img src="6df29239.png"></p>
+<blockquote>
+<p>这次呈集中在0.5附加的分布, 不会发生梯度消失问题. 但是激活值的分布有所偏向((0.5)), 说明表现力上会有很大问题.</p>
+</blockquote>
+<blockquote>
+<p>如果有多个神经元都输出几乎相同的值, 那么就没有意义了, 因为100个相同输出的神经元也可以用1个神经元来表达基本相同的事情,<br>因此, 激活值在分布上有偏向会出现”表现力受限”的问题</p>
+</blockquote>
+<ul>
+<li>各层的激活值的分布都要求有适当的广度. 在各层间传递多样性数据有利于高效学习</li>
+</ul>
+<blockquote>
+<p>为了使各层的激活值呈现出相同广度的分布, 我们尝试使用Xavier Glorot等人的论文中推荐的权重初始值((Xavier初始值))</p>
+</blockquote>
+<p><img src="498542ac.png"></p>
+<blockquote>
+<p>使用Xavier初始值, 前一层节点数越多, 要设定为目标节点的初始值的权重尺度就越小.</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python">    <span class="token comment" spellcheck="true"># 书上说因为所有层的节点数都是100, 所以简化了实现</span>
+    w <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>randn<span class="token punctuation">(</span>node_num<span class="token punctuation">,</span> node_num<span class="token punctuation">)</span> <span class="token operator">/</span> np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span>node_num<span class="token punctuation">)</span>
+</code></pre>
+<p><img src="9a2c921b.png"></p>
+<blockquote>
+<p>可以看出, 激活值比之前呈现更有广度的分布.</p>
+</blockquote>
+<ul>
+<li>在图6-13中, 后面的层的分布出现歪斜的形状, 如果用tanh函数((双曲线函数)), 则会呈现吊钟型分布, tanh的图像也是S型曲线,<br>但是sigmoid函数关于((x,y))=((0,0.5))对称, tanh则是关于原点((0.0))对称, 而激活函数最好选择具有关于原点对称的特性的</li>
+</ul>
+<h3 id="6-2-3-ReLU的权重初始值"><a href="#6-2-3-ReLU的权重初始值" class="headerlink" title="6.2.3 ReLU的权重初始值"></a>6.2.3 ReLU的权重初始值</h3><blockquote>
+<p>Xavier初始值是以激活函数是线性函数为前提而推导出来的, sigmoid函数和tanh函数左右对称, 且中央附近可以视作线性函数,<br>所以适合Xavier初始值.<br>当激活函数使用ReLU, 则推荐使用Kaiming He等人推荐的初始值, “He初始值”, 当前一层节点数为n, He初始值使用标准差为</p>
+<mjx-container class="MathJax" jax="SVG"><svg style="vertical-align: -1.304ex;" xmlns="http://www.w3.org/2000/svg" width="4.263ex" height="4.208ex" role="img" focusable="false" viewBox="0 -1283.6 1884.3 1860" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path id="MJX-1-TEX-LO-221A" d="M1001 1150Q1017 1150 1020 1132Q1020 1127 741 244L460 -643Q453 -650 436 -650H424Q423 -647 423 -645T421 -640T419 -631T415 -617T408 -594T399 -560T385 -512T367 -448T343 -364T312 -259L203 119L138 41L111 67L212 188L264 248L472 -474L983 1140Q988 1150 1001 1150Z"></path><path id="MJX-1-TEX-N-32" d="M109 429Q82 429 66 447T50 491Q50 562 103 614T235 666Q326 666 387 610T449 465Q449 422 429 383T381 315T301 241Q265 210 201 149L142 93L218 92Q375 92 385 97Q392 99 409 186V189H449V186Q448 183 436 95T421 3V0H50V19V31Q50 38 56 46T86 81Q115 113 136 137Q145 147 170 174T204 211T233 244T261 278T284 308T305 340T320 369T333 401T340 431T343 464Q343 527 309 573T212 619Q179 619 154 602T119 569T109 550Q109 549 114 549Q132 549 151 535T170 489Q170 464 154 447T109 429Z"></path><path id="MJX-1-TEX-I-1D45B" d="M21 287Q22 293 24 303T36 341T56 388T89 425T135 442Q171 442 195 424T225 390T231 369Q231 367 232 367L243 378Q304 442 382 442Q436 442 469 415T503 336T465 179T427 52Q427 26 444 26Q450 26 453 27Q482 32 505 65T540 145Q542 153 560 153Q580 153 580 145Q580 144 576 130Q568 101 554 73T508 17T439 -10Q392 -10 371 17T350 73Q350 92 386 193T423 345Q423 404 379 404H374Q288 404 229 303L222 291L189 157Q156 26 151 16Q138 -11 108 -11Q95 -11 87 -5T76 7T74 17Q74 30 112 180T152 343Q153 348 153 366Q153 405 129 405Q91 405 66 305Q60 285 60 284Q58 278 41 278H27Q21 284 21 287Z"></path></defs><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="scale(1,-1)"><g data-mml-node="math"><g data-mml-node="msqrt"><g transform="translate(1020,0)"><g data-mml-node="mfrac"><g data-mml-node="mn" transform="translate(255.4,394) scale(0.707)"><use data-c="32" xlink:href="#MJX-1-TEX-N-32"></use></g><g data-mml-node="mi" transform="translate(220,-345) scale(0.707)"><use data-c="1D45B" xlink:href="#MJX-1-TEX-I-1D45B"></use></g><rect width="624.3" height="60" x="120" y="220"></rect></g></g><g data-mml-node="mo" transform="translate(0,73.6)"><use data-c="221A" xlink:href="#MJX-1-TEX-LO-221A"></use></g><rect width="864.3" height="60" x="1020" y="1163.6"></rect></g></g></g></svg></mjx-container>的高斯分布.
+<p>可以直观上解释为, 因为ReLU的负值区域的值为0, 为了使他更有广度, 所以需要2倍于Xavier初始值的系数</p>
+</blockquote>
+<blockquote>
+<p>以下是3个实验, 权重初始值依次是 1. 标准差为0.01的高斯分布((下文简写”std=0.01”)), 2. Xavier初始值, 3. He初始值</p>
+</blockquote>
+<p><img src="012e5417.png"></p>
+<blockquote>
+<p>当使用Xavier初始值时, 层次越深, 激活值偏向越大, 容易出现梯度消失的问题.<br>而使用He初始值时, 各层中分布的广度相同, 即时层次加深也保持数据广度, 因此在逆向传播时也能传递合适的值.</p>
+</blockquote>
+<blockquote>
+<p>总结((目前的最佳实践)): 激活函数使用ReLU, 权重初始值使用He初始值; 激活函数用sigmoid或tanh等S型曲线函数, 则使用Xavier初始值</p>
+</blockquote>
+<h3 id="6-2-4-基于MNIST数据集的权重初始值的比较"><a href="#6-2-4-基于MNIST数据集的权重初始值的比较" class="headerlink" title="6.2.4 基于MNIST数据集的权重初始值的比较"></a>6.2.4 基于MNIST数据集的权重初始值的比较</h3><p><img src="1091c146.png" alt="可以看出权重初始值非常重要"><img src="1a45b637.png"></p>
+<h2 id="6-3-Batch-Normalization"><a href="#6-3-Batch-Normalization" class="headerlink" title="6.3 Batch Normalization"></a>6.3 Batch Normalization</h2><blockquote>
+</blockquote>
+<h3 id=""><a href="#" class="headerlink" title=""></a></h3>
             </div>
             <hr/>
 
@@ -3888,7 +3991,7 @@ kaggle
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">707.4k</span>
+                <span class="white-color">708.6k</span>
             
 
             
