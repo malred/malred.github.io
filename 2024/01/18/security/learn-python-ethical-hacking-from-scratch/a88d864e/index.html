@@ -370,14 +370,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        792
+                        1.3k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        4 分
+                        7 分
                     </div>
                     
                 
@@ -603,7 +603,115 @@ change_mac<span class="token punctuation">(</span>interface<span class="token pu
 change_mac<span class="token punctuation">(</span>options<span class="token punctuation">.</span>interface<span class="token punctuation">,</span> options<span class="token punctuation">.</span>new_mac<span class="token punctuation">)</span>
 </code></pre>
 <h2 id="012-Decision-Making-in-Python"><a href="#012-Decision-Making-in-Python" class="headerlink" title="012 Decision Making in Python"></a>012 Decision Making in Python</h2><p><img src="10bc290c.png"></p>
-<h2 id="013-Using-Conditional-Statements-in-MAC-Changer"><a href="#013-Using-Conditional-Statements-in-MAC-Changer" class="headerlink" title="013 Using Conditional Statements in MAC Changer"></a>013 Using Conditional Statements in MAC Changer</h2>
+<h2 id="013-Using-Conditional-Statements-in-MAC-Changer"><a href="#013-Using-Conditional-Statements-in-MAC-Changer" class="headerlink" title="013 Using Conditional Statements in MAC Changer"></a>013 Using Conditional Statements in MAC Changer</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> optparse
+
+
+<span class="token keyword">def</span> <span class="token function">get_arguments</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    parser <span class="token operator">=</span> optparse<span class="token punctuation">.</span>OptionParser<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    parser<span class="token punctuation">.</span>add_option<span class="token punctuation">(</span><span class="token string">"-i"</span><span class="token punctuation">,</span> <span class="token string">"--interface"</span><span class="token punctuation">,</span> dest<span class="token operator">=</span><span class="token string">"interface"</span><span class="token punctuation">,</span> help<span class="token operator">=</span><span class="token string">"Interface to change its MAC address"</span><span class="token punctuation">)</span>
+    parser<span class="token punctuation">.</span>add_option<span class="token punctuation">(</span><span class="token string">"-m"</span><span class="token punctuation">,</span> <span class="token string">"--mac"</span><span class="token punctuation">,</span> dest<span class="token operator">=</span><span class="token string">"new_mac"</span><span class="token punctuation">,</span> help<span class="token operator">=</span><span class="token string">"New MAC address"</span><span class="token punctuation">)</span>
+
+    <span class="token punctuation">(</span>options<span class="token punctuation">,</span> arguments<span class="token punctuation">)</span> <span class="token operator">=</span> parser<span class="token punctuation">.</span>parse_args<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> <span class="token operator">not</span> options<span class="token punctuation">.</span>interface<span class="token punctuation">:</span>
+        parser<span class="token punctuation">.</span>error<span class="token punctuation">(</span><span class="token string">"[-] Please specify an interface, use --help for more info"</span><span class="token punctuation">)</span>
+    <span class="token keyword">elif</span> <span class="token operator">not</span> options<span class="token punctuation">.</span>new_mac<span class="token punctuation">:</span>
+        parser<span class="token punctuation">.</span>error<span class="token punctuation">(</span><span class="token string">"[-] Please specify an new mac, use --help for more info"</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> options
+
+
+<span class="token keyword">import</span> subprocess
+
+
+<span class="token keyword">def</span> <span class="token function">change_mac</span><span class="token punctuation">(</span>interface<span class="token punctuation">,</span> new_mac<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"[+] Changing MAC address for "</span> <span class="token operator">+</span> interface <span class="token operator">+</span> <span class="token string">" to "</span> <span class="token operator">+</span> new_mac<span class="token punctuation">)</span>
+
+    subprocess<span class="token punctuation">.</span>call<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'ifconfig'</span><span class="token punctuation">,</span> interface<span class="token punctuation">,</span> <span class="token string">'down'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    subprocess<span class="token punctuation">.</span>call<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'ifconfig'</span><span class="token punctuation">,</span> interface<span class="token punctuation">,</span> <span class="token string">"hw"</span><span class="token punctuation">,</span> <span class="token string">"ether"</span><span class="token punctuation">,</span> new_mac<span class="token punctuation">]</span><span class="token punctuation">)</span>
+    subprocess<span class="token punctuation">.</span>call<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'ifconfig'</span><span class="token punctuation">,</span> interface<span class="token punctuation">,</span> <span class="token string">'up'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    subprocess<span class="token punctuation">.</span>call<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">"ifconfig"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+
+options <span class="token operator">=</span> get_arguments<span class="token punctuation">(</span><span class="token punctuation">)</span>
+change_mac<span class="token punctuation">(</span>options<span class="token punctuation">.</span>interface<span class="token punctuation">,</span> options<span class="token punctuation">.</span>new_mac<span class="token punctuation">)</span>
+</code></pre>
+<h1 id="03-MAC-Changer-Algorithm-Design"><a href="#03-MAC-Changer-Algorithm-Design" class="headerlink" title="03 - MAC Changer - Algorithm Design"></a>03 - MAC Changer - Algorithm Design</h1><h2 id="001-Introduction-to-Algorithms"><a href="#001-Introduction-to-Algorithms" class="headerlink" title="001 Introduction to Algorithms"></a>001 Introduction to Algorithms</h2><p><img src="f095224a.png"></p>
+<h2 id="002-Reading-Output-Returned-By-System-Commands"><a href="#002-Reading-Output-Returned-By-System-Commands" class="headerlink" title="002 Reading Output Returned By System Commands"></a>002 Reading Output Returned By System Commands</h2><pre class=" language-python"><code class="language-python">ifconfig_result <span class="token operator">=</span> subprocess<span class="token punctuation">.</span>check_output<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'ifconfig'</span><span class="token punctuation">,</span> options<span class="token punctuation">.</span>interface<span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>ifconfig_result<span class="token punctuation">)</span>
+</code></pre>
+<p><img src="16d698aa.png"><img src="72e0a018.png"></p>
+<h2 id="003-Introduction-to-Regular-Expressions-Regex"><a href="#003-Introduction-to-Regular-Expressions-Regex" class="headerlink" title="003 Introduction to Regular Expressions (Regex)"></a>003 Introduction to Regular Expressions (Regex)</h2><p><img src="99b63b61.png"><img src="56efe09b.png"><img src="3debb25c.png"></p>
+<h2 id="004-Extracting-a-Substring-Using-Regex"><a href="#004-Extracting-a-Substring-Using-Regex" class="headerlink" title="004 Extracting a Substring Using Regex"></a>004 Extracting a Substring Using Regex</h2><pre class=" language-python"><code class="language-python">ifconfig_result <span class="token operator">=</span> subprocess<span class="token punctuation">.</span>check_output<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'ifconfig'</span><span class="token punctuation">,</span> options<span class="token punctuation">.</span>interface<span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>ifconfig_result<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># TypeError: cannot use a string pattern on a bytes-like object</span>
+<span class="token comment" spellcheck="true"># mac_addr_search_res = re.search(r"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", ifconfig_result)</span>
+mac_addr_search_res <span class="token operator">=</span> re<span class="token punctuation">.</span>search<span class="token punctuation">(</span>r<span class="token string">"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w"</span><span class="token punctuation">,</span> ifconfig_result<span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">if</span> mac_addr_search_res<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>mac_addr_search_res<span class="token punctuation">.</span>group<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">else</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"[-] Could not read MAC address."</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="005-Refactoring-amp-Housekeeping"><a href="#005-Refactoring-amp-Housekeeping" class="headerlink" title="005 Refactoring &amp; Housekeeping"></a>005 Refactoring &amp; Housekeeping</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">def</span> <span class="token function">get_current_mac</span><span class="token punctuation">(</span>interface<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ifconfig_result <span class="token operator">=</span> subprocess<span class="token punctuation">.</span>check_output<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'ifconfig'</span><span class="token punctuation">,</span> interface<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># TypeError: cannot use a string pattern on a bytes-like object</span>
+    <span class="token comment" spellcheck="true"># mac_addr_search_res = re.search(r"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", ifconfig_result)</span>
+    mac_addr_search_res <span class="token operator">=</span> re<span class="token punctuation">.</span>search<span class="token punctuation">(</span>r<span class="token string">"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w"</span><span class="token punctuation">,</span> ifconfig_result<span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token string">'utf8'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> mac_addr_search_res<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> mac_addr_search_res<span class="token punctuation">.</span>group<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"[-] Could not read MAC address."</span><span class="token punctuation">)</span>
+
+
+current_mac <span class="token operator">=</span> get_current_mac<span class="token punctuation">(</span>options<span class="token punctuation">.</span>interface<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Current MAC: "</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>current_mac<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="006-Implementing-The-Validation-Algorithm"><a href="#006-Implementing-The-Validation-Algorithm" class="headerlink" title="006 Implementing The Validation Algorithm"></a>006 Implementing The Validation Algorithm</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true">###</span>
+
+options <span class="token operator">=</span> get_arguments<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_current_mac</span><span class="token punctuation">(</span>interface<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ifconfig_result <span class="token operator">=</span> subprocess<span class="token punctuation">.</span>check_output<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">'ifconfig'</span><span class="token punctuation">,</span> interface<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    <span class="token comment" spellcheck="true"># TypeError: cannot use a string pattern on a bytes-like object</span>
+    <span class="token comment" spellcheck="true"># mac_addr_search_res = re.search(r"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", ifconfig_result)</span>
+    <span class="token comment" spellcheck="true"># mac_addr_search_res = re.search(r"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w", ifconfig_result.decode('utf8'))</span>
+    mac_addr_search_res <span class="token operator">=</span> re<span class="token punctuation">.</span>search<span class="token punctuation">(</span>r<span class="token string">"\w\w:\w\w:\w\w:\w\w:\w\w:\w\w"</span><span class="token punctuation">,</span> str<span class="token punctuation">(</span>ifconfig_result<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> mac_addr_search_res<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> mac_addr_search_res<span class="token punctuation">.</span>group<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token keyword">else</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"[-] Could not read MAC address."</span><span class="token punctuation">)</span>
+
+
+current_mac <span class="token operator">=</span> get_current_mac<span class="token punctuation">(</span>options<span class="token punctuation">.</span>interface<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Current MAC: "</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>current_mac<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+change_mac<span class="token punctuation">(</span>options<span class="token punctuation">.</span>interface<span class="token punctuation">,</span> options<span class="token punctuation">.</span>new_mac<span class="token punctuation">)</span>
+
+current_mac <span class="token operator">=</span> get_current_mac<span class="token punctuation">(</span>options<span class="token punctuation">.</span>interface<span class="token punctuation">)</span>
+<span class="token keyword">if</span> current_mac <span class="token operator">==</span> options<span class="token punctuation">.</span>new_mac<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"[+] MAC address was successfully changed to "</span> <span class="token operator">+</span> current_mac<span class="token punctuation">)</span>
+<span class="token keyword">else</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"[-] MAC address did not get changed"</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="007-Python-3-Compatibility"><a href="#007-Python-3-Compatibility" class="headerlink" title="007 Python 3 Compatibility"></a>007 Python 3 Compatibility</h2><h1 id="04-Programming-a-Network-Scanner"><a href="#04-Programming-a-Network-Scanner" class="headerlink" title="04 - Programming a Network Scanner"></a>04 - Programming a Network Scanner</h1><h2 id="001-Introduction-amp-Teaser"><a href="#001-Introduction-amp-Teaser" class="headerlink" title="001 Introduction &amp; Teaser"></a>001 Introduction &amp; Teaser</h2><p><img src="45e68df8.png"><img src="3a9ee3e6.png"><img src="5d0b6349.png"><img src="e9e95f58.png"><img src="5f18a238.png"><img src="848c5840.png"></p>
+<h2 id="002-Installing-Windows-as-a-Virtual-Machine"><a href="#002-Installing-Windows-as-a-Virtual-Machine" class="headerlink" title="002 Installing Windows as a Virtual Machine"></a>002 Installing Windows as a Virtual Machine</h2><p><img src="e1ffe2c8.png"><img src="1297a813.png"></p>
+<h2 id="003-Introduction-to-ARP"><a href="#003-Introduction-to-ARP" class="headerlink" title="003 Introduction to ARP"></a>003 Introduction to ARP</h2><p><img src="972c088a.png"><img src="1f643510.png"><img src="fe56e4a8.png"><img src="aa83b7ef.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> scapy<span class="token punctuation">.</span>all <span class="token keyword">as</span> scapy
+
+<span class="token keyword">def</span> <span class="token function">scan</span><span class="token punctuation">(</span>ip<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    scapy<span class="token punctuation">.</span>arping<span class="token punctuation">(</span>ip<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># route -n</span>
+scan<span class="token punctuation">(</span><span class="token string">"192.168.92.2/24"</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="004-Designing-an-Algorithm-To-Discover-Clients-on-The-Same-Network"><a href="#004-Designing-an-Algorithm-To-Discover-Clients-on-The-Same-Network" class="headerlink" title="004 Designing an Algorithm To Discover Clients on The Same Network"></a>004 Designing an Algorithm To Discover Clients on The Same Network</h2>
             </div>
             <hr/>
 
@@ -1092,47 +1200,45 @@ gitment.render('gitment-content');
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fa fa-dot-circle-o"></i>&nbsp;本篇
-            </div>
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2024/01/18/security/learn-python-ethical-hacking-from-scratch/a88d864e/">
+                <a href="/2024/01/18/ai/data-science-in-python-data-prep-eda/a88d864e/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/17.jpg" class="responsive-img" alt="Learn Python & Ethical Hacking From Scratch">
+                        <img src="/medias/featureimages/16.jpg" class="responsive-img" alt="Data Science in Python Data Prep & EDA">
                         
-                        <span class="card-title">Learn Python & Ethical Hacking From Scratch</span>
+                        <span class="card-title">Data Science in Python Data Prep & EDA</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">01 - Introduction001 Teaser
-002 Course Introduction
-003 Introduction to Python Programming &amp; Ethical Hacking
-004 Lab</div>
+                    <div class="summary">1. Getting Started2. About This Series
+3. Course Structure &amp; Outline
+6. Introducing the Course Project
+7. Setting Ex</div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2024-01-18
-                            </span>
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2024-01-18
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" class="post-category" target="_blank">
-                                    网络安全
+                            <a href="/categories/ai/" class="post-category" target="_blank">
+                                    ai
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/" target="_blank">
-                        <span class="chip bg-color">网络安全</span>
+                    <a href="/tags/ai/" target="_blank">
+                        <span class="chip bg-color">ai</span>
                     </a>
                     
                 </div>
@@ -1260,7 +1366,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">710.1k</span>
+                <span class="white-color">713.3k</span>
             
 
             

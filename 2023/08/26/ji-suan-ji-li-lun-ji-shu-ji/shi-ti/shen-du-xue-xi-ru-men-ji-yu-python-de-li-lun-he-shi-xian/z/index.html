@@ -372,14 +372,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        30.1k
+                        31.1k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        121 分
+                        125 分
                     </div>
                     
                 
@@ -3317,10 +3317,134 @@ plt<span class="token punctuation">.</span>show<span class="token punctuation">(
 <h2 id="6-3-Batch-Normalization"><a href="#6-3-Batch-Normalization" class="headerlink" title="6.3 Batch Normalization"></a>6.3 Batch Normalization</h2><blockquote>
 <p>上一章讲述了我们通过合适的权重初始值可以使各层激活值拥有适当的广度, 那么如果”强制地”调整激活值的分布又会怎样?<br>Batch Normalization方法就是基于这个想法而产生的</p>
 </blockquote>
-<h3 id="Batch-Normalization-的算法"><a href="#Batch-Normalization-的算法" class="headerlink" title="Batch Normalization 的算法"></a>Batch Normalization 的算法</h3><ul>
+<h3 id="6-3-1-Batch-Normalization-的算法"><a href="#6-3-1-Batch-Normalization-的算法" class="headerlink" title="6.3.1 Batch Normalization 的算法"></a>6.3.1 Batch Normalization 的算法</h3><ul>
 <li>内心os: 数学式子不用特意写latex, 直接用本地解析器解析然后截图不就好了… 之前还特意写, 心累</li>
 </ul>
+<blockquote>
+<p>Batch Normalization(简称Batch Norm)是2015年提出的, 有以下优点</p>
+</blockquote>
+<ul>
+<li>可以使学习快速进行((可以增大学习率))</li>
+<li>不那么依赖初始值((对应初始值不用那么神经质))</li>
+<li>抑制过拟合((降低Dropout等的必要性))</li>
+</ul>
+<blockquote>
+<p>它的思路是调整各层的激活值分布使其拥有适当的广度. 为此, 要向神经网络中插入对数据分布进行正规化的层, 即Batch<br>Normalization层</p>
+</blockquote>
+<p><img src="53d51df5.png"></p>
+<blockquote>
+<p>Batch Norm, 以进行学习时的mini-batch为单位, 按mini-batch进行正规化. 就是进行使数据分布的均值为0、方差为1的正规化</p>
+</blockquote>
+<p><img src="25d47bf8.png" alt="\mu_B \gets \frac{1}{m} \sum_{i=1}^m x_i "><br><img src="c45392c6.png" alt="\sigma^2_B \gets \frac{1}{m} \sum_{i=1}^m (x_i - \mu_B)^2"><br><img src="ec22e8a3.png" alt="\hat{x_i} \gets \frac{x_i - \mu_B }{\sqrt[]{\sigma^2_B+ \varepsilon}}"></p>
+<blockquote>
+<p>这里对mini-batch的m个输入数据的集合B={x1,x2,…,xm}求均值μ 和 σ. 再对输入数据进行均值为0, 方差为1的正规化. з是微小值,<br>防止出现0的情况</p>
+</blockquote>
+<blockquote>
+<p>将这个处理插入到激活函数的前面或后面, 可以减少数据分布的偏向. 接着, Batch Norm层会对正规化后的数据进行缩放和平移的变换.</p>
+</blockquote>
+<p><img src="062b6fe8.png" alt=" y_i \gets \gamma \hat{x}_i+ \beta"></p>
+<blockquote>
+<p>γ和β是参数, 一开始γ=1, β=0, 然后通过学习调整到合适的值</p>
+</blockquote>
+<p><img src="67d6bc64.png"></p>
+<blockquote>
+<p>Batch Norm的反向传播可以看Frederik Kratzert的博客”Understanding the backward pass through Batch Normalization Layer”</p>
+</blockquote>
+<h3 id="6-3-2-Batch-Normalization的评估"><a href="#6-3-2-Batch-Normalization的评估" class="headerlink" title="6.3.2 Batch Normalization的评估"></a>6.3.2 Batch Normalization的评估</h3><blockquote>
+<p>使用Batch Norm层进行实验((源代码: ch06/batch_norm_test.py))</p>
+</blockquote>
+<p><img src="444a297a.png"></p>
+<blockquote>
+<p>使用Batch Norm后, 学习得更快. 下面的实验给予不同的初始值尺度, 观察效果.</p>
+</blockquote>
+<p><img src="40c896ea.png"></p>
+<blockquote>
+<p>几乎所有使用Batch Norm的学习都更快, 而如果没有好的初始值, 又不使用Batch Norm, 学习将无法进行</p>
+</blockquote>
+<blockquote>
+<p>综上, Batch Norm可以推动学习进行, 并且, 对<em>权重初始值健壮</em>((即不那么依赖初始值)).</p>
+</blockquote>
+<h2 id="6-4-正则化"><a href="#6-4-正则化" class="headerlink" title="6.4 正则化"></a>6.4 正则化</h2><blockquote>
+<p><strong>过拟合</strong>指的是只能拟合训练数据, 但是不能很好地拟合不包含在训练数据中的其他数据的状态.<br>机器学习的目标是提高泛化能力, 即便是没有包含在训练数据里的未观测数据, 也希望模型可以进行正确的识别</p>
+</blockquote>
+<h3 id="6-4-1-过拟合"><a href="#6-4-1-过拟合" class="headerlink" title="6.4.1 过拟合"></a>6.4.1 过拟合</h3><blockquote>
+<p>发生过拟合的原因主要有</p>
+</blockquote>
+<ul>
+<li>模型拥有大量参数、表现力强</li>
+<li>训练数据少</li>
+</ul>
+<blockquote>
+<p>我们从MNIST数据集只拿300个((满足’训练数据少’)), 使用7层网络, 每层100个神经元, 激活函数ReLU((满足’拥有大量参数’)), 进行训练</p>
+</blockquote>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">import</span> os
+<span class="token keyword">import</span> sys
 
+sys<span class="token punctuation">.</span>path<span class="token punctuation">.</span>append<span class="token punctuation">(</span>os<span class="token punctuation">.</span>pardir<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 为了导入父目录的文件而进行的设定</span>
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+<span class="token keyword">from</span> dataset<span class="token punctuation">.</span>mnist <span class="token keyword">import</span> load_mnist
+<span class="token keyword">from</span> common<span class="token punctuation">.</span>util <span class="token keyword">import</span> smooth_curve
+<span class="token keyword">from</span> common<span class="token punctuation">.</span>multi_layer_net <span class="token keyword">import</span> MultiLayerNet
+<span class="token keyword">from</span> common<span class="token punctuation">.</span>optimizer <span class="token keyword">import</span> SGD
+
+<span class="token punctuation">(</span>x_train<span class="token punctuation">,</span> t_train<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>x_test<span class="token punctuation">,</span> t_test<span class="token punctuation">)</span> <span class="token operator">=</span> load_mnist<span class="token punctuation">(</span>normalize<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 为了再现过拟合, 减少学习数据</span>
+x_train <span class="token operator">=</span> x_train<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">300</span><span class="token punctuation">]</span>
+t_train <span class="token operator">=</span> t_train<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token number">300</span><span class="token punctuation">]</span>
+
+<span class="token comment" spellcheck="true"># 神经网络</span>
+network <span class="token operator">=</span> MultiLayerNet<span class="token punctuation">(</span>input_size<span class="token operator">=</span><span class="token number">784</span><span class="token punctuation">,</span> hidden_size_list<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">100</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">]</span><span class="token punctuation">,</span> output_size<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 优化器</span>
+optimizer <span class="token operator">=</span> SGD<span class="token punctuation">(</span>lr<span class="token operator">=</span><span class="token number">0.01</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 学习率为0.01的SGD更新参数</span>
+
+max_epochs <span class="token operator">=</span> <span class="token number">201</span>
+train_size <span class="token operator">=</span> x_train<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+batch_size <span class="token operator">=</span> <span class="token number">100</span>
+
+train_loss_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+train_acc_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+test_acc_list <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+
+iter_per_epoch <span class="token operator">=</span> max<span class="token punctuation">(</span>train_size <span class="token operator">/</span> batch_size<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+epoch_cnt <span class="token operator">=</span> <span class="token number">0</span>
+
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1000000000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    batch_mask <span class="token operator">=</span> np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>choice<span class="token punctuation">(</span>train_size<span class="token punctuation">,</span> batch_size<span class="token punctuation">)</span>
+    x_batch <span class="token operator">=</span> x_train<span class="token punctuation">[</span>batch_mask<span class="token punctuation">]</span>
+    t_batch <span class="token operator">=</span> t_train<span class="token punctuation">[</span>batch_mask<span class="token punctuation">]</span>
+
+    <span class="token comment" spellcheck="true"># 计算梯度</span>
+    grads <span class="token operator">=</span> network<span class="token punctuation">.</span>gradient<span class="token punctuation">(</span>x_batch<span class="token punctuation">,</span> t_batch<span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true"># 更新梯度</span>
+    optimizer<span class="token punctuation">.</span>update<span class="token punctuation">(</span>network<span class="token punctuation">.</span>params<span class="token punctuation">,</span> grads<span class="token punctuation">)</span>
+
+    <span class="token keyword">if</span> i <span class="token operator">%</span> iter_per_epoch <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">:</span>
+        train_acc <span class="token operator">=</span> network<span class="token punctuation">.</span>accuracy<span class="token punctuation">(</span>x_train<span class="token punctuation">,</span> t_train<span class="token punctuation">)</span>
+        test_acc <span class="token operator">=</span> network<span class="token punctuation">.</span>accuracy<span class="token punctuation">(</span>x_test<span class="token punctuation">,</span> t_test<span class="token punctuation">)</span>
+        train_acc_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>train_acc<span class="token punctuation">)</span>
+        test_acc_list<span class="token punctuation">.</span>append<span class="token punctuation">(</span>test_acc<span class="token punctuation">)</span>
+
+        epoch_cnt <span class="token operator">+=</span> <span class="token number">1</span>
+        <span class="token keyword">if</span> epoch_cnt <span class="token operator">>=</span> max_epochs<span class="token punctuation">:</span>
+            <span class="token keyword">break</span>
+            
+<span class="token comment" spellcheck="true"># 绘制图形</span>
+markers <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">'train'</span><span class="token punctuation">:</span> <span class="token string">'o'</span><span class="token punctuation">,</span> <span class="token string">'test'</span><span class="token punctuation">:</span> <span class="token string">'s'</span><span class="token punctuation">}</span>
+x <span class="token operator">=</span> np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span>max_epochs<span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>x<span class="token punctuation">,</span> train_acc_list<span class="token punctuation">,</span> marker<span class="token operator">=</span><span class="token string">'o'</span><span class="token punctuation">,</span> label<span class="token operator">=</span><span class="token string">'train'</span><span class="token punctuation">,</span> markevery<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>x<span class="token punctuation">,</span> test_acc_list<span class="token punctuation">,</span> marker<span class="token operator">=</span><span class="token string">'s'</span><span class="token punctuation">,</span> label<span class="token operator">=</span><span class="token string">'test'</span><span class="token punctuation">,</span> markevery<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>xlabel<span class="token punctuation">(</span><span class="token string">"epochs"</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>ylabel<span class="token punctuation">(</span><span class="token string">"accuracy"</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>ylim<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>legend<span class="token punctuation">(</span>loc<span class="token operator">=</span><span class="token string">'lower right'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<p><img src="97ce05c1.png"></p>
+<blockquote>
+<p>可以看出, 过了100个epoch后, 用训练数据的识别精度几乎都接近100%, 但是测试数据则差很多, 这是因为只拟合了训练数据,<br>而对没有使用的一般数据((测试数据))拟合得不好</p>
+</blockquote>
+<h3 id="6-4-2-权值衰减"><a href="#6-4-2-权值衰减" class="headerlink" title="6.4.2 权值衰减"></a>6.4.2 权值衰减</h3>
             </div>
             <hr/>
 
@@ -3995,7 +4119,7 @@ kaggle
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">710.1k</span>
+                <span class="white-color">713.3k</span>
             
 
             
