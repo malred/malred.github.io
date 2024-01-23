@@ -371,14 +371,14 @@ cla">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        103
+                        836
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        1 分
+                        5 分
                     </div>
                     
                 
@@ -413,13 +413,270 @@ lli test.ll
 <p>.bc文件内容是比特码</p>
 </blockquote>
 <p><img src="3ca9d284.png"><img src="6184446a.png"><img src="8a310554.png"><br><img src="b5c4dc29.png"><img src="2c4bce0b.png" alt="用ll生成本机汇编代码"><img src="4e0a007f.png"></p>
-<h2 id="2-LLVM-program-structure-Module"><a href="#2-LLVM-program-structure-Module" class="headerlink" title="2 - LLVM program structure Module"></a>2 - LLVM program structure Module</h2><p><img src="4e1d3568.png"><img src="b480b862.png"><img src="e1345141/2a9c9f63.png"></p>
-<pre class=" language-cpp"><code class="language-cpp">
+<h2 id="2-LLVM-program-structure-Module"><a href="#2-LLVM-program-structure-Module" class="headerlink" title="2 - LLVM program structure Module"></a>2 - LLVM program structure Module</h2><p><img src="4e1d3568.png"><img src="b480b862.png"><img src="2a9c9f63.png"><img src="0df01199.png"></p>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token comment" spellcheck="true">// src/EvaLLVM.h</span>
+<span class="token comment" spellcheck="true">/**
+* Eva to LLVM IR compiler
+*/</span>
+
+<span class="token macro property">#<span class="token directive keyword">ifndef</span> EvaLLVM_h</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> EvaLLVM_h</span>
+
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string></span></span>
+
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"llvm/IR/IRBuilder.h"</span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"llvm/IR/LLVMContext.h"</span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"llvm/IR/Module.h"</span> </span>
+
+<span class="token keyword">using</span> <span class="token keyword">namespace</span> std<span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">EvaLLVM</span> <span class="token punctuation">{</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">EvaLLVM</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token function">moduleInit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+    * Executes a program
+    */</span>
+    <span class="token keyword">void</span> <span class="token function">exec</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token operator">::</span>string<span class="token operator">&amp;</span> program<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 1. Parse the program</span>
+        <span class="token comment" spellcheck="true">// auto ast = parser->parser(program)</span>
+
+        <span class="token comment" spellcheck="true">// 2. Compile to LLVM IR</span>
+        <span class="token comment" spellcheck="true">// compile(ast);</span>
+
+        <span class="token comment" spellcheck="true">// Print generated code</span>
+        module<span class="token operator">-</span><span class="token operator">></span><span class="token function">print</span><span class="token punctuation">(</span>llvm<span class="token operator">::</span><span class="token function">outs</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">nullptr</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token comment" spellcheck="true">// llvm�����������print</span>
+
+        <span class="token comment" spellcheck="true">// 3. Save module IR to file</span>
+        <span class="token function">saveModuleToFile</span><span class="token punctuation">(</span><span class="token string">"./out.ll"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+
+    <span class="token comment" spellcheck="true">/**
+        Saves IR to file
+    */</span>
+    <span class="token keyword">void</span> <span class="token function">saveModuleToFile</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token operator">::</span>string<span class="token operator">&amp;</span> fileName<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        std<span class="token operator">::</span>error_code errorCode<span class="token punctuation">;</span>
+        llvm<span class="token operator">::</span>raw_fd_ostream <span class="token function">outLL</span><span class="token punctuation">(</span>fileName<span class="token punctuation">,</span> errorCode<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        module<span class="token operator">-</span><span class="token operator">></span><span class="token function">print</span><span class="token punctuation">(</span>outLL<span class="token punctuation">,</span> <span class="token keyword">nullptr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+        Initialize the module
+    */</span>
+    <span class="token keyword">void</span> <span class="token function">moduleInit</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Open a new context and module</span>
+        ctx <span class="token operator">=</span> std<span class="token operator">::</span>make_unique<span class="token operator">&lt;</span>llvm<span class="token operator">::</span>LLVMContext<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        module <span class="token operator">=</span> std<span class="token operator">::</span>make_unique<span class="token operator">&lt;</span>llvm<span class="token operator">::</span>Module<span class="token operator">></span><span class="token punctuation">(</span><span class="token string">"EvaLLVM"</span><span class="token punctuation">,</span> <span class="token operator">*</span>ctx<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// Create a new builder for the module</span>
+        builder <span class="token operator">=</span> std<span class="token operator">::</span>make_unique<span class="token operator">&lt;</span>llvm<span class="token operator">::</span>IRBuilder<span class="token operator">&lt;</span><span class="token operator">>></span><span class="token punctuation">(</span><span class="token operator">*</span>ctx<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+    * Global LLVM context
+    * It owns and manages the core "global" data of LLVM's core
+    * infrastructure, including the type and constant unique tables.
+    */</span>
+    std<span class="token operator">::</span>unique_ptr<span class="token operator">&lt;</span>llvm<span class="token operator">::</span>LLVMContext<span class="token operator">></span> ctx<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/**
+        A Module instance is used to store all the information related to an
+        LLVM module.Modules are the top level container of all other LLVM
+        Intermediate Representation (IR)objects.Each module directly contains a
+        list of globals variables,a list of functions,a list of libraries (or
+        other modules)this module depends on,a symbol table,and various data
+        about the target's characteristics.
+        A module maintains a Globallist object that is used to hold all
+        constant references to global variables in the module.When a global
+        variable is destroyed,it should have no entries in the GlobalList.
+        The main container class for the LLVM Intermediate Representation.
+        */</span>
+    std<span class="token operator">::</span>unique_ptr<span class="token operator">&lt;</span>llvm<span class="token operator">::</span>Module<span class="token operator">></span> module<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/**
+    IR Builder.
+    This provides a uniform API for creating instructions and inserting
+    them into a basic block:either at the end of a BasicBlock,or at a
+    specific iterator location in a block.
+    */</span>
+    std<span class="token operator">::</span>unique_ptr<span class="token operator">&lt;</span>llvm<span class="token operator">::</span>IRBuilder<span class="token operator">&lt;</span><span class="token operator">>></span> builder<span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token macro property">#<span class="token directive keyword">endif</span></span>
+</code></pre>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token comment" spellcheck="true">// src/eva-llvm.cpp</span>
+<span class="token comment" spellcheck="true">/**
+    Eva LLVM executable
+*/</span>
+
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"./EvaLLVM.h"</span></span>
+
+<span class="token keyword">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token keyword">int</span> argc<span class="token punctuation">,</span> <span class="token keyword">char</span> <span class="token keyword">const</span><span class="token operator">*</span> argv<span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+     <span class="token comment" spellcheck="true">/**
+        Program to execute
+     */</span>
+    std<span class="token operator">::</span>string program <span class="token operator">=</span> R<span class="token string">"(42)"</span><span class="token punctuation">;</span>
+
+     <span class="token comment" spellcheck="true">/**
+        Compiler instance
+     */</span>
+    EvaLLVM vm<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">/**
+        Generate LLVM IR
+    */</span>
+    vm<span class="token punctuation">.</span><span class="token function">exec</span><span class="token punctuation">(</span>program<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
 </code></pre>
 <pre class=" language-shell"><code class="language-shell">clang++ -o eva-llvm `llvm-config --cxxflags --ldflags --system-libs --libs core` eva-llvm.cpp
 </code></pre>
-<p>… &gt; 以后在Ubuntu再试</p>
+<p><img src="f71eac52.png"></p>
+<h2 id="3-Basic-numbers-Main-function"><a href="#3-Basic-numbers-Main-function" class="headerlink" title="3 - Basic numbers Main function"></a>3 - Basic numbers Main function</h2><pre class=" language-shell"><code class="language-shell"># src/compile-run.sh
+# compile
+clang++ -o eva-llvm `llvm-config --cxxflags --ldflags --system-libs --libs core` eva-llvm.cpp
+# run
+./eva-llvm
+# execute generated IR
+lli ./out.ll
+</code></pre>
+<p><img src="050e5504.png" alt="main函数缺失"><img src="8c1797cf.png"><img src="e10d377c.png"><img src="552b35c1.png"><br><img src="b1aa2b82.png"><img src="5e94d56b.png"><img src="47f27ae9.png"></p>
+<pre class=" language-cpp"><code class="language-cpp"><span class="token comment" spellcheck="true">//src/EvaLLVM.h</span>
+<span class="token comment" spellcheck="true">/**
+* Eva to LLVM IR compiler
+*/</span>
 
+<span class="token macro property">#<span class="token directive keyword">ifndef</span> EvaLLVM_h</span>
+<span class="token macro property">#<span class="token directive keyword">define</span> EvaLLVM_h</span>
+
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;iostream></span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">&lt;string></span></span>
+
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"llvm/IR/IRBuilder.h"</span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"llvm/IR/LLVMContext.h"</span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"llvm/IR/Module.h"</span></span>
+<span class="token macro property">#<span class="token directive keyword">include</span> <span class="token string">"llvm/IR/Verifier.h"</span></span>
+
+<span class="token keyword">using</span> <span class="token keyword">namespace</span> std<span class="token punctuation">;</span>
+
+<span class="token keyword">class</span> <span class="token class-name">EvaLLVM</span> <span class="token punctuation">{</span>
+<span class="token keyword">public</span><span class="token operator">:</span>
+    <span class="token function">EvaLLVM</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token function">moduleInit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+    * Executes a program
+    */</span>
+    <span class="token keyword">void</span> <span class="token function">exec</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token operator">::</span>string <span class="token operator">&amp;</span>program<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 1. Parse the program</span>
+        <span class="token comment" spellcheck="true">// auto ast = parser->parser(program)</span>
+
+        <span class="token comment" spellcheck="true">// 2. Compile to LLVM IR</span>
+        <span class="token comment" spellcheck="true">// compile(ast);</span>
+        <span class="token function">compile</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment" spellcheck="true">// Print generated code</span>
+        module<span class="token operator">-</span><span class="token operator">></span><span class="token function">print</span><span class="token punctuation">(</span>llvm<span class="token operator">::</span><span class="token function">outs</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token keyword">nullptr</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        std<span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"\n"</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">/// </span>
+    <span class="token punctuation">}</span>
+
+<span class="token keyword">private</span><span class="token operator">:</span>
+    <span class="token comment" spellcheck="true">/**
+      * Compiles an expression.
+      */</span>
+    <span class="token keyword">void</span> <span class="token function">compile</span><span class="token punctuation">(</span><span class="token comment" spellcheck="true">/* ast */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// 1. Create main function:</span>
+        fn <span class="token operator">=</span> <span class="token function">createFunction</span><span class="token punctuation">(</span><span class="token string">"main"</span><span class="token punctuation">,</span> llvm<span class="token operator">::</span>FunctionType<span class="token operator">::</span><span class="token function">get</span><span class="token punctuation">(</span>
+                <span class="token comment" spellcheck="true">/* return type */</span> builder<span class="token operator">-</span><span class="token operator">></span><span class="token function">getInt32Ty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                <span class="token comment" spellcheck="true">/* vararg可变长度 */</span> <span class="token boolean">false</span>
+        <span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// 2. Compile main body:</span>
+        <span class="token keyword">auto</span> result <span class="token operator">=</span> <span class="token function">gen</span><span class="token punctuation">(</span><span class="token comment" spellcheck="true">/* ast */</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// Cast to i32 to return from main:</span>
+        <span class="token keyword">auto</span> i32Result <span class="token operator">=</span>
+                builder<span class="token operator">-</span><span class="token operator">></span><span class="token function">CreateIntCast</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> builder<span class="token operator">-</span><span class="token operator">></span><span class="token function">getInt32Ty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        builder<span class="token operator">-</span><span class="token operator">></span><span class="token function">CreateRet</span><span class="token punctuation">(</span>i32Result<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Main compile loop.
+     */</span>
+    llvm<span class="token operator">::</span>Value <span class="token operator">*</span><span class="token function">gen</span><span class="token punctuation">(</span><span class="token comment" spellcheck="true">/* exp */</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> builder<span class="token operator">-</span><span class="token operator">></span><span class="token function">getInt32</span><span class="token punctuation">(</span><span class="token number">42</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Creates a function
+     */</span>
+    llvm<span class="token operator">::</span>Function <span class="token operator">*</span><span class="token function">createFunction</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token operator">::</span>string <span class="token operator">&amp;</span>fnName<span class="token punctuation">,</span>
+                                   llvm<span class="token operator">::</span>FunctionType <span class="token operator">*</span>fnType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment" spellcheck="true">// Function prototype might already be defined:</span>
+        <span class="token keyword">auto</span> fn <span class="token operator">=</span> module<span class="token operator">-</span><span class="token operator">></span><span class="token function">getFunction</span><span class="token punctuation">(</span>fnName<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// If not,allocate the function:</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>fn <span class="token operator">==</span> <span class="token keyword">nullptr</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            fn <span class="token operator">=</span> <span class="token function">createFunctionProto</span><span class="token punctuation">(</span>fnName<span class="token punctuation">,</span> fnType<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token function">createFunctionBlock</span><span class="token punctuation">(</span>fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> fn<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Creates function prototype (defines the function,but not the body)
+     */</span>
+    llvm<span class="token operator">::</span>Function <span class="token operator">*</span><span class="token function">createFunctionProto</span><span class="token punctuation">(</span><span class="token keyword">const</span> std<span class="token operator">::</span>string <span class="token operator">&amp;</span>fnName<span class="token punctuation">,</span>
+                                        llvm<span class="token operator">::</span>FunctionType <span class="token operator">*</span>fnType<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">auto</span> fn <span class="token operator">=</span> llvm<span class="token operator">::</span>Function<span class="token operator">::</span><span class="token function">Create</span><span class="token punctuation">(</span>fnType<span class="token punctuation">,</span> llvm<span class="token operator">::</span>Function<span class="token operator">::</span>ExternalLinkage<span class="token punctuation">,</span> fnName<span class="token punctuation">,</span> <span class="token operator">*</span>module<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token function">verifyFunction</span><span class="token punctuation">(</span><span class="token operator">*</span>fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> fn<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Creates function block.
+     */</span>
+    <span class="token keyword">void</span> <span class="token function">createFunctionBlock</span><span class="token punctuation">(</span>llvm<span class="token operator">::</span>Function <span class="token operator">*</span>fn<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">auto</span> entry <span class="token operator">=</span> <span class="token function">createBB</span><span class="token punctuation">(</span><span class="token string">"entry"</span><span class="token punctuation">,</span> fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token comment" spellcheck="true">// 代码传递到入口</span>
+        builder<span class="token operator">-</span><span class="token operator">></span><span class="token function">SetInsertPoint</span><span class="token punctuation">(</span>entry<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Creates a basic block.If the fn is passed,the block is
+     * automatically appended to the parent function.Otherwise,
+     * the block should later be appended manually via
+     * fn->getBasicBlockList().push_back(block);
+     */</span>
+    llvm<span class="token operator">::</span>BasicBlock <span class="token operator">*</span><span class="token function">createBB</span><span class="token punctuation">(</span>std<span class="token operator">::</span>string name<span class="token punctuation">,</span> llvm<span class="token operator">::</span>Function <span class="token operator">*</span>fn <span class="token operator">=</span> <span class="token keyword">nullptr</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">return</span> llvm<span class="token operator">::</span>BasicBlock<span class="token operator">::</span><span class="token function">Create</span><span class="token punctuation">(</span><span class="token operator">*</span>ctx<span class="token punctuation">,</span> name<span class="token punctuation">,</span> fn<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+
+    <span class="token comment" spellcheck="true">/**
+     * Currently compiling function.
+     */</span>
+    llvm<span class="token operator">::</span>Function <span class="token operator">*</span>fn<span class="token punctuation">;</span>
+
+    <span class="token comment" spellcheck="true">///</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token macro property">#<span class="token directive keyword">endif</span></span>
+</code></pre>
+<p><img src="db7bda43.png"></p>
+<pre class=" language-shell"><code class="language-shell"># compile
+clang++ -o eva-llvm `llvm-config --cxxflags --ldflags --system-libs --libs core` eva-llvm.cpp
+# run
+./eva-llvm
+# execute generated IR
+lli ./out.ll
+# print result
+echo $?
+printf "\n"
+</code></pre>
+<h2 id="4-Strings-Printf-operator"><a href="#4-Strings-Printf-operator" class="headerlink" title="4 - Strings Printf operator"></a>4 - Strings Printf operator</h2>
             </div>
             <hr/>
 
@@ -1073,7 +1330,7 @@ cargo add ndarr</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">713.3k</span>
+                <span class="white-color">718.8k</span>
             
 
             
