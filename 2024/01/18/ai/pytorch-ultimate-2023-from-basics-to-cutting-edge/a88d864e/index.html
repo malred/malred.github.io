@@ -370,14 +370,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        3.1k
+                        3.6k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        17 分
+                        20 分
                     </div>
                     
                 
@@ -1128,7 +1128,129 @@ sns<span class="token punctuation">.</span>scatterplot<span class="token punctua
 sns<span class="token punctuation">.</span>lineplot<span class="token punctuation">(</span>x<span class="token operator">=</span>X_list<span class="token punctuation">,</span> y<span class="token operator">=</span>y_pred<span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">'red'</span><span class="token punctuation">)</span>
 <span class="token comment" spellcheck="true"># %%</span>
 </code></pre>
-<h2 id="005-Exercise-Learning-Rate-and-Number-of-Epochs"><a href="#005-Exercise-Learning-Rate-and-Number-of-Epochs" class="headerlink" title="005 Exercise Learning Rate and Number of Epochs"></a>005 Exercise Learning Rate and Number of Epochs</h2>
+<h2 id="005-Exercise-Learning-Rate-and-Number-of-Epochs"><a href="#005-Exercise-Learning-Rate-and-Number-of-Epochs" class="headerlink" title="005 Exercise Learning Rate and Number of Epochs"></a>005 Exercise Learning Rate and Number of Epochs</h2><h2 id="006-Solution-Learning-Rate-and-Number-of-Epochs"><a href="#006-Solution-Learning-Rate-and-Number-of-Epochs" class="headerlink" title="006 Solution Learning Rate and Number of Epochs"></a>006 Solution Learning Rate and Number of Epochs</h2><p><img src="3cfd3cb7.png"><img src="04920b08.png"><img src="1d775cf5.png"><img src="eac72761.png"><img src="d8696f7a.png"><img src="8312cb70.png"></p>
+<h2 id="007-Batches-101"><a href="#007-Batches-101" class="headerlink" title="007 Batches (101)"></a>007 Batches (101)</h2><p><img src="4720c65d.png"><img src="4c77e7ba.png"></p>
+<h2 id="008-Batches-Coding"><a href="#008-Batches-Coding" class="headerlink" title="008 Batches (Coding)"></a>008 Batches (Coding)</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># %% packages</span>
+<span class="token keyword">import</span> graphlib
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
+<span class="token keyword">import</span> torch
+<span class="token keyword">import</span> torch<span class="token punctuation">.</span>nn <span class="token keyword">as</span> nn
+<span class="token keyword">import</span> seaborn <span class="token keyword">as</span> sns
+
+<span class="token comment" spellcheck="true"># %% data import</span>
+<span class="token comment" spellcheck="true"># cars_file = 'https://gist.githubusercontent.com/noamross/e5d3e859aa0c794be10b/raw/b999fb4425b54c63cab088c0ce2c0d6ce961a563/cars.csv'</span>
+cars <span class="token operator">=</span> pd<span class="token punctuation">.</span>read_csv<span class="token punctuation">(</span><span class="token string">'cars.csv'</span><span class="token punctuation">)</span>
+cars<span class="token punctuation">.</span>head<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %% visualise the model</span>
+sns<span class="token punctuation">.</span>scatterplot<span class="token punctuation">(</span>x<span class="token operator">=</span><span class="token string">'wt'</span><span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token string">'mpg'</span><span class="token punctuation">,</span> data<span class="token operator">=</span>cars<span class="token punctuation">)</span>
+sns<span class="token punctuation">.</span>regplot<span class="token punctuation">(</span>x<span class="token operator">=</span><span class="token string">'wt'</span><span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token string">'mpg'</span><span class="token punctuation">,</span> data<span class="token operator">=</span>cars<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %% convert data to tensor</span>
+X_list <span class="token operator">=</span> cars<span class="token punctuation">.</span>wt<span class="token punctuation">.</span>values
+X_np <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>X_list<span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+y_list <span class="token operator">=</span> cars<span class="token punctuation">.</span>mpg<span class="token punctuation">.</span>values
+y_np <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>y_list<span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+X <span class="token operator">=</span> torch<span class="token punctuation">.</span>from_numpy<span class="token punctuation">(</span>X_np<span class="token punctuation">)</span>
+y_true <span class="token operator">=</span> torch<span class="token punctuation">.</span>from_numpy<span class="token punctuation">(</span>y_np<span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># %%</span>
+<span class="token keyword">class</span> <span class="token class-name">LinearRegressionTorch</span><span class="token punctuation">(</span>nn<span class="token punctuation">.</span>Module<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> input_size<span class="token punctuation">,</span> output_size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        super<span class="token punctuation">(</span>LinearRegressionTorch<span class="token punctuation">,</span> self<span class="token punctuation">)</span><span class="token punctuation">.</span>__init__<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>linear <span class="token operator">=</span> nn<span class="token punctuation">.</span>Linear<span class="token punctuation">(</span>input_size<span class="token punctuation">,</span> output_size<span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">forward</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> self<span class="token punctuation">.</span>linear<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+
+
+input_dim <span class="token operator">=</span> <span class="token number">1</span>
+output_dim <span class="token operator">=</span> <span class="token number">1</span>
+model <span class="token operator">=</span> LinearRegressionTorch<span class="token punctuation">(</span>input_size<span class="token operator">=</span>input_dim<span class="token punctuation">,</span> output_size<span class="token operator">=</span>output_dim<span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>train<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %% Mean Squared Error</span>
+loss_fun <span class="token operator">=</span> nn<span class="token punctuation">.</span>MSELoss<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %% Optimizer</span>
+learning_rate <span class="token operator">=</span> <span class="token number">0.02</span>
+<span class="token comment" spellcheck="true"># test different values of too large 0.1 and too small 0.001</span>
+<span class="token comment" spellcheck="true"># best 0.02</span>
+optimizer <span class="token operator">=</span> torch<span class="token punctuation">.</span>optim<span class="token punctuation">.</span>SGD<span class="token punctuation">(</span>model<span class="token punctuation">.</span>parameters<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> lr<span class="token operator">=</span>learning_rate<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %% perform training</span>
+losses <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+slope<span class="token punctuation">,</span> bias <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+NUM_EPOCHS <span class="token operator">=</span> <span class="token number">1000</span>
+BATCH_SIZE <span class="token operator">=</span> <span class="token number">2</span>
+<span class="token keyword">for</span> epoch <span class="token keyword">in</span> range<span class="token punctuation">(</span>NUM_EPOCHS<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># [0, X.shape[0]], 每次取BATCH_SIZE个</span>
+    <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> X<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> BATCH_SIZE<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        <span class="token comment" spellcheck="true"># set gradients to zero</span>
+        optimizer<span class="token punctuation">.</span>zero_grad<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># forward pass</span>
+        <span class="token comment" spellcheck="true"># y_pred = model(X)</span>
+        y_pred <span class="token operator">=</span> model<span class="token punctuation">(</span>X<span class="token punctuation">[</span>i<span class="token punctuation">:</span>i <span class="token operator">+</span> BATCH_SIZE<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># calculate loss</span>
+        <span class="token comment" spellcheck="true"># loss = loss_fun(y_pred, y_true)</span>
+        loss <span class="token operator">=</span> loss_fun<span class="token punctuation">(</span>y_pred<span class="token punctuation">,</span> y_true<span class="token punctuation">[</span>i<span class="token punctuation">:</span>i <span class="token operator">+</span> BATCH_SIZE<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        loss<span class="token punctuation">.</span>backward<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># update parameters</span>
+        optimizer<span class="token punctuation">.</span>step<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># get parameters</span>
+        <span class="token keyword">for</span> name<span class="token punctuation">,</span> param <span class="token keyword">in</span> model<span class="token punctuation">.</span>named_parameters<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> param<span class="token punctuation">.</span>requires_grad<span class="token punctuation">:</span>
+                <span class="token keyword">if</span> name <span class="token operator">==</span> <span class="token string">'linear.weight'</span><span class="token punctuation">:</span>
+                    slope<span class="token punctuation">.</span>append<span class="token punctuation">(</span>param<span class="token punctuation">.</span>data<span class="token punctuation">.</span>numpy<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+                <span class="token keyword">if</span> name <span class="token operator">==</span> <span class="token string">'linear.bias'</span><span class="token punctuation">:</span>
+                    bias<span class="token punctuation">.</span>append<span class="token punctuation">(</span>param<span class="token punctuation">.</span>data<span class="token punctuation">.</span>numpy<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># store loss</span>
+        losses<span class="token punctuation">.</span>append<span class="token punctuation">(</span>float<span class="token punctuation">(</span>loss<span class="token punctuation">.</span>data<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># print loss</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>epoch <span class="token operator">%</span> <span class="token number">100</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"Epoch {epoch}, Loss: {loss.data}"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %% visualise model training</span>
+sns<span class="token punctuation">.</span>scatterplot<span class="token punctuation">(</span>x<span class="token operator">=</span>range<span class="token punctuation">(</span>len<span class="token punctuation">(</span>losses<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> y<span class="token operator">=</span>losses<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %% visualise the bias development</span>
+sns<span class="token punctuation">.</span>lineplot<span class="token punctuation">(</span>x<span class="token operator">=</span>range<span class="token punctuation">(</span>NUM_EPOCHS<span class="token punctuation">)</span><span class="token punctuation">,</span> y<span class="token operator">=</span>bias<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># %% visualise the slope development</span>
+sns<span class="token punctuation">.</span>lineplot<span class="token punctuation">(</span>x<span class="token operator">=</span>range<span class="token punctuation">(</span>NUM_EPOCHS<span class="token punctuation">)</span><span class="token punctuation">,</span> y<span class="token operator">=</span>slope<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %% check the result</span>
+model<span class="token punctuation">.</span>eval<span class="token punctuation">(</span><span class="token punctuation">)</span>
+y_pred <span class="token operator">=</span> <span class="token punctuation">[</span>i<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token keyword">for</span> i <span class="token keyword">in</span> model<span class="token punctuation">(</span>X<span class="token punctuation">)</span><span class="token punctuation">.</span>data<span class="token punctuation">.</span>numpy<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+y <span class="token operator">=</span> <span class="token punctuation">[</span>i<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token keyword">for</span> i <span class="token keyword">in</span> y_true<span class="token punctuation">.</span>data<span class="token punctuation">.</span>numpy<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+sns<span class="token punctuation">.</span>scatterplot<span class="token punctuation">(</span>x<span class="token operator">=</span>X_list<span class="token punctuation">,</span> y<span class="token operator">=</span>y<span class="token punctuation">)</span>
+sns<span class="token punctuation">.</span>lineplot<span class="token punctuation">(</span>x<span class="token operator">=</span>X_list<span class="token punctuation">,</span> y<span class="token operator">=</span>y_pred<span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">'red'</span><span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># %% ERROR!!!</span>
+<span class="token comment" spellcheck="true"># From https://github.com/pytorch/pytorch/blob/2efe4d809fdc94501fc38bf429e9a8d4205b51b6/torch/utils/tensorboard/_pytorch_graph.py#L384</span>
+<span class="token keyword">def</span> <span class="token function">_node_get</span><span class="token punctuation">(</span>node<span class="token punctuation">:</span> torch<span class="token punctuation">.</span>_C<span class="token punctuation">.</span>Node<span class="token punctuation">,</span> key<span class="token punctuation">:</span> str<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""Gets attributes of a node which is polymorphic over return type."""</span>
+    sel <span class="token operator">=</span> node<span class="token punctuation">.</span>kindOf<span class="token punctuation">(</span>key<span class="token punctuation">)</span>
+    <span class="token keyword">return</span> getattr<span class="token punctuation">(</span>node<span class="token punctuation">,</span> sel<span class="token punctuation">)</span><span class="token punctuation">(</span>key<span class="token punctuation">)</span>
+
+
+torch<span class="token punctuation">.</span>_C<span class="token punctuation">.</span>Node<span class="token punctuation">.</span>__getitem__ <span class="token operator">=</span> _node_get
+
+<span class="token keyword">import</span> hiddenlayer <span class="token keyword">as</span> hl
+
+graph <span class="token operator">=</span> hl<span class="token punctuation">.</span>build_graph<span class="token punctuation">(</span>model<span class="token punctuation">,</span> X<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># %%</span>
+</code></pre>
+<p><img src="5c2a1543.png"></p>
+<h2 id="009-Datasets-and-Dataloaders-101"><a href="#009-Datasets-and-Dataloaders-101" class="headerlink" title="009 Datasets and Dataloaders (101)"></a>009 Datasets and Dataloaders (101)</h2>
             </div>
             <hr/>
 
@@ -1796,7 +1918,7 @@ jupyter
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">718.8k</span>
+                <span class="white-color">733.9k</span>
             
 
             
