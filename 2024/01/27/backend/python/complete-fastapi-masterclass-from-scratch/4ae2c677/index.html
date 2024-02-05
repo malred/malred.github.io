@@ -378,14 +378,14 @@ pip insta">
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        3.6k
+                        4.1k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        21 分
+                        24 分
                     </div>
                     
                 
@@ -1520,7 +1520,176 @@ ACCESS_TOKEN_EXPIRE_MINUTES <span class="token operator">=</span> <span class="t
     <span class="token keyword">return</span> encoded_jwt
 </code></pre>
 <p>点击接口右边的锁图标<br><img src="6e0ad1d1.png"><br>填入账号密码<br><img src="e8b77405.png"><br>登录后再请求就有带token<br><img src="4058df7f.png"></p>
-<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
+<h2 id="006-User-authentication"><a href="#006-User-authentication" class="headerlink" title="006 User authentication"></a>006 User authentication</h2><p><img src="33d5567e.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># auth/oauth2.py</span>
+<span class="token keyword">from</span> fastapi <span class="token keyword">import</span> Depends<span class="token punctuation">,</span> HTTPException<span class="token punctuation">,</span> status
+<span class="token keyword">from</span> fastapi<span class="token punctuation">.</span>security <span class="token keyword">import</span> OAuth2PasswordBearer
+<span class="token keyword">from</span> typing <span class="token keyword">import</span> Optional
+<span class="token keyword">from</span> datetime <span class="token keyword">import</span> timedelta<span class="token punctuation">,</span> datetime
+<span class="token keyword">from</span> jose <span class="token keyword">import</span> jwt<span class="token punctuation">,</span> JWTError
+<span class="token keyword">from</span> sqlalchemy<span class="token punctuation">.</span>orm <span class="token keyword">import</span> Session
+<span class="token keyword">from</span> db<span class="token punctuation">.</span>database <span class="token keyword">import</span> get_db
+<span class="token keyword">from</span> db <span class="token keyword">import</span> db_user
+
+<span class="token comment" spellcheck="true"># ...</span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_current_user</span><span class="token punctuation">(</span>token<span class="token punctuation">:</span> str <span class="token operator">=</span> Depends<span class="token punctuation">(</span>oauth2_schema<span class="token punctuation">)</span><span class="token punctuation">,</span> db<span class="token punctuation">:</span> Session <span class="token operator">=</span> Depends<span class="token punctuation">(</span>get_db<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    credentials_exception <span class="token operator">=</span> HTTPException<span class="token punctuation">(</span>
+        status_code<span class="token operator">=</span>status<span class="token punctuation">.</span>HTTP_401_UNAUTHORIZED<span class="token punctuation">,</span>
+        detail<span class="token operator">=</span><span class="token string">"Could not validate credentials"</span><span class="token punctuation">,</span>
+        headers<span class="token operator">=</span><span class="token punctuation">{</span><span class="token string">"WWW-Authenticate"</span><span class="token punctuation">:</span> <span class="token string">"Bearer"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+    <span class="token keyword">try</span><span class="token punctuation">:</span>
+        payload <span class="token operator">=</span> jwt<span class="token punctuation">.</span>decode<span class="token punctuation">(</span>token<span class="token punctuation">,</span> SECRET_KEY<span class="token punctuation">,</span> algorithms<span class="token operator">=</span><span class="token punctuation">[</span>ALGORITHM<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        username<span class="token punctuation">:</span> str <span class="token operator">=</span> payload<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"sub"</span><span class="token punctuation">)</span>
+        <span class="token keyword">if</span> username <span class="token keyword">is</span> None<span class="token punctuation">:</span>
+            <span class="token keyword">raise</span> credentials_exception
+    <span class="token keyword">except</span> JWTError<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> credentials_exception
+
+    user <span class="token operator">=</span>db_user<span class="token punctuation">.</span>get_user_by_username<span class="token punctuation">(</span>db<span class="token punctuation">,</span> username<span class="token punctuation">)</span>
+    <span class="token keyword">if</span> user <span class="token keyword">is</span> None<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> credentials_exception
+
+    <span class="token keyword">return</span> user
+</code></pre>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># router/article.py</span>
+<span class="token keyword">from</span> fastapi <span class="token keyword">import</span> APIRouter<span class="token punctuation">,</span> Depends
+<span class="token keyword">from</span> schemas <span class="token keyword">import</span> ArticleBase<span class="token punctuation">,</span> ArticleDisplay<span class="token punctuation">,</span> UserBase
+<span class="token keyword">from</span> db<span class="token punctuation">.</span>database <span class="token keyword">import</span> get_db
+<span class="token keyword">from</span> db <span class="token keyword">import</span> db_article
+<span class="token keyword">from</span> typing <span class="token keyword">import</span> List
+<span class="token keyword">from</span> auth<span class="token punctuation">.</span>oauth2 <span class="token keyword">import</span> oauth2_schema<span class="token punctuation">,</span> get_current_user
+<span class="token keyword">from</span> sqlalchemy<span class="token punctuation">.</span>orm <span class="token keyword">import</span> Session
+
+router <span class="token operator">=</span> APIRouter<span class="token punctuation">(</span>
+    prefix<span class="token operator">=</span><span class="token string">"/article"</span><span class="token punctuation">,</span>
+    tags<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"article"</span><span class="token punctuation">]</span>
+<span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># create article</span>
+@router<span class="token punctuation">.</span>post<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">,</span> response_model<span class="token operator">=</span>ArticleDisplay<span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">create_article</span><span class="token punctuation">(</span>request<span class="token punctuation">:</span> ArticleBase<span class="token punctuation">,</span> db<span class="token punctuation">:</span> Session <span class="token operator">=</span> Depends<span class="token punctuation">(</span>get_db<span class="token punctuation">)</span><span class="token punctuation">,</span>
+                   current_user<span class="token punctuation">:</span> UserBase <span class="token operator">=</span> Depends<span class="token punctuation">(</span>get_current_user<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> db_article<span class="token punctuation">.</span>create_article<span class="token punctuation">(</span>db<span class="token punctuation">,</span> request<span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># get article</span>
+<span class="token comment" spellcheck="true"># @router.get("/{id}", response_model=ArticleDisplay)</span>
+<span class="token comment" spellcheck="true"># def get_article(id: int, db: Session = Depends(get_db), token: str = Depends(oauth2_schema)):</span>
+@router<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">"/{id}"</span><span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">get_article</span><span class="token punctuation">(</span>id<span class="token punctuation">:</span> int<span class="token punctuation">,</span> db<span class="token punctuation">:</span> Session <span class="token operator">=</span> Depends<span class="token punctuation">(</span>get_db<span class="token punctuation">)</span><span class="token punctuation">,</span> current_user<span class="token punctuation">:</span> UserBase <span class="token operator">=</span> Depends<span class="token punctuation">(</span>get_current_user<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        <span class="token string">'data'</span><span class="token punctuation">:</span> db_article<span class="token punctuation">.</span>get_article<span class="token punctuation">(</span>db<span class="token punctuation">,</span> id<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token string">'current_user'</span><span class="token punctuation">:</span> current_user
+    <span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># db/db_user.py -> 操作表的函数</span>
+<span class="token keyword">from</span> fastapi <span class="token keyword">import</span> HTTPException<span class="token punctuation">,</span> status
+<span class="token keyword">from</span> sqlalchemy<span class="token punctuation">.</span>orm<span class="token punctuation">.</span>session <span class="token keyword">import</span> Session
+<span class="token keyword">from</span> db<span class="token punctuation">.</span>hash <span class="token keyword">import</span> Hash
+<span class="token keyword">from</span> schemas <span class="token keyword">import</span> UserBase
+<span class="token keyword">from</span> db<span class="token punctuation">.</span>models <span class="token keyword">import</span> DbUser
+
+<span class="token comment" spellcheck="true"># ...</span>
+
+
+<span class="token keyword">def</span> <span class="token function">get_user_by_username</span><span class="token punctuation">(</span>db<span class="token punctuation">:</span> Session<span class="token punctuation">,</span> username<span class="token punctuation">:</span> str<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    user <span class="token operator">=</span> db<span class="token punctuation">.</span>query<span class="token punctuation">(</span>DbUser<span class="token punctuation">)</span><span class="token punctuation">.</span>filter<span class="token punctuation">(</span>DbUser<span class="token punctuation">.</span>username <span class="token operator">==</span> username<span class="token punctuation">)</span><span class="token punctuation">.</span>first<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token operator">not</span> user<span class="token punctuation">:</span>
+        <span class="token keyword">raise</span> HTTPException<span class="token punctuation">(</span>
+            status_code<span class="token operator">=</span>status<span class="token punctuation">.</span>HTTP_404_NOT_FOUND<span class="token punctuation">,</span>
+            detail<span class="token operator">=</span>f<span class="token string">"User with username {username} not found"</span>
+        <span class="token punctuation">)</span>
+    <span class="token keyword">return</span> user
+
+
+<span class="token comment" spellcheck="true"># ...</span>
+</code></pre>
+<h1 id="10-Working-with-files"><a href="#10-Working-with-files" class="headerlink" title="10 - Working with files"></a>10 - Working with files</h1><h2 id="001-Section-overview-8"><a href="#001-Section-overview-8" class="headerlink" title="001 Section overview"></a>001 Section overview</h2><p><img src="935a392e.png"></p>
+<h2 id="002-File"><a href="#002-File" class="headerlink" title="002 File"></a>002 File</h2><p><img src="434d827f.png"><img src="b3a61f74.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># router/file.py</span>
+<span class="token keyword">from</span> fastapi <span class="token keyword">import</span> APIRouter<span class="token punctuation">,</span> File
+
+router <span class="token operator">=</span> APIRouter<span class="token punctuation">(</span>
+    prefix<span class="token operator">=</span><span class="token string">"/file"</span><span class="token punctuation">,</span>
+    tags<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"file"</span><span class="token punctuation">]</span>
+<span class="token punctuation">)</span>
+
+
+@router<span class="token punctuation">.</span>post<span class="token punctuation">(</span><span class="token string">'/file'</span><span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">get_file</span><span class="token punctuation">(</span>file<span class="token punctuation">:</span> bytes <span class="token operator">=</span> File<span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    content <span class="token operator">=</span> file<span class="token punctuation">.</span>decode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span>
+    lines <span class="token operator">=</span> content<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">'\n'</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span><span class="token string">'lines'</span><span class="token punctuation">:</span> lines<span class="token punctuation">}</span>
+</code></pre>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># main.py</span>
+<span class="token keyword">from</span> fastapi <span class="token keyword">import</span> FastAPI<span class="token punctuation">,</span> Request
+<span class="token keyword">from</span> fastapi <span class="token keyword">import</span> HTTPException<span class="token punctuation">,</span> status
+<span class="token keyword">from</span> fastapi<span class="token punctuation">.</span>responses <span class="token keyword">import</span> JSONResponse
+<span class="token keyword">from</span> fastapi<span class="token punctuation">.</span>middleware<span class="token punctuation">.</span>cors <span class="token keyword">import</span> CORSMiddleware
+<span class="token keyword">from</span> exceptions <span class="token keyword">import</span> StoryException
+<span class="token keyword">from</span> router <span class="token keyword">import</span> blog_get<span class="token punctuation">,</span> blog_post<span class="token punctuation">,</span> user<span class="token punctuation">,</span> article<span class="token punctuation">,</span> product<span class="token punctuation">,</span> file
+<span class="token keyword">from</span> auth <span class="token keyword">import</span> authentication
+<span class="token keyword">from</span> db <span class="token keyword">import</span> models
+<span class="token keyword">from</span> db<span class="token punctuation">.</span>database <span class="token keyword">import</span> engine
+
+app <span class="token operator">=</span> FastAPI<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 导入路由</span>
+app<span class="token punctuation">.</span>include_router<span class="token punctuation">(</span>blog_get<span class="token punctuation">.</span>router<span class="token punctuation">)</span>
+app<span class="token punctuation">.</span>include_router<span class="token punctuation">(</span>blog_post<span class="token punctuation">.</span>router<span class="token punctuation">)</span>
+app<span class="token punctuation">.</span>include_router<span class="token punctuation">(</span>user<span class="token punctuation">.</span>router<span class="token punctuation">)</span>
+app<span class="token punctuation">.</span>include_router<span class="token punctuation">(</span>article<span class="token punctuation">.</span>router<span class="token punctuation">)</span>
+app<span class="token punctuation">.</span>include_router<span class="token punctuation">(</span>product<span class="token punctuation">.</span>router<span class="token punctuation">)</span>
+app<span class="token punctuation">.</span>include_router<span class="token punctuation">(</span>authentication<span class="token punctuation">.</span>router<span class="token punctuation">)</span>
+app<span class="token punctuation">.</span>include_router<span class="token punctuation">(</span>file<span class="token punctuation">.</span>router<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="003-UploadFile"><a href="#003-UploadFile" class="headerlink" title="003 UploadFile"></a>003 UploadFile</h2><p><img src="f6037472.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># router/file.py</span>
+
+@router<span class="token punctuation">.</span>post<span class="token punctuation">(</span><span class="token string">'/upload'</span><span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">get_uploadfile</span><span class="token punctuation">(</span>upload_file<span class="token punctuation">:</span> UploadFile <span class="token operator">=</span> File<span class="token punctuation">(</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true"># 同名文件会覆盖, 所以可以使用随机名称替代filename保存</span>
+    path <span class="token operator">=</span> f<span class="token string">"files/{upload_file.filename}"</span>
+    <span class="token keyword">with</span> open<span class="token punctuation">(</span>path<span class="token punctuation">,</span> <span class="token string">'w+b'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> buffer<span class="token punctuation">:</span>
+        <span class="token comment" spellcheck="true"># 保存本地</span>
+        shutil<span class="token punctuation">.</span>copyfileobj<span class="token punctuation">(</span>upload_file<span class="token punctuation">.</span>file<span class="token punctuation">,</span> buffer<span class="token punctuation">)</span>
+
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        <span class="token string">'filename'</span><span class="token punctuation">:</span> path<span class="token punctuation">,</span>
+        <span class="token string">'type'</span><span class="token punctuation">:</span> upload_file<span class="token punctuation">.</span>content_type
+    <span class="token punctuation">}</span>
+</code></pre>
+<h2 id="004-Making-files-statically-available"><a href="#004-Making-files-statically-available" class="headerlink" title="004 Making files statically available"></a>004 Making files statically available</h2><pre class=" language-shell"><code class="language-shell">pip install aiofiles
+</code></pre>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># main.py</span>
+<span class="token keyword">from</span> fastapi <span class="token keyword">import</span> FastAPI<span class="token punctuation">,</span> Request
+<span class="token keyword">from</span> fastapi <span class="token keyword">import</span> HTTPException<span class="token punctuation">,</span> status
+<span class="token keyword">from</span> fastapi<span class="token punctuation">.</span>responses <span class="token keyword">import</span> JSONResponse
+<span class="token keyword">from</span> fastapi<span class="token punctuation">.</span>middleware<span class="token punctuation">.</span>cors <span class="token keyword">import</span> CORSMiddleware
+<span class="token keyword">from</span> exceptions <span class="token keyword">import</span> StoryException
+<span class="token keyword">from</span> router <span class="token keyword">import</span> blog_get<span class="token punctuation">,</span> blog_post<span class="token punctuation">,</span> user<span class="token punctuation">,</span> article<span class="token punctuation">,</span> product<span class="token punctuation">,</span> file
+<span class="token keyword">from</span> auth <span class="token keyword">import</span> authentication
+<span class="token keyword">from</span> db <span class="token keyword">import</span> models
+<span class="token keyword">from</span> db<span class="token punctuation">.</span>database <span class="token keyword">import</span> engine
+<span class="token keyword">from</span> fastapi<span class="token punctuation">.</span>staticfiles <span class="token keyword">import</span> StaticFiles
+
+<span class="token comment" spellcheck="true"># ...</span>
+
+<span class="token comment" spellcheck="true"># 静态文件</span>
+app<span class="token punctuation">.</span>mount<span class="token punctuation">(</span><span class="token string">"/files"</span><span class="token punctuation">,</span> StaticFiles<span class="token punctuation">(</span>directory<span class="token operator">=</span><span class="token string">"files"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> name<span class="token operator">=</span><span class="token string">"files"</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="005-Downloading-files"><a href="#005-Downloading-files" class="headerlink" title="005 Downloading files"></a>005 Downloading files</h2><p><img src="871d60a0.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># router/file.py</span>
+
+@router<span class="token punctuation">.</span>get<span class="token punctuation">(</span><span class="token string">'/download/{name}'</span><span class="token punctuation">,</span> response_class<span class="token operator">=</span>FileResponse<span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">get_file</span><span class="token punctuation">(</span>name<span class="token punctuation">:</span> str<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    path <span class="token operator">=</span> f<span class="token string">'files/{name}'</span>
+    <span class="token keyword">return</span> path
+</code></pre>
+<h1 id="11-Tasks"><a href="#11-Tasks" class="headerlink" title="11 - Tasks"></a>11 - Tasks</h1>
             </div>
             <hr/>
 
@@ -2181,7 +2350,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">756.9k</span>
+                <span class="white-color">757.5k</span>
             
 
             
