@@ -384,14 +384,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        22
+                        1.7k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        1 分
+                        9 分
                     </div>
                     
                 
@@ -409,7 +409,363 @@
             <div id="articleContent">
                 <h1 id="2-Spark-Basics-and-the-RDD-Interface"><a href="#2-Spark-Basics-and-the-RDD-Interface" class="headerlink" title="2. Spark Basics and the RDD Interface"></a>2. Spark Basics and the RDD Interface</h1><h2 id="1-What’s-new-in-Spark-3"><a href="#1-What’s-new-in-Spark-3" class="headerlink" title="1. What’s new in Spark 3"></a>1. What’s new in Spark 3</h2><h2 id="2-Introduction-to-Spark"><a href="#2-Introduction-to-Spark" class="headerlink" title="2. Introduction to Spark"></a>2. Introduction to Spark</h2><p><img src="7e1ffe49.png"><img src="20a4cb63.png"><img src="3b717f2f.png"><img src="9012fc11.png"><br><img src="3f3ce4f7.png"><img src="f5d0dc44.png"><img src="83a399be.png"><img src="a3de287b.png"></p>
 <h2 id="3-The-Resilient-Distributed-Dataset-RDD"><a href="#3-The-Resilient-Distributed-Dataset-RDD" class="headerlink" title="3. The Resilient Distributed Dataset (RDD)"></a>3. The Resilient Distributed Dataset (RDD)</h2><p><img src="506d9671.png"><img src="c84804b6.png"><img src="361fbf37.png"><img src="90f48cdb.png"><br><img src="8c568dc5.png"><img src="bd0e58c7.png"><img src="d59dedf4.png"><img src="911ee326.png"></p>
-<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
+<h2 id="4-Ratings-Histogram-Walkthrough"><a href="#4-Ratings-Histogram-Walkthrough" class="headerlink" title="4. Ratings Histogram Walkthrough"></a>4. Ratings Histogram Walkthrough</h2><p><img src="4d58fb60.png"><img src="e822046b.png"><img src="94f909f6.png"><img src="8a14e802.png"><br><img src="71a0b7d4.png"><img src="eb2c988f.png"></p>
+<pre class=" language-shell"><code class="language-shell"># 交给spark运行
+spark-submit ratings-counter.py
+</code></pre>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark <span class="token keyword">import</span> SparkConf<span class="token punctuation">,</span> SparkContext<span class="token punctuation">,</span> SQLContext
+<span class="token keyword">import</span> collections
+
+<span class="token comment" spellcheck="true"># org.apache.spark.SparkException: Python worker failed to connect back.</span>
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+conf <span class="token operator">=</span> SparkConf<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setMaster<span class="token punctuation">(</span><span class="token string">'local'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setAppName<span class="token punctuation">(</span><span class="token string">'RatingsHistogram'</span><span class="token punctuation">)</span>
+sc <span class="token operator">=</span> SparkContext<span class="token punctuation">(</span>conf<span class="token operator">=</span>conf<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># spark 上下文</span>
+
+<span class="token comment" spellcheck="true"># lines = sc.textFile('file:///SparkCourse/ml-100k/u.data')</span>
+lines <span class="token operator">=</span> sc<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/fakefriends.csv'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 截取每行的第4列</span>
+ratings <span class="token operator">=</span> lines<span class="token punctuation">.</span>map<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 计算所有行中, 不同数据出现的次数</span>
+result <span class="token operator">=</span> ratings<span class="token punctuation">.</span>countByValue<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># 将结果排序</span>
+sortedResults <span class="token operator">=</span> collections<span class="token punctuation">.</span>OrderedDict<span class="token punctuation">(</span>sorted<span class="token punctuation">(</span>result<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> k<span class="token punctuation">,</span> v <span class="token keyword">in</span> sortedResults<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"%s %i"</span> <span class="token operator">%</span> <span class="token punctuation">(</span>k<span class="token punctuation">,</span> v<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="5-KeyValue-RDD’s-and-the-Average-Friends-by-Age-Example"><a href="#5-KeyValue-RDD’s-and-the-Average-Friends-by-Age-Example" class="headerlink" title="5. KeyValue RDD’s, and the Average Friends by Age Example"></a>5. KeyValue RDD’s, and the Average Friends by Age Example</h2><p><img src="4dc8ccf1.png"><img src="540410ce.png"><img src="87b02712.png"><img src="98ac0b8f.png"><br><img src="21885cea.png"><img src="35572fa4.png"><img src="b3c9cf11.png"><img src="fc66a2d0.png"><br><img src="b4b968fa.png"></p>
+<h2 id="6-Activity-Running-the-Average-Friends-by-Age-Example"><a href="#6-Activity-Running-the-Average-Friends-by-Age-Example" class="headerlink" title="6. [Activity] Running the Average Friends by Age Example"></a>6. [Activity] Running the Average Friends by Age Example</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark <span class="token keyword">import</span> SparkConf<span class="token punctuation">,</span> SparkContext
+
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+conf <span class="token operator">=</span> SparkConf<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setMaster<span class="token punctuation">(</span><span class="token string">'local'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setAppName<span class="token punctuation">(</span><span class="token string">'FriendsByAge'</span><span class="token punctuation">)</span>
+sc <span class="token operator">=</span> SparkContext<span class="token punctuation">(</span>conf<span class="token operator">=</span>conf<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># spark 上下文</span>
+
+
+<span class="token keyword">def</span> <span class="token function">parseLine</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    fields <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+    age <span class="token operator">=</span> int<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    numFriends <span class="token operator">=</span> int<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>age<span class="token punctuation">,</span> numFriends<span class="token punctuation">)</span>
+
+
+lines <span class="token operator">=</span> sc<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/fakefriends.csv'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># csv的每一行执行parseLine</span>
+rdd <span class="token operator">=</span> lines<span class="token punctuation">.</span>map<span class="token punctuation">(</span>parseLine<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (k,x) -> (k,(x,1)) -> (k, (x+y, x1+y1)) ; x+y=total age, x1+y1=how many</span>
+<span class="token comment" spellcheck="true"># reduceByKey: 对key相同的数据进行操作</span>
+totalsByAge <span class="token operator">=</span> rdd<span class="token punctuation">.</span>mapValues<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> <span class="token punctuation">(</span>x<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> \
+    <span class="token punctuation">.</span>reduceByKey<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">,</span> y<span class="token punctuation">:</span> <span class="token punctuation">(</span>x<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+</span> y<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> y<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+averagesByAge <span class="token operator">=</span> totalsByAge<span class="token punctuation">.</span>mapValues<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">/</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+results <span class="token operator">=</span> averagesByAge<span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> res <span class="token keyword">in</span> results<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="7-Filtering-RDD’s-and-the-Minimum-Temperature-by-Location-Example"><a href="#7-Filtering-RDD’s-and-the-Minimum-Temperature-by-Location-Example" class="headerlink" title="7. Filtering RDD’s, and the Minimum Temperature by Location Example"></a>7. Filtering RDD’s, and the Minimum Temperature by Location Example</h2><p><img src="3bcfc8a7.png"><img src="a4fdf231.png"><img src="17136a43.png"><img src="6b707704.png"><br><img src="fbd8ca0e.png"><img src="98010962.png"><img src="b30ca4fc.png"></p>
+<h2 id="8-Activity-Running-the-Minimum-Temperature-Example-and-Modifying-it-for-Maximums"><a href="#8-Activity-Running-the-Minimum-Temperature-Example-and-Modifying-it-for-Maximums" class="headerlink" title="8. [Activity]Running the Minimum Temperature Example, and Modifying it for Maximums"></a>8. [Activity]Running the Minimum Temperature Example, and Modifying it for Maximums</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark <span class="token keyword">import</span> SparkConf<span class="token punctuation">,</span> SparkContext
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+conf <span class="token operator">=</span> SparkConf<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setMaster<span class="token punctuation">(</span><span class="token string">'local'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setAppName<span class="token punctuation">(</span><span class="token string">'min-temp'</span><span class="token punctuation">)</span>
+sc <span class="token operator">=</span> SparkContext<span class="token punctuation">(</span>conf<span class="token operator">=</span>conf<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># spark 上下文</span>
+
+
+<span class="token keyword">def</span> <span class="token function">parseLine</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    fields <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+    stationID <span class="token operator">=</span> fields<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    entryType <span class="token operator">=</span> fields<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+    <span class="token comment" spellcheck="true"># 转华氏温度</span>
+    temperature <span class="token operator">=</span> float<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">0.1</span> <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">9.0</span> <span class="token operator">/</span> <span class="token number">5.0</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">32.0</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>stationID<span class="token punctuation">,</span> entryType<span class="token punctuation">,</span> temperature<span class="token punctuation">)</span>
+
+
+lines <span class="token operator">=</span> sc<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/1800.csv'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># csv的每一行执行parseLine</span>
+rdd <span class="token operator">=</span> lines<span class="token punctuation">.</span>map<span class="token punctuation">(</span>parseLine<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># x[1] 是一个字符串标记, 这里找出最低温度标记</span>
+minTemps <span class="token operator">=</span> rdd<span class="token punctuation">.</span>filter<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> <span class="token string">"TMIN"</span> <span class="token keyword">in</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 去掉其他列</span>
+stationTemps <span class="token operator">=</span> minTemps<span class="token punctuation">.</span>map<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> <span class="token punctuation">(</span>x<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> x<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 相同key(station)之间取y(temp)值小的</span>
+minTemps <span class="token operator">=</span> stationTemps<span class="token punctuation">.</span>reduceByKey<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">,</span> y<span class="token punctuation">:</span> min<span class="token punctuation">(</span>x<span class="token punctuation">,</span> y<span class="token punctuation">)</span><span class="token punctuation">)</span>
+results <span class="token operator">=</span> minTemps<span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> res <span class="token keyword">in</span> results<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>res<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token string">"\t{:.2f}F"</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>res<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="9-Activity-Running-the-Maximum-Temperature-by-Location-Example"><a href="#9-Activity-Running-the-Maximum-Temperature-by-Location-Example" class="headerlink" title="9. [Activity] Running the Maximum Temperature by Location Example"></a>9. [Activity] Running the Maximum Temperature by Location Example</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark <span class="token keyword">import</span> SparkConf<span class="token punctuation">,</span> SparkContext
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+conf <span class="token operator">=</span> SparkConf<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setMaster<span class="token punctuation">(</span><span class="token string">'local'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setAppName<span class="token punctuation">(</span><span class="token string">'max-temp'</span><span class="token punctuation">)</span>
+sc <span class="token operator">=</span> SparkContext<span class="token punctuation">(</span>conf<span class="token operator">=</span>conf<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># spark 上下文</span>
+
+
+<span class="token keyword">def</span> <span class="token function">parseLine</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    fields <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+    stationID <span class="token operator">=</span> fields<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+    entryType <span class="token operator">=</span> fields<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span>
+    <span class="token comment" spellcheck="true"># 转华氏温度</span>
+    temperature <span class="token operator">=</span> float<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">0.1</span> <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">9.0</span> <span class="token operator">/</span> <span class="token number">5.0</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token number">32.0</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>stationID<span class="token punctuation">,</span> entryType<span class="token punctuation">,</span> temperature<span class="token punctuation">)</span>
+
+
+lines <span class="token operator">=</span> sc<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/1800.csv'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># csv的每一行执行parseLine</span>
+rdd <span class="token operator">=</span> lines<span class="token punctuation">.</span>map<span class="token punctuation">(</span>parseLine<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># x[1] 是一个字符串标记, 这里找出最低温度标记</span>
+minTemps <span class="token operator">=</span> rdd<span class="token punctuation">.</span>filter<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> <span class="token string">"TMAX"</span> <span class="token keyword">in</span> x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 去掉其他列</span>
+stationTemps <span class="token operator">=</span> minTemps<span class="token punctuation">.</span>map<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> <span class="token punctuation">(</span>x<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> x<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 相同key(station)之间取y(temp)值小的</span>
+minTemps <span class="token operator">=</span> stationTemps<span class="token punctuation">.</span>reduceByKey<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">,</span> y<span class="token punctuation">:</span> max<span class="token punctuation">(</span>x<span class="token punctuation">,</span> y<span class="token punctuation">)</span><span class="token punctuation">)</span>
+results <span class="token operator">=</span> minTemps<span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> res <span class="token keyword">in</span> results<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>res<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token string">"\t{:.2f}F"</span><span class="token punctuation">.</span>format<span class="token punctuation">(</span>res<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="10-Activity-Counting-Word-Occurrences-using-flatmap"><a href="#10-Activity-Counting-Word-Occurrences-using-flatmap" class="headerlink" title="10. [Activity] Counting Word Occurrences using flatmap()"></a>10. [Activity] Counting Word Occurrences using flatmap()</h2><p><img src="42bf6a89.png"><img src="7d0277dc.png"><img src="95c95c65.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark <span class="token keyword">import</span> SparkConf<span class="token punctuation">,</span> SparkContext
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+conf <span class="token operator">=</span> SparkConf<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setMaster<span class="token punctuation">(</span><span class="token string">'local'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setAppName<span class="token punctuation">(</span><span class="token string">'WordCount'</span><span class="token punctuation">)</span>
+sc <span class="token operator">=</span> SparkContext<span class="token punctuation">(</span>conf<span class="token operator">=</span>conf<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># spark 上下文</span>
+
+input <span class="token operator">=</span> sc<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/Book.txt'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 扁平化, 案例：对给定单词列表 ["Hello","World"],你想返回列表["H","e","l","o","W","r","d"]</span>
+<span class="token comment" spellcheck="true"># 用空格分割句子, 然后展开为一个一个单词</span>
+words <span class="token operator">=</span> input<span class="token punctuation">.</span>flatMap<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> x<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (x) -> (x,count)</span>
+wordCounts <span class="token operator">=</span> words<span class="token punctuation">.</span>countByValue<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> word<span class="token punctuation">,</span> count <span class="token keyword">in</span> wordCounts<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cleanWord <span class="token operator">=</span> word<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'ascii'</span><span class="token punctuation">,</span> <span class="token string">'ignore'</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>cleanWord<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>cleanWord<span class="token punctuation">,</span> count<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="11-Activity-Improving-the-Word-Count-Script-with-Regular-Expressions"><a href="#11-Activity-Improving-the-Word-Count-Script-with-Regular-Expressions" class="headerlink" title="11. [Activity] Improving the Word Count Script with Regular Expressions"></a>11. [Activity] Improving the Word Count Script with Regular Expressions</h2><p><img src="311fadf2.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark <span class="token keyword">import</span> SparkConf<span class="token punctuation">,</span> SparkContext
+<span class="token keyword">import</span> re
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+
+<span class="token comment" spellcheck="true"># 只提取单词, 不保留标点符号等</span>
+<span class="token keyword">def</span> <span class="token function">normalizeWords</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> re<span class="token punctuation">.</span>compile<span class="token punctuation">(</span>r<span class="token string">'\W+'</span><span class="token punctuation">,</span> re<span class="token punctuation">.</span>UNICODE<span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span>text<span class="token punctuation">.</span>lower<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+conf <span class="token operator">=</span> SparkConf<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setMaster<span class="token punctuation">(</span><span class="token string">'local'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setAppName<span class="token punctuation">(</span><span class="token string">'WordCountBetter'</span><span class="token punctuation">)</span>
+sc <span class="token operator">=</span> SparkContext<span class="token punctuation">(</span>conf<span class="token operator">=</span>conf<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># spark 上下文</span>
+
+input <span class="token operator">=</span> sc<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/Book.txt'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 扁平化, 案例：对给定单词列表 ["Hello","World"],你想返回列表["H","e","l","o","W","r","d"]</span>
+<span class="token comment" spellcheck="true"># 用空格分割句子, 然后展开为一个一个单词</span>
+words <span class="token operator">=</span> input<span class="token punctuation">.</span>flatMap<span class="token punctuation">(</span>normalizeWords<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (x) -> (x,count)</span>
+wordCounts <span class="token operator">=</span> words<span class="token punctuation">.</span>countByValue<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> word<span class="token punctuation">,</span> count <span class="token keyword">in</span> wordCounts<span class="token punctuation">.</span>items<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    cleanWord <span class="token operator">=</span> word<span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'ascii'</span><span class="token punctuation">,</span> <span class="token string">'ignore'</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>cleanWord<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>cleanWord<span class="token punctuation">,</span> count<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="12-Activity-Sorting-the-Word-Count-Results"><a href="#12-Activity-Sorting-the-Word-Count-Results" class="headerlink" title="12. [Activity] Sorting the Word Count Results"></a>12. [Activity] Sorting the Word Count Results</h2><p><img src="15856af8.png"><img src="0558598a.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark <span class="token keyword">import</span> SparkConf<span class="token punctuation">,</span> SparkContext
+<span class="token keyword">import</span> re
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+
+<span class="token comment" spellcheck="true"># 只提取单词, 不保留标点符号等</span>
+<span class="token keyword">def</span> <span class="token function">normalizeWords</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> re<span class="token punctuation">.</span>compile<span class="token punctuation">(</span>r<span class="token string">'\W+'</span><span class="token punctuation">,</span> re<span class="token punctuation">.</span>UNICODE<span class="token punctuation">)</span><span class="token punctuation">.</span>split<span class="token punctuation">(</span>text<span class="token punctuation">.</span>lower<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+conf <span class="token operator">=</span> SparkConf<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setMaster<span class="token punctuation">(</span><span class="token string">'local'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setAppName<span class="token punctuation">(</span><span class="token string">'WordCountBetter'</span><span class="token punctuation">)</span>
+sc <span class="token operator">=</span> SparkContext<span class="token punctuation">(</span>conf<span class="token operator">=</span>conf<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># spark 上下文</span>
+
+input <span class="token operator">=</span> sc<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/Book.txt'</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># 扁平化, 案例：对给定单词列表 ["Hello","World"],你想返回列表["H","e","l","o","W","r","d"]</span>
+<span class="token comment" spellcheck="true"># 用空格分割句子, 然后展开为一个一个单词</span>
+words <span class="token operator">=</span> input<span class="token punctuation">.</span>flatMap<span class="token punctuation">(</span>normalizeWords<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># (x) -> (x,1) => (x,1),(x,1) -> (x,2) ...</span>
+wordCounts <span class="token operator">=</span> words<span class="token punctuation">.</span>map<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> <span class="token punctuation">(</span>x<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reduceByKey<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">,</span> y<span class="token punctuation">:</span> x <span class="token operator">+</span> y<span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true"># (word, count) -> (count, word) -> sort by count</span>
+<span class="token comment" spellcheck="true"># wordCountsSorted = wordCounts.map(lambda (x,y): (y,x)).sortByKey() # Python 3 中不支持元组形参解包</span>
+wordCountsSorted <span class="token operator">=</span> wordCounts<span class="token punctuation">.</span>map<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> <span class="token punctuation">(</span>x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> x<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>sortByKey<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+results <span class="token operator">=</span> wordCountsSorted<span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> res <span class="token keyword">in</span> results<span class="token punctuation">:</span>
+    count <span class="token operator">=</span> str<span class="token punctuation">(</span>res<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    word <span class="token operator">=</span> res<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'ascii'</span><span class="token punctuation">,</span> <span class="token string">'ignore'</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>word<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">print</span><span class="token punctuation">(</span>word<span class="token punctuation">,</span> <span class="token string">':\t\t'</span><span class="token punctuation">,</span> count<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="13-Exercise-Find-the-Total-Amount-Spent-by-Customer"><a href="#13-Exercise-Find-the-Total-Amount-Spent-by-Customer" class="headerlink" title="13. [Exercise] Find the Total Amount Spent by Customer"></a>13. [Exercise] Find the Total Amount Spent by Customer</h2><p><img src="02f8137e.png" alt="客户ID,项目ID,花费金额"><img src="3daead89.png"><img src="506b1d06.png"></p>
+<h2 id="14-Excercise-Check-your-Results-and-Now-Sort-them-by-Total-Amount-Spent"><a href="#14-Excercise-Check-your-Results-and-Now-Sort-them-by-Total-Amount-Spent" class="headerlink" title="14. [Excercise] Check your Results, and Now Sort them by Total Amount Spent."></a>14. [Excercise] Check your Results, and Now Sort them by Total Amount Spent.</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark <span class="token keyword">import</span> SparkConf<span class="token punctuation">,</span> SparkContext
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+conf <span class="token operator">=</span> SparkConf<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setMaster<span class="token punctuation">(</span><span class="token string">'local'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setAppName<span class="token punctuation">(</span><span class="token string">'Customer'</span><span class="token punctuation">)</span>
+sc <span class="token operator">=</span> SparkContext<span class="token punctuation">(</span>conf<span class="token operator">=</span>conf<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># spark 上下文</span>
+
+
+<span class="token keyword">def</span> <span class="token function">extractCustomerPricePairs</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    fields <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>int<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> float<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+input <span class="token operator">=</span> sc<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/customer-orders.csv'</span><span class="token punctuation">)</span>
+mappedInput <span class="token operator">=</span> input<span class="token punctuation">.</span>map<span class="token punctuation">(</span>extractCustomerPricePairs<span class="token punctuation">)</span>
+totalByCustomer <span class="token operator">=</span> mappedInput<span class="token punctuation">.</span>reduceByKey<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">,</span> y<span class="token punctuation">:</span> x <span class="token operator">+</span> y<span class="token punctuation">)</span>
+
+results <span class="token operator">=</span> totalByCustomer<span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> res <span class="token keyword">in</span> results<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="15-Check-Your-Sorted-Implementation-and-Results-Against-Mine"><a href="#15-Check-Your-Sorted-Implementation-and-Results-Against-Mine" class="headerlink" title="15. Check Your Sorted Implementation and Results Against Mine."></a>15. Check Your Sorted Implementation and Results Against Mine.</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark <span class="token keyword">import</span> SparkConf<span class="token punctuation">,</span> SparkContext
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+conf <span class="token operator">=</span> SparkConf<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setMaster<span class="token punctuation">(</span><span class="token string">'local'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>setAppName<span class="token punctuation">(</span><span class="token string">'Customer'</span><span class="token punctuation">)</span>
+sc <span class="token operator">=</span> SparkContext<span class="token punctuation">(</span>conf<span class="token operator">=</span>conf<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># spark 上下文</span>
+
+
+<span class="token keyword">def</span> <span class="token function">extractCustomerPricePairs</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    fields <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>int<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> float<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+input <span class="token operator">=</span> sc<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/customer-orders.csv'</span><span class="token punctuation">)</span>
+mappedInput <span class="token operator">=</span> input<span class="token punctuation">.</span>map<span class="token punctuation">(</span>extractCustomerPricePairs<span class="token punctuation">)</span>
+totalByCustomer <span class="token operator">=</span> mappedInput<span class="token punctuation">.</span>reduceByKey<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">,</span> y<span class="token punctuation">:</span> x <span class="token operator">+</span> y<span class="token punctuation">)</span>
+
+flipped <span class="token operator">=</span> totalByCustomer<span class="token punctuation">.</span>map<span class="token punctuation">(</span><span class="token keyword">lambda</span> x<span class="token punctuation">:</span> <span class="token punctuation">(</span>x<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> x<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+totalByCustomerSorted <span class="token operator">=</span> flipped<span class="token punctuation">.</span>sortByKey<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+results <span class="token operator">=</span> totalByCustomerSorted<span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> res <span class="token keyword">in</span> results<span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>res<span class="token punctuation">)</span>
+</code></pre>
+<h1 id="3-SparkSQL-DataFrames-and-DataSets"><a href="#3-SparkSQL-DataFrames-and-DataSets" class="headerlink" title="3. SparkSQL, DataFrames, and DataSets"></a>3. SparkSQL, DataFrames, and DataSets</h1><h2 id="1-Introducing-SparkSQL"><a href="#1-Introducing-SparkSQL" class="headerlink" title="1. Introducing SparkSQL"></a>1. Introducing SparkSQL</h2><p><img src="15130f95.png" alt="现在更多地使用spark dataframe"><img src="990b6bf2.png"><img src="49af0ec2.png"><br><img src="7cecf730.png"><img src="afd3cc92.png"><img src="e2ba6bfa.png"><img src="8f4db791.png"></p>
+<h2 id="2-Activity-Executing-SQL-commands-and-SQL-style-functions-on-a-DataFrame"><a href="#2-Activity-Executing-SQL-commands-and-SQL-style-functions-on-a-DataFrame" class="headerlink" title="2. [Activity] Executing SQL commands and SQL-style functions on a DataFrame"></a>2. [Activity] Executing SQL commands and SQL-style functions on a DataFrame</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>sql <span class="token keyword">import</span> SparkSession<span class="token punctuation">,</span> Row
+
+<span class="token comment" spellcheck="true"># org.apache.spark.SparkException: Python worker failed to connect back.</span>
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+<span class="token comment" spellcheck="true"># create session</span>
+spark <span class="token operator">=</span> SparkSession<span class="token punctuation">.</span>builder<span class="token punctuation">.</span>appName<span class="token punctuation">(</span><span class="token string">'SparkSQL'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>getOrCreate<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+
+<span class="token keyword">def</span> <span class="token function">mapper</span><span class="token punctuation">(</span>line<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    fields <span class="token operator">=</span> line<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">','</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> Row<span class="token punctuation">(</span>ID<span class="token operator">=</span>int<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> name<span class="token operator">=</span>str<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>encode<span class="token punctuation">(</span><span class="token string">'utf-8'</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+               age<span class="token operator">=</span>int<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> numFriends<span class="token operator">=</span>int<span class="token punctuation">(</span>fields<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+
+lines <span class="token operator">=</span> spark<span class="token punctuation">.</span>sparkContext<span class="token punctuation">.</span>textFile<span class="token punctuation">(</span><span class="token string">'../dataset/fakefriends.csv'</span><span class="token punctuation">)</span>
+people <span class="token operator">=</span> lines<span class="token punctuation">.</span>map<span class="token punctuation">(</span>mapper<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Infer the schema,and register the DataFrame as a table.</span>
+schemaPeople <span class="token operator">=</span> spark<span class="token punctuation">.</span>createDataFrame<span class="token punctuation">(</span>people<span class="token punctuation">)</span><span class="token punctuation">.</span>cache<span class="token punctuation">(</span><span class="token punctuation">)</span>
+schemaPeople<span class="token punctuation">.</span>createOrReplaceTempView<span class="token punctuation">(</span><span class="token string">'people'</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 创建临时视图</span>
+
+<span class="token comment" spellcheck="true"># SOL can be run over DataFrames that have been registered as a table.</span>
+teenagers <span class="token operator">=</span> spark<span class="token punctuation">.</span>sql<span class="token punctuation">(</span><span class="token string">'SELECT * FROM people WHERE age >= 13 AND age &lt;= 19'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># The results of SQL queries are RDDs and support all the normal RDD operations.</span>
+<span class="token keyword">for</span> teen <span class="token keyword">in</span> teenagers<span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>teen<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># We can also use functions instead of SQL queries:</span>
+schemaPeople<span class="token punctuation">.</span>groupBy<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>count<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>orderBy<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+spark<span class="token punctuation">.</span>stop<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="3-Using-DataFrames-instead-of-RDD’s"><a href="#3-Using-DataFrames-instead-of-RDD’s" class="headerlink" title="3. Using DataFrames instead of RDD’s"></a>3. Using DataFrames instead of RDD’s</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>sql <span class="token keyword">import</span> SparkSession<span class="token punctuation">,</span> Row
+
+<span class="token comment" spellcheck="true"># org.apache.spark.SparkException: Python worker failed to connect back.</span>
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+<span class="token comment" spellcheck="true"># create session</span>
+spark <span class="token operator">=</span> SparkSession<span class="token punctuation">.</span>builder<span class="token punctuation">.</span>appName<span class="token punctuation">(</span><span class="token string">'SparkSQL'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>getOrCreate<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+people <span class="token operator">=</span> spark<span class="token punctuation">.</span>read<span class="token punctuation">.</span>option<span class="token punctuation">(</span><span class="token string">'header'</span><span class="token punctuation">,</span> <span class="token string">'true'</span><span class="token punctuation">)</span> \
+    <span class="token punctuation">.</span>option<span class="token punctuation">(</span><span class="token string">'inferSchema'</span><span class="token punctuation">,</span> <span class="token string">'true'</span><span class="token punctuation">)</span> \
+    <span class="token punctuation">.</span>csv<span class="token punctuation">(</span><span class="token string">'../dataset/fakefriends-header.csv'</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Here is our inferred schema:"</span><span class="token punctuation">)</span>
+people<span class="token punctuation">.</span>printSchema<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Let's display the name column:"</span><span class="token punctuation">)</span>
+people<span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token string">"name"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Filter out anyone over 21:"</span><span class="token punctuation">)</span>
+people<span class="token punctuation">.</span>filter<span class="token punctuation">(</span>people<span class="token punctuation">.</span>age <span class="token operator">&lt;</span> <span class="token number">21</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Group by age"</span><span class="token punctuation">)</span>
+people<span class="token punctuation">.</span>groupBy<span class="token punctuation">(</span><span class="token string">"age"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>count<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Make everyone 10 years older:"</span><span class="token punctuation">)</span>
+people<span class="token punctuation">.</span>select<span class="token punctuation">(</span>people<span class="token punctuation">.</span>name<span class="token punctuation">,</span> people<span class="token punctuation">.</span>age <span class="token operator">+</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+spark<span class="token punctuation">.</span>stop<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="4-Exercise-Friends-by-Age-with-DataFrames"><a href="#4-Exercise-Friends-by-Age-with-DataFrames" class="headerlink" title="4. [Exercise] Friends by Age, with DataFrames"></a>4. [Exercise] Friends by Age, with DataFrames</h2><p><img src="3c29d09b.png"><img src="7fcfaefc.png"></p>
+<h2 id="5-Exercise-Solution-Friends-by-Age-with-DataFrames"><a href="#5-Exercise-Solution-Friends-by-Age-with-DataFrames" class="headerlink" title="5. Exercise Solution Friends by Age, with DataFrames"></a>5. Exercise Solution Friends by Age, with DataFrames</h2><pre class=" language-python"><code class="language-python"><span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>sql <span class="token keyword">import</span> SparkSession<span class="token punctuation">,</span> Row<span class="token punctuation">,</span> functions <span class="token keyword">as</span> func
+
+<span class="token comment" spellcheck="true"># org.apache.spark.SparkException: Python worker failed to connect back.</span>
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>  <span class="token comment" spellcheck="true"># 放Python的位置</span>
+
+spark <span class="token operator">=</span> SparkSession<span class="token punctuation">.</span>builder<span class="token punctuation">.</span>appName<span class="token punctuation">(</span><span class="token string">'FriendsByAge'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>getOrCreate<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+lines <span class="token operator">=</span> spark<span class="token punctuation">.</span>read<span class="token punctuation">.</span>option<span class="token punctuation">(</span><span class="token string">'header'</span><span class="token punctuation">,</span> <span class="token string">'true'</span><span class="token punctuation">)</span> \
+    <span class="token punctuation">.</span>option<span class="token punctuation">(</span><span class="token string">'inferSchema'</span><span class="token punctuation">,</span> <span class="token string">'true'</span><span class="token punctuation">)</span> \
+    <span class="token punctuation">.</span>csv<span class="token punctuation">(</span><span class="token string">'../dataset/fakefriends-header.csv'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Select only age and numFriends columns</span>
+friendsByAge <span class="token operator">=</span> lines<span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">,</span> <span class="token string">'friends'</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># From friendsByAge we group by "age" and then compute average</span>
+friendsByAge<span class="token punctuation">.</span>groupby<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>avg<span class="token punctuation">(</span><span class="token string">'friends'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Sorted</span>
+friendsByAge<span class="token punctuation">.</span>groupby<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>avg<span class="token punctuation">(</span><span class="token string">'friends'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>sort<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Formatted more nicely</span>
+<span class="token comment" spellcheck="true"># agg() 聚合多种操作</span>
+friendsByAge<span class="token punctuation">.</span>groupby<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>agg<span class="token punctuation">(</span>func<span class="token punctuation">.</span>round<span class="token punctuation">(</span>func<span class="token punctuation">.</span>avg<span class="token punctuation">(</span><span class="token string">'friends'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">.</span>sort<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># With a custom column name</span>
+<span class="token punctuation">(</span>friendsByAge<span class="token punctuation">.</span>groupby<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>agg<span class="token punctuation">(</span>func<span class="token punctuation">.</span>round<span class="token punctuation">(</span>func<span class="token punctuation">.</span>avg<span class="token punctuation">(</span><span class="token string">'friends'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">.</span>alias<span class="token punctuation">(</span><span class="token string">'friends_avg'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+ <span class="token punctuation">.</span>sort<span class="token punctuation">(</span><span class="token string">'age'</span><span class="token punctuation">)</span><span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+spark<span class="token punctuation">.</span>stop<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="6-Activity-Word-Count-with-DataFrames"><a href="#6-Activity-Word-Count-with-DataFrames" class="headerlink" title="6. [Activity] Word Count, with DataFrames"></a>6. [Activity] Word Count, with DataFrames</h2>
             </div>
             <hr/>
 
@@ -898,61 +1254,50 @@ gitment.render('gitment-content');
 <article id="prenext-posts" class="prev-next articles">
     <div class="row article-row">
         
-        <div class="article col s12 m6" data-aos="fade-up" data-aos="fade-up">
+        <div class="article col s12 m6" data-aos="fade-up">
             <div class="article-badge left-badge text-color">
-                <i class="fa fa-dot-circle-o"></i>&nbsp;本篇
-            </div>
+                <i class="fa fa-chevron-left"></i>&nbsp;上一篇</div>
             <div class="card">
-                <a href="/2024/04/16/bigdata/pyspark/taming-big-data-with-apache-spark-and-python-hands-on/4ae2c67327/">
+                <a href="/2024/04/17/ai/building-recommender-systems-with-machine-learning-and-ai/4ae2c67327/">
                     <div class="card-image">
                         
                         
-                        <img src="/medias/featureimages/5.jpg" class="responsive-img" alt="Taming Big Data with Apache Spark and Python - Hands On!">
+                        <img src="/medias/featureimages/7.jpg" class="responsive-img" alt="Building Recommender Systems with Machine Learning and AI">
                         
-                        <span class="card-title">Taming Big Data with Apache Spark and Python - Hands On!</span>
+                        <span class="card-title">Building Recommender Systems with Machine Learning and AI</span>
                     </div>
                 </a>
                 <div class="card-content article-content">
-                    <div class="summary">2. Spark Basics and the RDD Interface1. What’s new in Spark 32. Introduction to Spark
-3. The Resilient Distributed Datas</div>
+                    <div class="summary">01 - Getting Started004 [Activity] Install Anaconda, course materials, and create movie recommendations!005 Course Roadm</div>
                     <div class="publish-info">
-                            <span class="publish-date">
-                                <i class="fa fa-clock-o fa-fw icon-date"></i>2024-04-16
-                            </span>
+                        <span class="publish-date">
+                            <i class="fa fa-clock-o fa-fw icon-date"></i>2024-04-17
+                        </span>
                         <span class="publish-author">
                             
                             <i class="fa fa-bookmark fa-fw icon-category"></i>
                             
-                            <a href="/categories/python/" class="post-category" target="_blank">
-                                    python
+                            <a href="/categories/ai/" class="post-category" target="_blank">
+                                    ai
                                 </a>
                             
-                            <a href="/categories/python/bigdata/" class="post-category" target="_blank">
-                                    bigdata
-                                </a>
-                            
-                            <a href="/categories/python/bigdata/pyspark/" class="post-category" target="_blank">
-                                    pyspark
+                            <a href="/categories/ai/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" class="post-category" target="_blank">
+                                    推荐系统
                                 </a>
                             
                             
                         </span>
                     </div>
                 </div>
-
                 
                 <div class="card-action article-tags">
                     
-                    <a href="/tags/bigdata/" target="_blank">
-                        <span class="chip bg-color">bigdata</span>
+                    <a href="/tags/ai/" target="_blank">
+                        <span class="chip bg-color">ai</span>
                     </a>
                     
-                    <a href="/tags/python/" target="_blank">
-                        <span class="chip bg-color">python</span>
-                    </a>
-                    
-                    <a href="/tags/pyspark/" target="_blank">
-                        <span class="chip bg-color">pyspark</span>
+                    <a href="/tags/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F/" target="_blank">
+                        <span class="chip bg-color">推荐系统</span>
                     </a>
                     
                 </div>
@@ -1086,7 +1431,7 @@ npx eslint</div>
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">773k</span>
+                <span class="white-color">779.8k</span>
             
 
             
