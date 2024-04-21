@@ -375,14 +375,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        5.1k
+                        8.2k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        30 分
+                        49 分
                     </div>
                     
                 
@@ -1658,7 +1658,676 @@ evaluator<span class="token punctuation">.</span>SampleTopNRecs<span class="toke
 </code></pre>
 <p><img src="140e2443.png"></p>
 <h2 id="006-Bleeding-Edge-Alert-Sparse-Linear-Methods-SLIM"><a href="#006-Bleeding-Edge-Alert-Sparse-Linear-Methods-SLIM" class="headerlink" title="006 Bleeding Edge Alert! Sparse Linear Methods (SLIM)"></a>006 Bleeding Edge Alert! Sparse Linear Methods (SLIM)</h2><p><img src="d04bac92.png"><img src="61f0d405.png"><img src="211837a1.png"></p>
-<h1 id="09-Deep-Learning-for-Recommender-Systems"><a href="#09-Deep-Learning-for-Recommender-Systems" class="headerlink" title="09 - Deep Learning for Recommender Systems"></a>09 - Deep Learning for Recommender Systems</h1><h2 id="001-Intro-to-Deep-Learning-for-Recommenders"><a href="#001-Intro-to-Deep-Learning-for-Recommenders" class="headerlink" title="001 Intro to Deep Learning for Recommenders"></a>001 Intro to Deep Learning for Recommenders</h2><h2 id="002-Restricted-Boltzmann-Machines-RBM’s"><a href="#002-Restricted-Boltzmann-Machines-RBM’s" class="headerlink" title="002 Restricted Boltzmann Machines (RBM’s)"></a>002 Restricted Boltzmann Machines (RBM’s)</h2>
+<h1 id="09-Deep-Learning-for-Recommender-Systems"><a href="#09-Deep-Learning-for-Recommender-Systems" class="headerlink" title="09 - Deep Learning for Recommender Systems"></a>09 - Deep Learning for Recommender Systems</h1><h2 id="001-Intro-to-Deep-Learning-for-Recommenders"><a href="#001-Intro-to-Deep-Learning-for-Recommenders" class="headerlink" title="001 Intro to Deep Learning for Recommenders"></a>001 Intro to Deep Learning for Recommenders</h2><h2 id="002-Restricted-Boltzmann-Machines-RBM’s-vb-受限波兹曼机"><a href="#002-Restricted-Boltzmann-Machines-RBM’s-vb-受限波兹曼机" class="headerlink" title="002 Restricted Boltzmann Machines (RBM’s)vb 受限波兹曼机"></a>002 Restricted Boltzmann Machines (RBM’s)vb 受限波兹曼机</h2><p><img src="ec09f489.png"><img src="e82d786d.png"><img src="d60ded57.png"><img src="15c434ff.png"><img src="ca7577ad.png"></p>
+<h2 id="003-Activity-Recommendations-with-RBM’s-part-1"><a href="#003-Activity-Recommendations-with-RBM’s-part-1" class="headerlink" title="003 [Activity] Recommendations with RBM’s, part 1"></a>003 [Activity] Recommendations with RBM’s, part 1</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># RBM.py</span>
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf <span class="token comment" spellcheck="true"># 1.15 py36</span>
+<span class="token keyword">from</span> tensorflow<span class="token punctuation">.</span>python<span class="token punctuation">.</span>framework <span class="token keyword">import</span> ops
+
+
+<span class="token keyword">class</span> <span class="token class-name">RBM</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> visibleDimensions<span class="token punctuation">,</span> epochs<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">,</span> hiddenDimensions<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">,</span> ratingValues<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span> learningRate<span class="token operator">=</span><span class="token number">0.001</span><span class="token punctuation">,</span>
+                 batchSize<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        <span class="token comment" spellcheck="true"># 输入层维度</span>
+        self<span class="token punctuation">.</span>visibleDimensions <span class="token operator">=</span> visibleDimensions
+        self<span class="token punctuation">.</span>epochs <span class="token operator">=</span> epochs
+        <span class="token comment" spellcheck="true"># 隐藏层维度 - 隐藏层神经元的数量</span>
+        self<span class="token punctuation">.</span>hiddenDimensions <span class="token operator">=</span> hiddenDimensions
+        self<span class="token punctuation">.</span>ratingValues <span class="token operator">=</span> ratingValues
+        self<span class="token punctuation">.</span>learningRate <span class="token operator">=</span> learningRate
+        self<span class="token punctuation">.</span>batchSize <span class="token operator">=</span> batchSize
+
+    <span class="token keyword">def</span> <span class="token function">Train</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        ops<span class="token punctuation">.</span>reset_default_graph<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        self<span class="token punctuation">.</span>MakeGraph<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        init <span class="token operator">=</span> tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>sess <span class="token operator">=</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
+
+        <span class="token keyword">for</span> epoch <span class="token keyword">in</span> range<span class="token punctuation">(</span>self<span class="token punctuation">.</span>epochs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>shuffle<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+
+            trX <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+            <span class="token comment" spellcheck="true"># 0~trX.shape[0], 每次迭代 i+batchSize</span>
+            <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> trX<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> self<span class="token punctuation">.</span>batchSize<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                self<span class="token punctuation">.</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>self<span class="token punctuation">.</span>update<span class="token punctuation">,</span> feed_dict<span class="token operator">=</span><span class="token punctuation">{</span>self<span class="token punctuation">.</span>X<span class="token punctuation">:</span> trX<span class="token punctuation">[</span>i<span class="token punctuation">:</span>i <span class="token operator">+</span> self<span class="token punctuation">.</span>batchSize<span class="token punctuation">]</span><span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Trained epoch "</span><span class="token punctuation">,</span> epoch<span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">GetRecommendations</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> inputUser<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        hidden <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>matmul<span class="token punctuation">(</span>self<span class="token punctuation">.</span>X<span class="token punctuation">,</span> self<span class="token punctuation">.</span>weights<span class="token punctuation">)</span> <span class="token operator">+</span> self<span class="token punctuation">.</span>hiddenBias<span class="token punctuation">)</span>
+        visible <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>matmul<span class="token punctuation">(</span>hidden<span class="token punctuation">,</span> tf<span class="token punctuation">.</span>transpose<span class="token punctuation">(</span>self<span class="token punctuation">.</span>weights<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">+</span> self<span class="token punctuation">.</span>visibleBias<span class="token punctuation">)</span>
+
+        feed <span class="token operator">=</span> self<span class="token punctuation">.</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>hidden<span class="token punctuation">,</span> feed_dict<span class="token operator">=</span><span class="token punctuation">{</span>self<span class="token punctuation">.</span>X<span class="token punctuation">:</span> inputUser<span class="token punctuation">}</span><span class="token punctuation">)</span>
+        rec <span class="token operator">=</span> self<span class="token punctuation">.</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>visible<span class="token punctuation">,</span> feed_dict<span class="token operator">=</span><span class="token punctuation">{</span>hidden<span class="token punctuation">:</span> feed<span class="token punctuation">}</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> rec<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">def</span> <span class="token function">MakeGraph</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        tf<span class="token punctuation">.</span>set_random_seed<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># Create variables for the graph, weights and biases</span>
+        self<span class="token punctuation">.</span>X <span class="token operator">=</span> tf<span class="token punctuation">.</span>placeholder<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>float32<span class="token punctuation">,</span> <span class="token punctuation">[</span>None<span class="token punctuation">,</span> self<span class="token punctuation">.</span>visibleDimensions<span class="token punctuation">]</span><span class="token punctuation">,</span> name<span class="token operator">=</span><span class="token string">"X"</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># Initialize weights randomly</span>
+        maxWeight <span class="token operator">=</span> <span class="token operator">-</span><span class="token number">4.0</span> <span class="token operator">*</span> np<span class="token punctuation">.</span>sqrt<span class="token punctuation">(</span><span class="token number">6.0</span> <span class="token operator">/</span> <span class="token punctuation">(</span>self<span class="token punctuation">.</span>hiddenDimensions <span class="token operator">+</span> self<span class="token punctuation">.</span>visibleDimensions<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>weights <span class="token operator">=</span> tf<span class="token punctuation">.</span>Variable<span class="token punctuation">(</span>
+            tf<span class="token punctuation">.</span>random_uniform<span class="token punctuation">(</span><span class="token punctuation">[</span>self<span class="token punctuation">.</span>visibleDimensions<span class="token punctuation">,</span> self<span class="token punctuation">.</span>hiddenDimensions<span class="token punctuation">]</span><span class="token punctuation">,</span> minval<span class="token operator">=</span><span class="token operator">-</span>maxWeight<span class="token punctuation">,</span> maxval<span class="token operator">=</span>maxWeight<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            tf<span class="token punctuation">.</span>float32<span class="token punctuation">,</span> name<span class="token operator">=</span><span class="token string">"weights"</span><span class="token punctuation">)</span>
+
+        self<span class="token punctuation">.</span>hiddenBias <span class="token operator">=</span> tf<span class="token punctuation">.</span>Variable<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">[</span>self<span class="token punctuation">.</span>hiddenDimensions<span class="token punctuation">]</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>float32<span class="token punctuation">,</span> name<span class="token operator">=</span><span class="token string">"hiddenBias"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>visibleBias <span class="token operator">=</span> tf<span class="token punctuation">.</span>Variable<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">[</span>self<span class="token punctuation">.</span>visibleDimensions<span class="token punctuation">]</span><span class="token punctuation">,</span> tf<span class="token punctuation">.</span>float32<span class="token punctuation">,</span> name<span class="token operator">=</span><span class="token string">"visibleBias"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># Perform Gibbs Sampling for Contrastive Divergence, per the paper we assume k=1 instead of iterating over the </span>
+        <span class="token comment" spellcheck="true"># forward pass multiple times since it seems to work just fine</span>
+
+        <span class="token comment" spellcheck="true"># Forward pass</span>
+        <span class="token comment" spellcheck="true"># Sample hidden layer given visible...</span>
+        <span class="token comment" spellcheck="true"># Get tensor of hidden probabilities</span>
+        hProb0 <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>matmul<span class="token punctuation">(</span>self<span class="token punctuation">.</span>X<span class="token punctuation">,</span> self<span class="token punctuation">.</span>weights<span class="token punctuation">)</span> <span class="token operator">+</span> self<span class="token punctuation">.</span>hiddenBias<span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># Sample from all of the distributions</span>
+        hSample <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>relu<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>sign<span class="token punctuation">(</span>hProb0 <span class="token operator">-</span> tf<span class="token punctuation">.</span>random_uniform<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>shape<span class="token punctuation">(</span>hProb0<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># Stitch it together</span>
+        forward <span class="token operator">=</span> tf<span class="token punctuation">.</span>matmul<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>transpose<span class="token punctuation">(</span>self<span class="token punctuation">.</span>X<span class="token punctuation">)</span><span class="token punctuation">,</span> hSample<span class="token punctuation">)</span> <span class="token comment" spellcheck="true"># tf.matmul 矩阵相乘</span>
+
+        <span class="token comment" spellcheck="true"># Backward pass</span>
+        <span class="token comment" spellcheck="true"># Reconstruct visible layer given hidden layer sample</span>
+        v <span class="token operator">=</span> tf<span class="token punctuation">.</span>matmul<span class="token punctuation">(</span>hSample<span class="token punctuation">,</span> tf<span class="token punctuation">.</span>transpose<span class="token punctuation">(</span>self<span class="token punctuation">.</span>weights<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">+</span> self<span class="token punctuation">.</span>visibleBias
+
+        <span class="token comment" spellcheck="true"># Build up our mask for missing ratings</span>
+        vMask <span class="token operator">=</span> tf<span class="token punctuation">.</span>sign<span class="token punctuation">(</span>self<span class="token punctuation">.</span>X<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># Make sure everything is 0 or 1</span>
+        vMask3D <span class="token operator">=</span> tf<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>vMask<span class="token punctuation">,</span>
+                             <span class="token punctuation">[</span>tf<span class="token punctuation">.</span>shape<span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> self<span class="token punctuation">.</span>ratingValues<span class="token punctuation">]</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># Reshape into arrays of individual ratings</span>
+        vMask3D <span class="token operator">=</span> tf<span class="token punctuation">.</span>reduce_max<span class="token punctuation">(</span>vMask3D<span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                                keepdims<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># Use reduce_max to either give us 1 for ratings that exist, and 0 for missing ratings</span>
+
+        <span class="token comment" spellcheck="true"># Extract rating vectors for each individual set of 10 rating binary values</span>
+        v <span class="token operator">=</span> tf<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>v<span class="token punctuation">,</span> <span class="token punctuation">[</span>tf<span class="token punctuation">.</span>shape<span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> self<span class="token punctuation">.</span>ratingValues<span class="token punctuation">]</span><span class="token punctuation">)</span>
+        vProb <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>softmax<span class="token punctuation">(</span>v <span class="token operator">*</span> vMask3D<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># Apply softmax activation function</span>
+        vProb <span class="token operator">=</span> tf<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>vProb<span class="token punctuation">,</span> <span class="token punctuation">[</span>tf<span class="token punctuation">.</span>shape<span class="token punctuation">(</span>v<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                                   <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># And shove them back into the flattened state. Reconstruction is done now.</span>
+        <span class="token comment" spellcheck="true"># Stitch it together to define the backward pass and updated hidden biases</span>
+        hProb1 <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>matmul<span class="token punctuation">(</span>vProb<span class="token punctuation">,</span> self<span class="token punctuation">.</span>weights<span class="token punctuation">)</span> <span class="token operator">+</span> self<span class="token punctuation">.</span>hiddenBias<span class="token punctuation">)</span>
+        backward <span class="token operator">=</span> tf<span class="token punctuation">.</span>matmul<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>transpose<span class="token punctuation">(</span>vProb<span class="token punctuation">)</span><span class="token punctuation">,</span> hProb1<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># Now define what each epoch will do...</span>
+        <span class="token comment" spellcheck="true"># Run the forward and backward passes, and update the weights</span>
+        weightUpdate <span class="token operator">=</span> self<span class="token punctuation">.</span>weights<span class="token punctuation">.</span>assign_add<span class="token punctuation">(</span>self<span class="token punctuation">.</span>learningRate <span class="token operator">*</span> <span class="token punctuation">(</span>forward <span class="token operator">-</span> backward<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># Update hidden bias, minimizing the divergence in the hidden nodes</span>
+        hiddenBiasUpdate <span class="token operator">=</span> self<span class="token punctuation">.</span>hiddenBias<span class="token punctuation">.</span>assign_add<span class="token punctuation">(</span>self<span class="token punctuation">.</span>learningRate <span class="token operator">*</span> tf<span class="token punctuation">.</span>reduce_mean<span class="token punctuation">(</span>hProb0 <span class="token operator">-</span> hProb1<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token comment" spellcheck="true"># Update the visible bias, minimizng divergence in the visible results</span>
+        visibleBiasUpdate <span class="token operator">=</span> self<span class="token punctuation">.</span>visibleBias<span class="token punctuation">.</span>assign_add<span class="token punctuation">(</span>self<span class="token punctuation">.</span>learningRate <span class="token operator">*</span> tf<span class="token punctuation">.</span>reduce_mean<span class="token punctuation">(</span>self<span class="token punctuation">.</span>X <span class="token operator">-</span> vProb<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+        self<span class="token punctuation">.</span>update <span class="token operator">=</span> <span class="token punctuation">[</span>weightUpdate<span class="token punctuation">,</span> hiddenBiasUpdate<span class="token punctuation">,</span> visibleBiasUpdate<span class="token punctuation">]</span>
+</code></pre>
+<h2 id="004-Activity-Recommendations-with-RBM’s-part-2"><a href="#004-Activity-Recommendations-with-RBM’s-part-2" class="headerlink" title="004 [Activity] Recommendations with RBM’s, part 2"></a>004 [Activity] Recommendations with RBM’s, part 2</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># -*- coding: utf-8 -*-</span>
+<span class="token triple-quoted-string string">"""
+Created on Fri May  4 13:08:25 2018
+
+@author: Frank
+"""</span>
+<span class="token comment" spellcheck="true"># RBMAlgorithm.py</span>
+<span class="token keyword">from</span> surprise <span class="token keyword">import</span> AlgoBase
+<span class="token keyword">from</span> surprise <span class="token keyword">import</span> PredictionImpossible
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> RBM <span class="token keyword">import</span> RBM
+
+
+<span class="token keyword">class</span> <span class="token class-name">RBMAlgorithm</span><span class="token punctuation">(</span>AlgoBase<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> epochs<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">,</span> hiddenDim<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> learningRate<span class="token operator">=</span><span class="token number">0.001</span><span class="token punctuation">,</span> batchSize<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> sim_options<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        AlgoBase<span class="token punctuation">.</span>__init__<span class="token punctuation">(</span>self<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>epochs <span class="token operator">=</span> epochs
+        self<span class="token punctuation">.</span>hiddenDim <span class="token operator">=</span> hiddenDim
+        self<span class="token punctuation">.</span>learningRate <span class="token operator">=</span> learningRate
+        self<span class="token punctuation">.</span>batchSize <span class="token operator">=</span> batchSize
+
+    <span class="token keyword">def</span> <span class="token function">softmax</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> x<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span>x<span class="token punctuation">)</span> <span class="token operator">/</span> np<span class="token punctuation">.</span>sum<span class="token punctuation">(</span>np<span class="token punctuation">.</span>exp<span class="token punctuation">(</span>x<span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">fit</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> trainset<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        AlgoBase<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>self<span class="token punctuation">,</span> trainset<span class="token punctuation">)</span>
+
+        numUsers <span class="token operator">=</span> trainset<span class="token punctuation">.</span>n_users
+        numItems <span class="token operator">=</span> trainset<span class="token punctuation">.</span>n_items
+
+        trainingMatrix <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">[</span>numUsers<span class="token punctuation">,</span> numItems<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>uid<span class="token punctuation">,</span> iid<span class="token punctuation">,</span> rating<span class="token punctuation">)</span> <span class="token keyword">in</span> trainset<span class="token punctuation">.</span>all_ratings<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            adjustedRating <span class="token operator">=</span> int<span class="token punctuation">(</span>float<span class="token punctuation">(</span>rating<span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">2.0</span><span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">1</span>
+            trainingMatrix<span class="token punctuation">[</span>int<span class="token punctuation">(</span>uid<span class="token punctuation">)</span><span class="token punctuation">,</span> int<span class="token punctuation">(</span>iid<span class="token punctuation">)</span><span class="token punctuation">,</span> adjustedRating<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1</span>
+
+        <span class="token comment" spellcheck="true"># Flatten to a 2D array, with nodes for each possible rating type on each possible item, for every user.</span>
+        trainingMatrix <span class="token operator">=</span> np<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>trainingMatrix<span class="token punctuation">,</span> <span class="token punctuation">[</span>trainingMatrix<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># Create an RBM with (num items * rating values) visible nodes</span>
+        rbm <span class="token operator">=</span> RBM<span class="token punctuation">(</span>trainingMatrix<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> hiddenDimensions<span class="token operator">=</span>self<span class="token punctuation">.</span>hiddenDim<span class="token punctuation">,</span> learningRate<span class="token operator">=</span>self<span class="token punctuation">.</span>learningRate<span class="token punctuation">,</span>
+                  batchSize<span class="token operator">=</span>self<span class="token punctuation">.</span>batchSize<span class="token punctuation">,</span> epochs<span class="token operator">=</span>self<span class="token punctuation">.</span>epochs<span class="token punctuation">)</span>
+        rbm<span class="token punctuation">.</span>Train<span class="token punctuation">(</span>trainingMatrix<span class="token punctuation">)</span>
+
+        self<span class="token punctuation">.</span>predictedRatings <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">[</span>numUsers<span class="token punctuation">,</span> numItems<span class="token punctuation">]</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+        <span class="token keyword">for</span> uiid <span class="token keyword">in</span> range<span class="token punctuation">(</span>trainset<span class="token punctuation">.</span>n_users<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>uiid <span class="token operator">%</span> <span class="token number">50</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Processing user "</span><span class="token punctuation">,</span> uiid<span class="token punctuation">)</span>
+            recs <span class="token operator">=</span> rbm<span class="token punctuation">.</span>GetRecommendations<span class="token punctuation">(</span><span class="token punctuation">[</span>trainingMatrix<span class="token punctuation">[</span>uiid<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+            recs <span class="token operator">=</span> np<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>recs<span class="token punctuation">,</span> <span class="token punctuation">[</span>numItems<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+            <span class="token keyword">for</span> itemID<span class="token punctuation">,</span> rec <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>recs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token comment" spellcheck="true"># The obvious thing would be to just take the rating with the highest score:                </span>
+                <span class="token comment" spellcheck="true"># rating = rec.argmax()</span>
+                <span class="token comment" spellcheck="true"># ... but this just leads to a huge multi-way tie for 5-star predictions.</span>
+                <span class="token comment" spellcheck="true"># The paper suggests performing normalization over K values to get probabilities</span>
+                <span class="token comment" spellcheck="true"># and take the expectation as your prediction, so we'll do that instead:</span>
+                normalized <span class="token operator">=</span> self<span class="token punctuation">.</span>softmax<span class="token punctuation">(</span>rec<span class="token punctuation">)</span>
+                rating <span class="token operator">=</span> np<span class="token punctuation">.</span>average<span class="token punctuation">(</span>np<span class="token punctuation">.</span>arange<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">,</span> weights<span class="token operator">=</span>normalized<span class="token punctuation">)</span>
+                self<span class="token punctuation">.</span>predictedRatings<span class="token punctuation">[</span>uiid<span class="token punctuation">,</span> itemID<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token punctuation">(</span>rating <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">0.5</span>
+
+        <span class="token keyword">return</span> self
+
+    <span class="token keyword">def</span> <span class="token function">estimate</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> u<span class="token punctuation">,</span> i<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        <span class="token keyword">if</span> <span class="token operator">not</span> <span class="token punctuation">(</span>self<span class="token punctuation">.</span>trainset<span class="token punctuation">.</span>knows_user<span class="token punctuation">(</span>u<span class="token punctuation">)</span> <span class="token operator">and</span> self<span class="token punctuation">.</span>trainset<span class="token punctuation">.</span>knows_item<span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">raise</span> PredictionImpossible<span class="token punctuation">(</span><span class="token string">'User and/or item is unkown.'</span><span class="token punctuation">)</span>
+
+        rating <span class="token operator">=</span> self<span class="token punctuation">.</span>predictedRatings<span class="token punctuation">[</span>u<span class="token punctuation">,</span> i<span class="token punctuation">]</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rating <span class="token operator">&lt;</span> <span class="token number">0.001</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">raise</span> PredictionImpossible<span class="token punctuation">(</span><span class="token string">'No valid prediction exists.'</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> rating
+</code></pre>
+<h2 id="005-Activity-Evaluating-the-RBM-Recommender"><a href="#005-Activity-Evaluating-the-RBM-Recommender" class="headerlink" title="005 [Activity] Evaluating the RBM Recommender"></a>005 [Activity] Evaluating the RBM Recommender</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># -*- coding: utf-8 -*-</span>
+<span class="token triple-quoted-string string">"""
+Created on Thu May  3 11:11:13 2018
+
+@author: Frank
+"""</span>
+<span class="token comment" spellcheck="true"># RBMBakeOff.py</span>
+
+<span class="token keyword">from</span> MovieLens <span class="token keyword">import</span> MovieLens
+<span class="token keyword">from</span> RBMAlgorithm <span class="token keyword">import</span> RBMAlgorithm
+<span class="token keyword">from</span> surprise <span class="token keyword">import</span> NormalPredictor
+<span class="token keyword">from</span> Evaluator <span class="token keyword">import</span> Evaluator
+
+<span class="token keyword">import</span> random
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+<span class="token keyword">def</span> <span class="token function">LoadMovieLensData</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ml <span class="token operator">=</span> MovieLens<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Loading movie ratings..."</span><span class="token punctuation">)</span>
+    data <span class="token operator">=</span> ml<span class="token punctuation">.</span>loadMovieLensLatestSmall<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"\nComputing movie popularity ranks so we can measure novelty later..."</span><span class="token punctuation">)</span>
+    rankings <span class="token operator">=</span> ml<span class="token punctuation">.</span>getPopularityRanks<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>ml<span class="token punctuation">,</span> data<span class="token punctuation">,</span> rankings<span class="token punctuation">)</span>
+
+np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Load up common data set for the recommender algorithms</span>
+<span class="token punctuation">(</span>ml<span class="token punctuation">,</span> evaluationData<span class="token punctuation">,</span> rankings<span class="token punctuation">)</span> <span class="token operator">=</span> LoadMovieLensData<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Construct an Evaluator to, you know, evaluate them</span>
+evaluator <span class="token operator">=</span> Evaluator<span class="token punctuation">(</span>evaluationData<span class="token punctuation">,</span> rankings<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">#RBM</span>
+RBM <span class="token operator">=</span> RBMAlgorithm<span class="token punctuation">(</span>epochs<span class="token operator">=</span><span class="token number">20</span><span class="token punctuation">)</span>
+evaluator<span class="token punctuation">.</span>AddAlgorithm<span class="token punctuation">(</span>RBM<span class="token punctuation">,</span> <span class="token string">"RBM"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Just make random recommendations</span>
+Random <span class="token operator">=</span> NormalPredictor<span class="token punctuation">(</span><span class="token punctuation">)</span>
+evaluator<span class="token punctuation">.</span>AddAlgorithm<span class="token punctuation">(</span>Random<span class="token punctuation">,</span> <span class="token string">"Random"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Fight!</span>
+evaluator<span class="token punctuation">.</span>Evaluate<span class="token punctuation">(</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+evaluator<span class="token punctuation">.</span>SampleTopNRecs<span class="token punctuation">(</span>ml<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="006-Exercise-Tuning-Restricted-Boltzmann-Machines"><a href="#006-Exercise-Tuning-Restricted-Boltzmann-Machines" class="headerlink" title="006 [Exercise] Tuning Restricted Boltzmann Machines"></a>006 [Exercise] Tuning Restricted Boltzmann Machines</h2><p><img src="95d2a5a5.png"></p>
+<h2 id="007-Exercise-Results-Tuning-a-RBM-Recommender"><a href="#007-Exercise-Results-Tuning-a-RBM-Recommender" class="headerlink" title="007 Exercise Results Tuning a RBM Recommender"></a>007 Exercise Results Tuning a RBM Recommender</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># -*- coding: utf-8 -*-</span>
+<span class="token triple-quoted-string string">"""
+Created on Thu May  3 11:11:13 2018
+
+@author: Frank
+"""</span>
+<span class="token comment" spellcheck="true"># RBMTuning.py</span>
+
+<span class="token keyword">from</span> MovieLens <span class="token keyword">import</span> MovieLens
+<span class="token keyword">from</span> RBMAlgorithm <span class="token keyword">import</span> RBMAlgorithm
+<span class="token keyword">from</span> surprise <span class="token keyword">import</span> NormalPredictor
+<span class="token keyword">from</span> Evaluator <span class="token keyword">import</span> Evaluator
+<span class="token keyword">from</span> surprise<span class="token punctuation">.</span>model_selection <span class="token keyword">import</span> GridSearchCV
+
+<span class="token keyword">import</span> random
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+<span class="token keyword">def</span> <span class="token function">LoadMovieLensData</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ml <span class="token operator">=</span> MovieLens<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Loading movie ratings..."</span><span class="token punctuation">)</span>
+    data <span class="token operator">=</span> ml<span class="token punctuation">.</span>loadMovieLensLatestSmall<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"\nComputing movie popularity ranks so we can measure novelty later..."</span><span class="token punctuation">)</span>
+    rankings <span class="token operator">=</span> ml<span class="token punctuation">.</span>getPopularityRanks<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>ml<span class="token punctuation">,</span> data<span class="token punctuation">,</span> rankings<span class="token punctuation">)</span>
+
+np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Load up common data set for the recommender algorithms</span>
+<span class="token punctuation">(</span>ml<span class="token punctuation">,</span> evaluationData<span class="token punctuation">,</span> rankings<span class="token punctuation">)</span> <span class="token operator">=</span> LoadMovieLensData<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Searching for best parameters..."</span><span class="token punctuation">)</span>
+param_grid <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">'hiddenDim'</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token number">20</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token string">'learningRate'</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.01</span><span class="token punctuation">]</span><span class="token punctuation">}</span>
+gs <span class="token operator">=</span> GridSearchCV<span class="token punctuation">(</span>RBMAlgorithm<span class="token punctuation">,</span> param_grid<span class="token punctuation">,</span> measures<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'rmse'</span><span class="token punctuation">,</span> <span class="token string">'mae'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> cv<span class="token operator">=</span><span class="token number">3</span><span class="token punctuation">)</span>
+
+gs<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>evaluationData<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># best RMSE score</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Best RMSE score attained: "</span><span class="token punctuation">,</span> gs<span class="token punctuation">.</span>best_score<span class="token punctuation">[</span><span class="token string">'rmse'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># combination of parameters that gave the best RMSE score</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>gs<span class="token punctuation">.</span>best_params<span class="token punctuation">[</span><span class="token string">'rmse'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Construct an Evaluator to, you know, evaluate them</span>
+evaluator <span class="token operator">=</span> Evaluator<span class="token punctuation">(</span>evaluationData<span class="token punctuation">,</span> rankings<span class="token punctuation">)</span>
+
+params <span class="token operator">=</span> gs<span class="token punctuation">.</span>best_params<span class="token punctuation">[</span><span class="token string">'rmse'</span><span class="token punctuation">]</span>
+RBMtuned <span class="token operator">=</span> RBMAlgorithm<span class="token punctuation">(</span>hiddenDim <span class="token operator">=</span> params<span class="token punctuation">[</span><span class="token string">'hiddenDim'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> learningRate <span class="token operator">=</span> params<span class="token punctuation">[</span><span class="token string">'learningRate'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+evaluator<span class="token punctuation">.</span>AddAlgorithm<span class="token punctuation">(</span>RBMtuned<span class="token punctuation">,</span> <span class="token string">"RBM - Tuned"</span><span class="token punctuation">)</span>
+
+RBMUntuned <span class="token operator">=</span> RBMAlgorithm<span class="token punctuation">(</span><span class="token punctuation">)</span>
+evaluator<span class="token punctuation">.</span>AddAlgorithm<span class="token punctuation">(</span>RBMUntuned<span class="token punctuation">,</span> <span class="token string">"RBM - Untuned"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Just make random recommendations</span>
+Random <span class="token operator">=</span> NormalPredictor<span class="token punctuation">(</span><span class="token punctuation">)</span>
+evaluator<span class="token punctuation">.</span>AddAlgorithm<span class="token punctuation">(</span>Random<span class="token punctuation">,</span> <span class="token string">"Random"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Fight!</span>
+evaluator<span class="token punctuation">.</span>Evaluate<span class="token punctuation">(</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+
+evaluator<span class="token punctuation">.</span>SampleTopNRecs<span class="token punctuation">(</span>ml<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="008-Auto-Encoders-for-Recommendations-Deep-Learning-for-Recs"><a href="#008-Auto-Encoders-for-Recommendations-Deep-Learning-for-Recs" class="headerlink" title="008 Auto-Encoders for Recommendations Deep Learning for Recs"></a>008 Auto-Encoders for Recommendations Deep Learning for Recs</h2><p><img src="6fe377d4.png"><img src="cbc41091.png"></p>
+<h2 id="009-Activity-Recommendations-with-Deep-Neural-Networks"><a href="#009-Activity-Recommendations-with-Deep-Neural-Networks" class="headerlink" title="009 [Activity] Recommendations with Deep Neural Networks"></a>009 [Activity] Recommendations with Deep Neural Networks</h2><p>数据太稀疏, 评分样本不够, 则缺失值或0值过多, 神经网络的效果不好</p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># AutoRec.py</span>
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
+<span class="token keyword">from</span> tensorflow<span class="token punctuation">.</span>python<span class="token punctuation">.</span>framework <span class="token keyword">import</span> ops
+
+
+<span class="token keyword">class</span> <span class="token class-name">AutoRec</span><span class="token punctuation">(</span>object<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> visibleDimensions<span class="token punctuation">,</span> epochs<span class="token operator">=</span><span class="token number">200</span><span class="token punctuation">,</span> hiddenDimensions<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">,</span> learningRate<span class="token operator">=</span><span class="token number">0.1</span><span class="token punctuation">,</span> batchSize<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        self<span class="token punctuation">.</span>visibleDimensions <span class="token operator">=</span> visibleDimensions
+        self<span class="token punctuation">.</span>epochs <span class="token operator">=</span> epochs
+        self<span class="token punctuation">.</span>hiddenDimensions <span class="token operator">=</span> hiddenDimensions
+        self<span class="token punctuation">.</span>learningRate <span class="token operator">=</span> learningRate
+        self<span class="token punctuation">.</span>batchSize <span class="token operator">=</span> batchSize
+
+    <span class="token keyword">def</span> <span class="token function">Train</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> X<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        ops<span class="token punctuation">.</span>reset_default_graph<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        self<span class="token punctuation">.</span>MakeGraph<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        init <span class="token operator">=</span> tf<span class="token punctuation">.</span>global_variables_initializer<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>sess <span class="token operator">=</span> tf<span class="token punctuation">.</span>Session<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>init<span class="token punctuation">)</span>
+
+        npX <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+
+        <span class="token keyword">for</span> epoch <span class="token keyword">in</span> range<span class="token punctuation">(</span>self<span class="token punctuation">.</span>epochs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+            <span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> npX<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> self<span class="token punctuation">.</span>batchSize<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                epochX <span class="token operator">=</span> npX<span class="token punctuation">[</span>i<span class="token punctuation">:</span>i <span class="token operator">+</span> self<span class="token punctuation">.</span>batchSize<span class="token punctuation">]</span>
+                self<span class="token punctuation">.</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>self<span class="token punctuation">.</span>update<span class="token punctuation">,</span> feed_dict<span class="token operator">=</span><span class="token punctuation">{</span>self<span class="token punctuation">.</span>inputLayer<span class="token punctuation">:</span> epochX<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+            <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Trained epoch "</span><span class="token punctuation">,</span> epoch<span class="token punctuation">)</span>
+
+    <span class="token keyword">def</span> <span class="token function">GetRecommendations</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> inputUser<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        <span class="token comment" spellcheck="true"># Feed through a single user and return predictions from the output layer.</span>
+        rec <span class="token operator">=</span> self<span class="token punctuation">.</span>sess<span class="token punctuation">.</span>run<span class="token punctuation">(</span>self<span class="token punctuation">.</span>outputLayer<span class="token punctuation">,</span> feed_dict<span class="token operator">=</span><span class="token punctuation">{</span>self<span class="token punctuation">.</span>inputLayer<span class="token punctuation">:</span> inputUser<span class="token punctuation">}</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> rec<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+
+    <span class="token keyword">def</span> <span class="token function">MakeGraph</span><span class="token punctuation">(</span>self<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        tf<span class="token punctuation">.</span>set_random_seed<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># Create varaibles for weights for the encoding (visible->hidden) and decoding (hidden->output) stages, randomly initialized</span>
+        self<span class="token punctuation">.</span>encoderWeights <span class="token operator">=</span> <span class="token punctuation">{</span>
+            <span class="token string">'weights'</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>Variable<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>random_normal<span class="token punctuation">(</span><span class="token punctuation">[</span>self<span class="token punctuation">.</span>visibleDimensions<span class="token punctuation">,</span> self<span class="token punctuation">.</span>hiddenDimensions<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+        self<span class="token punctuation">.</span>decoderWeights <span class="token operator">=</span> <span class="token punctuation">{</span>
+            <span class="token string">'weights'</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>Variable<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>random_normal<span class="token punctuation">(</span><span class="token punctuation">[</span>self<span class="token punctuation">.</span>hiddenDimensions<span class="token punctuation">,</span> self<span class="token punctuation">.</span>visibleDimensions<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true"># Create biases</span>
+        self<span class="token punctuation">.</span>encoderBiases <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">'biases'</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>Variable<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>random_normal<span class="token punctuation">(</span><span class="token punctuation">[</span>self<span class="token punctuation">.</span>hiddenDimensions<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+        self<span class="token punctuation">.</span>decoderBiases <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">'biases'</span><span class="token punctuation">:</span> tf<span class="token punctuation">.</span>Variable<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>random_normal<span class="token punctuation">(</span><span class="token punctuation">[</span>self<span class="token punctuation">.</span>visibleDimensions<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+
+        <span class="token comment" spellcheck="true"># Create the input layer</span>
+        self<span class="token punctuation">.</span>inputLayer <span class="token operator">=</span> tf<span class="token punctuation">.</span>placeholder<span class="token punctuation">(</span><span class="token string">'float'</span><span class="token punctuation">,</span> <span class="token punctuation">[</span>None<span class="token punctuation">,</span> self<span class="token punctuation">.</span>visibleDimensions<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># hidden layer</span>
+        hidden <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>
+            tf<span class="token punctuation">.</span>add<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>matmul<span class="token punctuation">(</span>self<span class="token punctuation">.</span>inputLayer<span class="token punctuation">,</span> self<span class="token punctuation">.</span>encoderWeights<span class="token punctuation">[</span><span class="token string">'weights'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> self<span class="token punctuation">.</span>encoderBiases<span class="token punctuation">[</span><span class="token string">'biases'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># output layer for our predictions.</span>
+        self<span class="token punctuation">.</span>outputLayer <span class="token operator">=</span> tf<span class="token punctuation">.</span>nn<span class="token punctuation">.</span>sigmoid<span class="token punctuation">(</span>
+            tf<span class="token punctuation">.</span>add<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>matmul<span class="token punctuation">(</span>hidden<span class="token punctuation">,</span> self<span class="token punctuation">.</span>decoderWeights<span class="token punctuation">[</span><span class="token string">'weights'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> self<span class="token punctuation">.</span>decoderBiases<span class="token punctuation">[</span><span class="token string">'biases'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># Our "true" labels for training are copied from the input layer.</span>
+        self<span class="token punctuation">.</span>labels <span class="token operator">=</span> self<span class="token punctuation">.</span>inputLayer
+
+        <span class="token comment" spellcheck="true"># loss function and optimizer. Try other optimizers, like Adam!</span>
+        loss <span class="token operator">=</span> tf<span class="token punctuation">.</span>losses<span class="token punctuation">.</span>mean_squared_error<span class="token punctuation">(</span>self<span class="token punctuation">.</span>labels<span class="token punctuation">,</span> self<span class="token punctuation">.</span>outputLayer<span class="token punctuation">)</span>
+        optimizer <span class="token operator">=</span> tf<span class="token punctuation">.</span>train<span class="token punctuation">.</span>RMSPropOptimizer<span class="token punctuation">(</span>self<span class="token punctuation">.</span>learningRate<span class="token punctuation">)</span><span class="token punctuation">.</span>minimize<span class="token punctuation">(</span>loss<span class="token punctuation">)</span>
+
+        <span class="token comment" spellcheck="true"># What we evaluate each batch.</span>
+        self<span class="token punctuation">.</span>update <span class="token operator">=</span> <span class="token punctuation">[</span>optimizer<span class="token punctuation">,</span> loss<span class="token punctuation">]</span>
+</code></pre>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># -*- coding: utf-8 -*-</span>
+<span class="token triple-quoted-string string">"""
+Created on Fri May  4 13:08:25 2018
+
+@author: Frank
+"""</span>
+<span class="token comment" spellcheck="true"># AutoRecAlgorithm.py</span>
+
+<span class="token keyword">from</span> surprise <span class="token keyword">import</span> AlgoBase
+<span class="token keyword">from</span> surprise <span class="token keyword">import</span> PredictionImpossible
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">from</span> AutoRec <span class="token keyword">import</span> AutoRec
+
+
+<span class="token keyword">class</span> <span class="token class-name">AutoRecAlgorithm</span><span class="token punctuation">(</span>AlgoBase<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> epochs<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> hiddenDim<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> learningRate<span class="token operator">=</span><span class="token number">0.01</span><span class="token punctuation">,</span> batchSize<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> sim_options<span class="token operator">=</span><span class="token punctuation">{</span><span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+        AlgoBase<span class="token punctuation">.</span>__init__<span class="token punctuation">(</span>self<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>epochs <span class="token operator">=</span> epochs
+        self<span class="token punctuation">.</span>hiddenDim <span class="token operator">=</span> hiddenDim
+        self<span class="token punctuation">.</span>learningRate <span class="token operator">=</span> learningRate
+        self<span class="token punctuation">.</span>batchSize <span class="token operator">=</span> batchSize
+
+    <span class="token keyword">def</span> <span class="token function">fit</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> trainset<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        AlgoBase<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>self<span class="token punctuation">,</span> trainset<span class="token punctuation">)</span>
+
+        numUsers <span class="token operator">=</span> trainset<span class="token punctuation">.</span>n_users
+        numItems <span class="token operator">=</span> trainset<span class="token punctuation">.</span>n_items
+
+        trainingMatrix <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">[</span>numUsers<span class="token punctuation">,</span> numItems<span class="token punctuation">]</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+
+        <span class="token keyword">for</span> <span class="token punctuation">(</span>uid<span class="token punctuation">,</span> iid<span class="token punctuation">,</span> rating<span class="token punctuation">)</span> <span class="token keyword">in</span> trainset<span class="token punctuation">.</span>all_ratings<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            trainingMatrix<span class="token punctuation">[</span>int<span class="token punctuation">(</span>uid<span class="token punctuation">)</span><span class="token punctuation">,</span> int<span class="token punctuation">(</span>iid<span class="token punctuation">)</span><span class="token punctuation">]</span> <span class="token operator">=</span> rating <span class="token operator">/</span> <span class="token number">5.0</span>
+
+        <span class="token comment" spellcheck="true"># Create an RBM with (num items * rating values) visible nodes</span>
+        autoRec <span class="token operator">=</span> AutoRec<span class="token punctuation">(</span>trainingMatrix<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> hiddenDimensions<span class="token operator">=</span>self<span class="token punctuation">.</span>hiddenDim<span class="token punctuation">,</span> learningRate<span class="token operator">=</span>self<span class="token punctuation">.</span>learningRate<span class="token punctuation">,</span>
+                          batchSize<span class="token operator">=</span>self<span class="token punctuation">.</span>batchSize<span class="token punctuation">,</span> epochs<span class="token operator">=</span>self<span class="token punctuation">.</span>epochs<span class="token punctuation">)</span>
+        autoRec<span class="token punctuation">.</span>Train<span class="token punctuation">(</span>trainingMatrix<span class="token punctuation">)</span>
+
+        self<span class="token punctuation">.</span>predictedRatings <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span><span class="token punctuation">[</span>numUsers<span class="token punctuation">,</span> numItems<span class="token punctuation">]</span><span class="token punctuation">,</span> dtype<span class="token operator">=</span>np<span class="token punctuation">.</span>float32<span class="token punctuation">)</span>
+
+        <span class="token keyword">for</span> uiid <span class="token keyword">in</span> range<span class="token punctuation">(</span>trainset<span class="token punctuation">.</span>n_users<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>uiid <span class="token operator">%</span> <span class="token number">50</span> <span class="token operator">==</span> <span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Processing user "</span><span class="token punctuation">,</span> uiid<span class="token punctuation">)</span>
+            recs <span class="token operator">=</span> autoRec<span class="token punctuation">.</span>GetRecommendations<span class="token punctuation">(</span><span class="token punctuation">[</span>trainingMatrix<span class="token punctuation">[</span>uiid<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+            <span class="token keyword">for</span> itemID<span class="token punctuation">,</span> rec <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>recs<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                self<span class="token punctuation">.</span>predictedRatings<span class="token punctuation">[</span>uiid<span class="token punctuation">,</span> itemID<span class="token punctuation">]</span> <span class="token operator">=</span> rec <span class="token operator">*</span> <span class="token number">5.0</span>
+
+        <span class="token keyword">return</span> self
+
+    <span class="token keyword">def</span> <span class="token function">estimate</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> u<span class="token punctuation">,</span> i<span class="token punctuation">)</span><span class="token punctuation">:</span>
+
+        <span class="token keyword">if</span> <span class="token operator">not</span> <span class="token punctuation">(</span>self<span class="token punctuation">.</span>trainset<span class="token punctuation">.</span>knows_user<span class="token punctuation">(</span>u<span class="token punctuation">)</span> <span class="token operator">and</span> self<span class="token punctuation">.</span>trainset<span class="token punctuation">.</span>knows_item<span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">raise</span> PredictionImpossible<span class="token punctuation">(</span><span class="token string">'User and/or item is unkown.'</span><span class="token punctuation">)</span>
+
+        rating <span class="token operator">=</span> self<span class="token punctuation">.</span>predictedRatings<span class="token punctuation">[</span>u<span class="token punctuation">,</span> i<span class="token punctuation">]</span>
+
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>rating <span class="token operator">&lt;</span> <span class="token number">0.001</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">raise</span> PredictionImpossible<span class="token punctuation">(</span><span class="token string">'No valid prediction exists.'</span><span class="token punctuation">)</span>
+
+        <span class="token keyword">return</span> rating
+</code></pre>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># -*- coding: utf-8 -*-</span>
+<span class="token triple-quoted-string string">"""
+Created on Thu May  3 11:11:13 2018
+
+@author: Frank
+"""</span>
+<span class="token comment" spellcheck="true"># AutoRecBakeOff.py</span>
+
+<span class="token keyword">from</span> MovieLens <span class="token keyword">import</span> MovieLens
+<span class="token keyword">from</span> AutoRecAlgorithm <span class="token keyword">import</span> AutoRecAlgorithm
+<span class="token keyword">from</span> surprise <span class="token keyword">import</span> NormalPredictor
+<span class="token keyword">from</span> Evaluator <span class="token keyword">import</span> Evaluator
+
+<span class="token keyword">import</span> random
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+
+<span class="token keyword">def</span> <span class="token function">LoadMovieLensData</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    ml <span class="token operator">=</span> MovieLens<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Loading movie ratings..."</span><span class="token punctuation">)</span>
+    data <span class="token operator">=</span> ml<span class="token punctuation">.</span>loadMovieLensLatestSmall<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"\nComputing movie popularity ranks so we can measure novelty later..."</span><span class="token punctuation">)</span>
+    rankings <span class="token operator">=</span> ml<span class="token punctuation">.</span>getPopularityRanks<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span>ml<span class="token punctuation">,</span> data<span class="token punctuation">,</span> rankings<span class="token punctuation">)</span>
+
+np<span class="token punctuation">.</span>random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+random<span class="token punctuation">.</span>seed<span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Load up common data set for the recommender algorithms</span>
+<span class="token punctuation">(</span>ml<span class="token punctuation">,</span> evaluationData<span class="token punctuation">,</span> rankings<span class="token punctuation">)</span> <span class="token operator">=</span> LoadMovieLensData<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Construct an Evaluator to, you know, evaluate them</span>
+evaluator <span class="token operator">=</span> Evaluator<span class="token punctuation">(</span>evaluationData<span class="token punctuation">,</span> rankings<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true">#Autoencoder</span>
+AutoRec <span class="token operator">=</span> AutoRecAlgorithm<span class="token punctuation">(</span><span class="token punctuation">)</span>
+evaluator<span class="token punctuation">.</span>AddAlgorithm<span class="token punctuation">(</span>AutoRec<span class="token punctuation">,</span> <span class="token string">"AutoRec"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Just make random recommendations</span>
+Random <span class="token operator">=</span> NormalPredictor<span class="token punctuation">(</span><span class="token punctuation">)</span>
+evaluator<span class="token punctuation">.</span>AddAlgorithm<span class="token punctuation">(</span>Random<span class="token punctuation">,</span> <span class="token string">"Random"</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Fight!</span>
+evaluator<span class="token punctuation">.</span>Evaluate<span class="token punctuation">(</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+evaluator<span class="token punctuation">.</span>SampleTopNRecs<span class="token punctuation">(</span>ml<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="010-Clickstream-Recommendations-with-RNN’s"><a href="#010-Clickstream-Recommendations-with-RNN’s" class="headerlink" title="010 Clickstream Recommendations with RNN’s"></a>010 Clickstream Recommendations with RNN’s</h2><p>基于会话的推荐, 根据用户的点击流, 用RNN预测用户接下来会点击什么</p>
+<p><img src="5eca19cc.png"><img src="f3a6475c.png" alt="用户未登录也能根据他的点击预测接下来看什么"><img src="8c7932e0.png"><br><img src="3079c594.png"><img src="f549b066.png"><img src="cfe96cb8.png"></p>
+<h2 id="011-Exercise-Get-GRU4Rec-Working-on-your-Desktop"><a href="#011-Exercise-Get-GRU4Rec-Working-on-your-Desktop" class="headerlink" title="011 [Exercise] Get GRU4Rec Working on your Desktop"></a>011 [Exercise] Get GRU4Rec Working on your Desktop</h2><p><img src="6ecde305.png"></p>
+<h2 id="012-Exercise-Results-GRU4Rec-in-Action"><a href="#012-Exercise-Results-GRU4Rec-in-Action" class="headerlink" title="012 Exercise Results GRU4Rec in Action"></a>012 Exercise Results GRU4Rec in Action</h2><p><img src="8cbc4062.png" alt="GRU的这个代码借鉴了别人的, 不能商用"><img src="6ec5b2ba.png"></p>
+<p>… skip</p>
+<h2 id="013-Bleeding-Edge-Alert-Generative-Adversarial-Networks-for-Recommendations"><a href="#013-Bleeding-Edge-Alert-Generative-Adversarial-Networks-for-Recommendations" class="headerlink" title="013 Bleeding Edge Alert! Generative Adversarial Networks for Recommendations"></a>013 Bleeding Edge Alert! Generative Adversarial Networks for Recommendations</h2><p><img src="370a4d35.png"><img src="9d0f8c46.png"><img src="59d7e562.png"></p>
+<h2 id="014-Tensorflow-Recommenders-TFRS-Intro-and-Building-a-Retrieval-Stage"><a href="#014-Tensorflow-Recommenders-TFRS-Intro-and-Building-a-Retrieval-Stage" class="headerlink" title="014 Tensorflow Recommenders (TFRS) Intro, and Building a Retrieval Stage"></a>014 Tensorflow Recommenders (TFRS) Intro, and Building a Retrieval Stage</h2><p><img src="763d8f41.png"><img src="948b2fdd.png"></p>
+<pre class=" language-shell"><code class="language-shell">pip install -q tensorflow-recommenders
+pip install -q --upgrade tensorflow-datasets
+</code></pre>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true">#%% md</span>
+<span class="token comment" spellcheck="true"># Introducing Keras</span>
+
+Be sure to be using tensorflow <span class="token number">1.9</span> <span class="token operator">or</span> newer!
+
+Keras <span class="token keyword">is</span> a higher<span class="token operator">-</span>level API within TensorFlow that makes things a lot easier<span class="token punctuation">.</span> Not only <span class="token keyword">is</span> it easier to use<span class="token punctuation">,</span> it's easier to tune<span class="token punctuation">.</span>
+
+Let's set up the same deep neural network we set up <span class="token keyword">with</span> TensorFlow to learn <span class="token keyword">from</span> the MNIST data set<span class="token punctuation">.</span>
+
+First we'll <span class="token keyword">import</span> all the stuff we need<span class="token punctuation">,</span> which will initialize Keras <span class="token keyword">as</span> a side effect<span class="token punctuation">:</span>
+<span class="token comment" spellcheck="true">#%%</span>
+<span class="token keyword">from</span> tensorflow <span class="token keyword">import</span> keras
+<span class="token keyword">from</span> tensorflow<span class="token punctuation">.</span>keras<span class="token punctuation">.</span>datasets <span class="token keyword">import</span> mnist
+<span class="token keyword">from</span> tensorflow<span class="token punctuation">.</span>keras<span class="token punctuation">.</span>models <span class="token keyword">import</span> Sequential
+<span class="token keyword">from</span> tensorflow<span class="token punctuation">.</span>keras<span class="token punctuation">.</span>layers <span class="token keyword">import</span> Dense<span class="token punctuation">,</span> Dropout
+<span class="token keyword">from</span> tensorflow<span class="token punctuation">.</span>keras<span class="token punctuation">.</span>optimizers <span class="token keyword">import</span> RMSprop
+<span class="token comment" spellcheck="true">#%% md</span>
+We<span class="token string">'ll load up the MNIST data set. In Keras, it'</span>s a little bit different <span class="token operator">-</span> there are 60K training samples <span class="token operator">and</span> 10K test samples<span class="token punctuation">.</span> No <span class="token string">"validation"</span> samples<span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">#%%</span>
+<span class="token punctuation">(</span>mnist_train_images<span class="token punctuation">,</span> mnist_train_labels<span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">(</span>mnist_test_images<span class="token punctuation">,</span> mnist_test_labels<span class="token punctuation">)</span> <span class="token operator">=</span> mnist<span class="token punctuation">.</span>load_data<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+We need to explicitly convert the data into the format Keras <span class="token operator">/</span> TensorFlow expects<span class="token punctuation">.</span> We divide the image data by <span class="token number">255</span> <span class="token keyword">in</span> order to normalize it into <span class="token number">0</span><span class="token operator">-</span><span class="token number">1</span> range<span class="token punctuation">,</span> after converting it into floating point values<span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">#%%</span>
+train_images <span class="token operator">=</span> mnist_train_images<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">60000</span><span class="token punctuation">,</span> <span class="token number">784</span><span class="token punctuation">)</span>
+test_images <span class="token operator">=</span> mnist_test_images<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">10000</span><span class="token punctuation">,</span> <span class="token number">784</span><span class="token punctuation">)</span>
+train_images <span class="token operator">=</span> train_images<span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token string">'float32'</span><span class="token punctuation">)</span>
+test_images <span class="token operator">=</span> test_images<span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token string">'float32'</span><span class="token punctuation">)</span>
+train_images <span class="token operator">/=</span> <span class="token number">255</span>
+test_images <span class="token operator">/=</span> <span class="token number">255</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+Now we'll convert the <span class="token number">0</span><span class="token operator">-</span><span class="token number">9</span> labels into <span class="token string">"one-hot"</span> format<span class="token punctuation">,</span> <span class="token keyword">as</span> we did <span class="token keyword">for</span> TensorFlow<span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">#%%</span>
+train_labels <span class="token operator">=</span> keras<span class="token punctuation">.</span>utils<span class="token punctuation">.</span>to_categorical<span class="token punctuation">(</span>mnist_train_labels<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+test_labels <span class="token operator">=</span> keras<span class="token punctuation">.</span>utils<span class="token punctuation">.</span>to_categorical<span class="token punctuation">(</span>mnist_test_labels<span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+Let's take a peek at one of the training images just to make sure it looks OK<span class="token punctuation">:</span>
+<span class="token comment" spellcheck="true">#%%</span>
+<span class="token operator">%</span>matplotlib inline
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+
+<span class="token keyword">def</span> <span class="token function">display_sample</span><span class="token punctuation">(</span>num<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token comment" spellcheck="true">#Print the one-hot array of this sample's label </span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>train_labels<span class="token punctuation">[</span>num<span class="token punctuation">]</span><span class="token punctuation">)</span>  
+    <span class="token comment" spellcheck="true">#Print the label converted back to a number</span>
+    label <span class="token operator">=</span> train_labels<span class="token punctuation">[</span>num<span class="token punctuation">]</span><span class="token punctuation">.</span>argmax<span class="token punctuation">(</span>axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+    <span class="token comment" spellcheck="true">#Reshape the 768 values to a 28x28 image</span>
+    image <span class="token operator">=</span> train_images<span class="token punctuation">[</span>num<span class="token punctuation">]</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">28</span><span class="token punctuation">,</span><span class="token number">28</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token string">'Sample: %d  Label: %d'</span> <span class="token operator">%</span> <span class="token punctuation">(</span>num<span class="token punctuation">,</span> label<span class="token punctuation">)</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>imshow<span class="token punctuation">(</span>image<span class="token punctuation">,</span> cmap<span class="token operator">=</span>plt<span class="token punctuation">.</span>get_cmap<span class="token punctuation">(</span><span class="token string">'gray_r'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    
+display_sample<span class="token punctuation">(</span><span class="token number">1234</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+Here's where things get exciting<span class="token punctuation">.</span> All that code we wrote <span class="token keyword">in</span> Tensorflow creating placeholders<span class="token punctuation">,</span> variables<span class="token punctuation">,</span> <span class="token operator">and</span> defining a bunch of linear algebra <span class="token keyword">for</span> each layer <span class="token keyword">in</span> our neural network? None of that <span class="token keyword">is</span> necessary <span class="token keyword">with</span> Keras!
+
+We can set up the same layers like this<span class="token punctuation">.</span> The input layer of <span class="token number">784</span> features feeds into a ReLU layer of <span class="token number">512</span> nodes<span class="token punctuation">,</span> which then goes into <span class="token number">10</span> nodes <span class="token keyword">with</span> softmax applied<span class="token punctuation">.</span> Couldn't be simpler<span class="token punctuation">:</span>
+<span class="token comment" spellcheck="true">#%%</span>
+model <span class="token operator">=</span> Sequential<span class="token punctuation">(</span><span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dense<span class="token punctuation">(</span><span class="token number">512</span><span class="token punctuation">,</span> activation<span class="token operator">=</span><span class="token string">'relu'</span><span class="token punctuation">,</span> input_shape<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">784</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dense<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> activation<span class="token operator">=</span><span class="token string">'softmax'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+We can even get a nice description of the resulting model<span class="token punctuation">:</span>
+<span class="token comment" spellcheck="true">#%%</span>
+model<span class="token punctuation">.</span>summary<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+Setting up our optimizer <span class="token operator">and</span> loss function <span class="token keyword">is</span> just <span class="token keyword">as</span> simple<span class="token punctuation">.</span> We will use the RMSProp optimizer here<span class="token punctuation">.</span> Other choices include Adagrad<span class="token punctuation">,</span> SGD<span class="token punctuation">,</span> Adam<span class="token punctuation">,</span> Adamax<span class="token punctuation">,</span> <span class="token operator">and</span> Nadam<span class="token punctuation">.</span> See https<span class="token punctuation">:</span><span class="token operator">//</span>keras<span class="token punctuation">.</span>io<span class="token operator">/</span>optimizers<span class="token operator">/</span>
+<span class="token comment" spellcheck="true">#%%</span>
+model<span class="token punctuation">.</span>compile<span class="token punctuation">(</span>loss<span class="token operator">=</span><span class="token string">'categorical_crossentropy'</span><span class="token punctuation">,</span>
+              optimizer<span class="token operator">=</span>RMSprop<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+              metrics<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'accuracy'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+Training our model <span class="token keyword">is</span> also just one line of code <span class="token keyword">with</span> Keras<span class="token punctuation">.</span> Here we<span class="token string">'ll do 10 epochs with a batch size of 100. Keras is slower, and if we'</span>re <span class="token operator">not</span> running on top of a GPU<span class="token operator">-</span>accelerated Tensorflow this can take a fair amount of time <span class="token punctuation">(</span>that<span class="token string">'s why I'</span>ve limited it to just <span class="token number">10</span> epochs<span class="token punctuation">.</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%%</span>
+history <span class="token operator">=</span> model<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>train_images<span class="token punctuation">,</span> train_labels<span class="token punctuation">,</span>
+                    batch_size<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span>
+                    epochs<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span>
+                    verbose<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span>
+                    validation_data<span class="token operator">=</span><span class="token punctuation">(</span>test_images<span class="token punctuation">,</span> test_labels<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+But<span class="token punctuation">,</span> even <span class="token keyword">with</span> just <span class="token number">10</span> epochs<span class="token punctuation">,</span> we've outperformed our Tensorflow version considerably!
+<span class="token comment" spellcheck="true">#%%</span>
+score <span class="token operator">=</span> model<span class="token punctuation">.</span>evaluate<span class="token punctuation">(</span>test_images<span class="token punctuation">,</span> test_labels<span class="token punctuation">,</span> verbose<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Test loss:'</span><span class="token punctuation">,</span> score<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Test accuracy:'</span><span class="token punctuation">,</span> score<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+As before let<span class="token string">'s visualize the ones it got wrong. As this model is much better, we'</span>ll have to search deeper to find mistakes to look at<span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">#%%</span>
+<span class="token keyword">for</span> x <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">1000</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    test_image <span class="token operator">=</span> test_images<span class="token punctuation">[</span>x<span class="token punctuation">,</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span><span class="token number">784</span><span class="token punctuation">)</span>
+    predicted_cat <span class="token operator">=</span> model<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>test_image<span class="token punctuation">)</span><span class="token punctuation">.</span>argmax<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    label <span class="token operator">=</span> test_labels<span class="token punctuation">[</span>x<span class="token punctuation">]</span><span class="token punctuation">.</span>argmax<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>predicted_cat <span class="token operator">!=</span> label<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token string">'Prediction: %d Label: %d'</span> <span class="token operator">%</span> <span class="token punctuation">(</span>predicted_cat<span class="token punctuation">,</span> label<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>imshow<span class="token punctuation">(</span>test_image<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">28</span><span class="token punctuation">,</span><span class="token number">28</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> cmap<span class="token operator">=</span>plt<span class="token punctuation">.</span>get_cmap<span class="token punctuation">(</span><span class="token string">'gray_r'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token comment" spellcheck="true">#%% md</span>
+You can see most of the ones it's having trouble <span class="token keyword">with</span><span class="token punctuation">,</span> are images a human would have trouble <span class="token keyword">with</span> <span class="token keyword">as</span> well!
+
+<span class="token comment" spellcheck="true">## Excercise</span>
+
+As before<span class="token punctuation">,</span> see <span class="token keyword">if</span> you can improve on the results! Does running more epochs help considerably? How about trying different optimizers?
+
+You can also take advantage of Keras's ease of use to <span class="token keyword">try</span> different topologies quickly<span class="token punctuation">.</span> Keras includes a MNIST example<span class="token punctuation">,</span> where they add an additional layer<span class="token punctuation">,</span> <span class="token operator">and</span> use Dropout at each step to prevent overfitting<span class="token punctuation">,</span> like this<span class="token punctuation">:</span>
+
+`
+model <span class="token operator">=</span> Sequential<span class="token punctuation">(</span><span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dense<span class="token punctuation">(</span><span class="token number">512</span><span class="token punctuation">,</span> activation<span class="token operator">=</span><span class="token string">'relu'</span><span class="token punctuation">,</span> input_shape<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">784</span><span class="token punctuation">,</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dropout<span class="token punctuation">(</span><span class="token number">0.2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dense<span class="token punctuation">(</span><span class="token number">512</span><span class="token punctuation">,</span> activation<span class="token operator">=</span><span class="token string">'relu'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dropout<span class="token punctuation">(</span><span class="token number">0.2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dense<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> activation<span class="token operator">=</span><span class="token string">'softmax'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+`
+
+Try adapting that to our code above <span class="token operator">and</span> see <span class="token keyword">if</span> it makes a difference <span class="token operator">or</span> <span class="token operator">not</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true">#%%</span>
+</code></pre>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2><h1 id="10-Scaling-it-Up"><a href="#10-Scaling-it-Up" class="headerlink" title="10 - Scaling it Up"></a>10 - Scaling it Up</h1><h2 id="004-Activity-Movie-Recommendations-with-Spark-Matrix-Factorization-and-ALS"><a href="#004-Activity-Movie-Recommendations-with-Spark-Matrix-Factorization-and-ALS" class="headerlink" title="004 [Activity] Movie Recommendations with Spark, Matrix Factorization, and ALS"></a>004 [Activity] Movie Recommendations with Spark, Matrix Factorization, and ALS</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># -*- coding: utf-8 -*-</span>
+<span class="token triple-quoted-string string">"""
+Created on Mon May 28 11:09:55 2018
+
+@author: Frank
+"""</span>
+<span class="token comment" spellcheck="true"># SparkALS.py</span>
+
+<span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>sql <span class="token keyword">import</span> SparkSession
+
+<span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>ml<span class="token punctuation">.</span>evaluation <span class="token keyword">import</span> RegressionEvaluator
+<span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>ml<span class="token punctuation">.</span>recommendation <span class="token keyword">import</span> ALS
+<span class="token keyword">from</span> pyspark<span class="token punctuation">.</span>sql <span class="token keyword">import</span> Row
+
+<span class="token keyword">from</span> MovieLens <span class="token keyword">import</span> MovieLens
+
+<span class="token comment" spellcheck="true"># org.apache.spark.SparkException: Python worker failed to connect back.</span>
+<span class="token keyword">import</span> os
+
+os<span class="token punctuation">.</span>environ<span class="token punctuation">[</span><span class="token string">'PYSPARK_PYTHON'</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token string">"python"</span>
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">"__main__"</span><span class="token punctuation">:</span>
+    spark <span class="token operator">=</span> SparkSession \
+        <span class="token punctuation">.</span>builder \
+        <span class="token punctuation">.</span>appName<span class="token punctuation">(</span><span class="token string">"ALSExample"</span><span class="token punctuation">)</span> \
+        <span class="token punctuation">.</span>getOrCreate<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    lines <span class="token operator">=</span> spark<span class="token punctuation">.</span>read<span class="token punctuation">.</span>option<span class="token punctuation">(</span><span class="token string">"header"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>csv<span class="token punctuation">(</span><span class="token string">"../ml-latest-small/ratings.csv"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>rdd
+
+    ratingsRDD <span class="token operator">=</span> lines<span class="token punctuation">.</span>map<span class="token punctuation">(</span><span class="token keyword">lambda</span> p<span class="token punctuation">:</span> Row<span class="token punctuation">(</span>userId<span class="token operator">=</span>int<span class="token punctuation">(</span>p<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> movieId<span class="token operator">=</span>int<span class="token punctuation">(</span>p<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                                         rating<span class="token operator">=</span>float<span class="token punctuation">(</span>p<span class="token punctuation">[</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> timestamp<span class="token operator">=</span>int<span class="token punctuation">(</span>p<span class="token punctuation">[</span><span class="token number">3</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    ratings <span class="token operator">=</span> spark<span class="token punctuation">.</span>createDataFrame<span class="token punctuation">(</span>ratingsRDD<span class="token punctuation">)</span>
+
+    <span class="token punctuation">(</span>training<span class="token punctuation">,</span> test<span class="token punctuation">)</span> <span class="token operator">=</span> ratings<span class="token punctuation">.</span>randomSplit<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token number">0.8</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+    als <span class="token operator">=</span> ALS<span class="token punctuation">(</span>maxIter<span class="token operator">=</span><span class="token number">5</span><span class="token punctuation">,</span> regParam<span class="token operator">=</span><span class="token number">0.01</span><span class="token punctuation">,</span> userCol<span class="token operator">=</span><span class="token string">"userId"</span><span class="token punctuation">,</span> itemCol<span class="token operator">=</span><span class="token string">"movieId"</span><span class="token punctuation">,</span> ratingCol<span class="token operator">=</span><span class="token string">"rating"</span><span class="token punctuation">,</span>
+              coldStartStrategy<span class="token operator">=</span><span class="token string">"drop"</span><span class="token punctuation">)</span>
+    model <span class="token operator">=</span> als<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>training<span class="token punctuation">)</span>
+
+    predictions <span class="token operator">=</span> model<span class="token punctuation">.</span>transform<span class="token punctuation">(</span>test<span class="token punctuation">)</span>
+    evaluator <span class="token operator">=</span> RegressionEvaluator<span class="token punctuation">(</span>metricName<span class="token operator">=</span><span class="token string">"rmse"</span><span class="token punctuation">,</span> labelCol<span class="token operator">=</span><span class="token string">"rating"</span><span class="token punctuation">,</span>
+                                    predictionCol<span class="token operator">=</span><span class="token string">"prediction"</span><span class="token punctuation">)</span>
+    rmse <span class="token operator">=</span> evaluator<span class="token punctuation">.</span>evaluate<span class="token punctuation">(</span>predictions<span class="token punctuation">)</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"Root-mean-square error = "</span> <span class="token operator">+</span> str<span class="token punctuation">(</span>rmse<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+    userRecs <span class="token operator">=</span> model<span class="token punctuation">.</span>recommendForAllUsers<span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span>
+
+    user85Recs <span class="token operator">=</span> userRecs<span class="token punctuation">.</span>filter<span class="token punctuation">(</span>userRecs<span class="token punctuation">[</span><span class="token string">'userId'</span><span class="token punctuation">]</span> <span class="token operator">==</span> <span class="token number">85</span><span class="token punctuation">)</span><span class="token punctuation">.</span>collect<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    spark<span class="token punctuation">.</span>stop<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    ml <span class="token operator">=</span> MovieLens<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    ml<span class="token punctuation">.</span>loadMovieLensLatestSmall<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token keyword">for</span> row <span class="token keyword">in</span> user85Recs<span class="token punctuation">:</span>
+        <span class="token keyword">for</span> rec <span class="token keyword">in</span> row<span class="token punctuation">.</span>recommendations<span class="token punctuation">:</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span>ml<span class="token punctuation">.</span>getMovieName<span class="token punctuation">(</span>rec<span class="token punctuation">.</span>movieId<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="-1"><a href="#-1" class="headerlink" title=""></a></h2><h1 id="11-Real-World-Challenges-of-Recommender-Systems"><a href="#11-Real-World-Challenges-of-Recommender-Systems" class="headerlink" title="11 - Real-World Challenges of Recommender Systems"></a>11 - Real-World Challenges of Recommender Systems</h1><h2 id="001-The-Cold-Start-Problem-and-solutions"><a href="#001-The-Cold-Start-Problem-and-solutions" class="headerlink" title="001 The Cold Start Problem (and solutions)"></a>001 The Cold Start Problem (and solutions)</h2><p><img src="d17ba10b.png"><img src="239a0822.png"></p>
+<h2 id="002-Exercise-Implement-Random-Exploration"><a href="#002-Exercise-Implement-Random-Exploration" class="headerlink" title="002 [Exercise] Implement Random Exploration"></a>002 [Exercise] Implement Random Exploration</h2><h2 id="-2"><a href="#-2" class="headerlink" title=""></a></h2><h1 id="-3"><a href="#-3" class="headerlink" title=""></a></h1><h1 id="13-Hybrid-Approaches-混合不同方法"><a href="#13-Hybrid-Approaches-混合不同方法" class="headerlink" title="13 - Hybrid Approaches 混合不同方法"></a>13 - Hybrid Approaches 混合不同方法</h1><h2 id="001-Hybrid-Recommenders-and-Exercise"><a href="#001-Hybrid-Recommenders-and-Exercise" class="headerlink" title="001 Hybrid Recommenders and Exercise"></a>001 Hybrid Recommenders and Exercise</h2><p><img src="d6ce890c.png"><img src="2e9e91bd.png" alt="混合不同方法可以解决冷启动问题"></p>
+<h2 id="002-Exercise-Solution-Hybrid-Recommenders"><a href="#002-Exercise-Solution-Hybrid-Recommenders" class="headerlink" title="002 Exercise Solution Hybrid Recommenders"></a>002 Exercise Solution Hybrid Recommenders</h2>
             </div>
             <hr/>
 
@@ -2328,7 +2997,7 @@ gitment.render('gitment-content');
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">779.8k</span>
+                <span class="white-color">783k</span>
             
 
             
