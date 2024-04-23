@@ -368,14 +368,14 @@
                     
                     <div class="info-break-policy">
                         <i class="fa fa-file-word-o fa-fw"></i>文章字数:&nbsp;&nbsp;
-                        1.2k
+                        2.9k
                     </div>
                     
 
                     
                     <div class="info-break-policy">
                         <i class="fa fa-clock-o fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                        6 分
+                        14 分
                     </div>
                     
                 
@@ -617,6 +617,7 @@ result <span class="token operator">=</span> cnn<span class="token punctuation">
 <span class="token comment" spellcheck="true"># import library</span>
 <span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
 <span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+matplotlib<span class="token punctuation">.</span>use<span class="token punctuation">(</span><span class="token string">'tkagg'</span><span class="token punctuation">)</span>
 <span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
 
 <span class="token comment" spellcheck="true"># import train set</span>
@@ -627,7 +628,319 @@ training_set <span class="token operator">=</span> dataset_train<span class="tok
 
 <span class="token comment" spellcheck="true"># %% Part 3-Making the predictions and visualising the results</span>
 </code></pre>
-<h2 id="004-Building-a-RNN-Step-3"><a href="#004-Building-a-RNN-Step-3" class="headerlink" title="004 Building a RNN - Step 3"></a>004 Building a RNN - Step 3</h2><h1 id="11-Evaluating-and-Improving-the-RNN"><a href="#11-Evaluating-and-Improving-the-RNN" class="headerlink" title="11 - Evaluating and Improving the RNN"></a>11 - Evaluating and Improving the RNN</h1>
+<h2 id="004-Building-a-RNN-Step-3"><a href="#004-Building-a-RNN-Step-3" class="headerlink" title="004 Building a RNN - Step 3"></a>004 Building a RNN - Step 3</h2><p><img src="2fdbbfbd.png" alt="特征缩放"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Recurrent Neural Network</span>
+
+<span class="token comment" spellcheck="true"># %% Part 1 - Data Preprocessing</span>
+
+<span class="token comment" spellcheck="true"># import library </span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+<span class="token comment" spellcheck="true"># Feature Scaling</span>
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>preprocessing <span class="token keyword">import</span> MinMaxScaler
+
+<span class="token comment" spellcheck="true"># feature_range 数据变换后的期望范围</span>
+sc <span class="token operator">=</span> MinMaxScaler<span class="token punctuation">(</span>feature_range<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+training_set_scaled <span class="token operator">=</span> sc<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>training_set<span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># %% Part 2-Building the RNN</span>
+
+<span class="token comment" spellcheck="true"># %% Part 3-Making the predictions and visualising the results</span>
+</code></pre>
+<h2 id="005-Building-a-RNN-Step-4"><a href="#005-Building-a-RNN-Step-4" class="headerlink" title="005 Building a RNN - Step 4"></a>005 Building a RNN - Step 4</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Recurrent Neural Network</span>
+
+<span class="token comment" spellcheck="true"># %% Part 1 - Data Preprocessing</span>
+
+<span class="token comment" spellcheck="true"># import library</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true"># import train set</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+<span class="token comment" spellcheck="true"># Feature Scaling</span>
+<span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+
+<span class="token comment" spellcheck="true"># Creating a data structure with 60 timesteps and 1 output 查看前60天的数据然后预测/学习当前数据</span>
+X_train <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+y_train <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">60</span><span class="token punctuation">,</span> <span class="token number">1258</span><span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># training_set.shape (1258,1)</span>
+    X_train<span class="token punctuation">.</span>append<span class="token punctuation">(</span>training_set_scaled<span class="token punctuation">[</span>i <span class="token operator">-</span> <span class="token number">60</span><span class="token punctuation">:</span>i<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 前t个数据</span>
+    y_train<span class="token punctuation">.</span>append<span class="token punctuation">(</span>training_set_scaled<span class="token punctuation">[</span>i<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 预测t+1的target</span>
+
+X_train<span class="token punctuation">,</span> y_train <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>X_train<span class="token punctuation">)</span><span class="token punctuation">,</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>y_train<span class="token punctuation">)</span>
+
+
+<span class="token comment" spellcheck="true"># %% Part 2-Building the RNN</span>
+
+<span class="token comment" spellcheck="true"># %% Part 3-Making the predictions and visualising the results</span>
+</code></pre>
+<h2 id="006-Building-a-RNN-Step-5"><a href="#006-Building-a-RNN-Step-5" class="headerlink" title="006 Building a RNN - Step 5"></a>006 Building a RNN - Step 5</h2><p><img src="da57898c.png" alt="Xtrain变换到keras需要的形状"><img src="2186b06d.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Reshaping (股票价格数, 时间步长, 指标数)</span>
+X_train <span class="token operator">=</span> np<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>X_train<span class="token punctuation">,</span> <span class="token punctuation">(</span>X_train<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> X_train<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span> 
+</code></pre>
+<h2 id="007-Building-a-RNN-Step-6"><a href="#007-Building-a-RNN-Step-6" class="headerlink" title="007 Building a RNN - Step 6"></a>007 Building a RNN - Step 6</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># %% Part 2-Building the RNN</span>
+<span class="token keyword">from</span> keras<span class="token punctuation">.</span>models <span class="token keyword">import</span> Sequential
+<span class="token keyword">from</span> keras<span class="token punctuation">.</span>layers <span class="token keyword">import</span> Dense<span class="token punctuation">,</span> LSTM<span class="token punctuation">,</span> Dropout
+
+<span class="token comment" spellcheck="true"># Initialising the rnn</span>
+regressor <span class="token operator">=</span> Sequential<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 回归预测连续值, 分类预测一个类别</span>
+</code></pre>
+<h2 id="008-Building-a-RNN-Step-7"><a href="#008-Building-a-RNN-Step-7" class="headerlink" title="008 Building a RNN - Step 7"></a>008 Building a RNN - Step 7</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Adding the first LSTM layer and some Dropout regularisation</span>
+regressor<span class="token punctuation">.</span>add<span class="token punctuation">(</span>LSTM<span class="token punctuation">(</span>
+    <span class="token comment" spellcheck="true"># 神经单元数</span>
+    units<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true"># 是否返回序列, 如果需要下面继续堆叠LSTM, 就true, 不需要就false</span>
+    return_sequences<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+    <span class="token comment" spellcheck="true"># 维度 (时间步长, target维度)</span>
+    <span class="token comment" spellcheck="true"># Input_Sizes是每个时间点输入x的维度, 对于语句来说,就是一个字的embedding的向量维度</span>
+    input_shape<span class="token operator">=</span><span class="token punctuation">(</span>X_train<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span class="token punctuation">)</span>
+regressor<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dropout<span class="token punctuation">(</span><span class="token number">0.2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># Dropout掉20%的神经元 正则化</span>
+</code></pre>
+<h2 id="009-Building-a-RNN-Step-8"><a href="#009-Building-a-RNN-Step-8" class="headerlink" title="009 Building a RNN - Step 8"></a>009 Building a RNN - Step 8</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Adding a second LSTM layer and some Dropout regularisation</span>
+regressor<span class="token punctuation">.</span>add<span class="token punctuation">(</span>LSTM<span class="token punctuation">(</span>units<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">,</span> return_sequences<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 上面的LSTM已经说明, 自动推断input维度</span>
+regressor<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dropout<span class="token punctuation">(</span><span class="token number">0.2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Adding a third LSTM layer and some Dropout regularisation</span>
+regressor<span class="token punctuation">.</span>add<span class="token punctuation">(</span>LSTM<span class="token punctuation">(</span>units<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">,</span> return_sequences<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+regressor<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dropout<span class="token punctuation">(</span><span class="token number">0.2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token comment" spellcheck="true"># Adding a fourth ISTM layer and some Dropout regularisation</span>
+<span class="token comment" spellcheck="true"># regressor.add(LSTM(units=50, return_sequences=False)) return_sequences 默认false</span>
+regressor<span class="token punctuation">.</span>add<span class="token punctuation">(</span>LSTM<span class="token punctuation">(</span>units<span class="token operator">=</span><span class="token number">50</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+regressor<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dropout<span class="token punctuation">(</span><span class="token number">0.2</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="010-Building-a-RNN-Step-9"><a href="#010-Building-a-RNN-Step-9" class="headerlink" title="010 Building a RNN - Step 9"></a>010 Building a RNN - Step 9</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Adding the output layer</span>
+regressor<span class="token punctuation">.</span>add<span class="token punctuation">(</span>Dense<span class="token punctuation">(</span>units<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="011-Building-a-RNN-Step-10"><a href="#011-Building-a-RNN-Step-10" class="headerlink" title="011 Building a RNN - Step 10"></a>011 Building a RNN - Step 10</h2><p><img src="6cf788f8.png"><img src="cbaa1fad.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Compiling the RNN - 使用Adam优化器, 均方误差损失函数</span>
+regressor<span class="token punctuation">.</span>compile<span class="token punctuation">(</span>optimizer<span class="token operator">=</span><span class="token string">'adam'</span><span class="token punctuation">,</span> loss<span class="token operator">=</span><span class="token string">'mean_squared_error'</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="012-Building-a-RNN-Step-11"><a href="#012-Building-a-RNN-Step-11" class="headerlink" title="012 Building a RNN - Step 11"></a>012 Building a RNN - Step 11</h2><pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Fitting the RNN to the Training set</span>
+regressor<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>X_train<span class="token punctuation">,</span> y_train<span class="token punctuation">,</span> epochs<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">,</span> batch_size<span class="token operator">=</span><span class="token number">32</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="013-Building-a-RNN-Step-12-…"><a href="#013-Building-a-RNN-Step-12-…" class="headerlink" title="013 Building a RNN - Step 12 …"></a>013 Building a RNN - Step 12 …</h2><p><img src="e1be425f.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># %% Part 3-Making the predictions and visualising the results</span>
+
+<span class="token comment" spellcheck="true"># Getting the real stock price of 2017</span>
+dataset_test <span class="token operator">=</span> pd<span class="token punctuation">.</span>read_csv<span class="token punctuation">(</span><span class="token string">'dataset/Google_Stock_Price_Test.csv'</span><span class="token punctuation">)</span>
+real_stock_price <span class="token operator">=</span> dataset_test<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">:</span><span class="token number">2</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values  <span class="token comment" spellcheck="true"># 取所有行的第2列</span>
+
+<span class="token comment" spellcheck="true"># Getting the predicted stock price of 2017</span>
+dataset_total <span class="token operator">=</span> pd<span class="token punctuation">.</span>concat<span class="token punctuation">(</span><span class="token punctuation">(</span>dataset_train<span class="token punctuation">[</span><span class="token string">'Open'</span><span class="token punctuation">]</span><span class="token punctuation">,</span> dataset_test<span class="token punctuation">[</span><span class="token string">'Open'</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 连接数据集</span>
+inputs <span class="token operator">=</span> dataset_total<span class="token punctuation">[</span>len<span class="token punctuation">(</span>dataset_total<span class="token punctuation">)</span> <span class="token operator">-</span> len<span class="token punctuation">(</span>dataset_test<span class="token punctuation">)</span> <span class="token operator">-</span> <span class="token number">60</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values  <span class="token comment" spellcheck="true"># 包含了test set前60天数的数据集</span>
+inputs <span class="token operator">=</span> inputs<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+inputs <span class="token operator">=</span> sc<span class="token punctuation">.</span>transform<span class="token punctuation">(</span>inputs<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 标准化</span>
+X_test <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span><span class="token number">60</span><span class="token punctuation">,</span> <span class="token number">80</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    X_test<span class="token punctuation">.</span>append<span class="token punctuation">(</span>inputs<span class="token punctuation">[</span>i <span class="token operator">-</span> <span class="token number">60</span><span class="token punctuation">:</span>i<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+X_test <span class="token operator">=</span> np<span class="token punctuation">.</span>array<span class="token punctuation">(</span>X_test<span class="token punctuation">)</span>
+X_test <span class="token operator">=</span> np<span class="token punctuation">.</span>reshape<span class="token punctuation">(</span>X_test<span class="token punctuation">,</span> <span class="token punctuation">(</span>X_test<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">,</span> X_test<span class="token punctuation">.</span>shape<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+predicted_stock_price <span class="token operator">=</span> regressor<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>X_test<span class="token punctuation">)</span>
+predicted_stock_price <span class="token operator">=</span> sc<span class="token punctuation">.</span>inverse_transform<span class="token punctuation">(</span>predicted_stock_price<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 撤销之前sc的缩放</span>
+
+<span class="token comment" spellcheck="true"># visualising the results</span>
+plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>real_stock_price<span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">'red'</span><span class="token punctuation">,</span> label<span class="token operator">=</span><span class="token string">'Real Google Stock Price'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>plot<span class="token punctuation">(</span>predicted_stock_price<span class="token punctuation">,</span> color<span class="token operator">=</span><span class="token string">'blue'</span><span class="token punctuation">,</span> label<span class="token operator">=</span><span class="token string">'Predicted Google Stock Price'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token string">'Google Stock Price Prediction'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>xlabel<span class="token punctuation">(</span><span class="token string">'Time'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>ylabel<span class="token punctuation">(</span><span class="token string">'Google Stock Price'</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>legend<span class="token punctuation">(</span><span class="token punctuation">)</span>
+plt<span class="token punctuation">.</span>show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h1 id="11-Evaluating-and-Improving-the-RNN"><a href="#11-Evaluating-and-Improving-the-RNN" class="headerlink" title="11 - Evaluating and Improving the RNN"></a>11 - Evaluating and Improving the RNN</h1><h1 id="12-————————-Part-4-Self-Organizing-Maps-————————"><a href="#12-————————-Part-4-Self-Organizing-Maps-————————" class="headerlink" title="12 - ———————— Part 4 - Self Organizing Maps ————————"></a>12 - ———————— Part 4 - Self Organizing Maps ————————</h1><h1 id="13-SOMs-Intuition"><a href="#13-SOMs-Intuition" class="headerlink" title="13 - SOMs Intuition"></a>13 - SOMs Intuition</h1><p>什么是自组织映射？</p>
+<p>一个特别有趣的无监督系统是基于竞争性学习，其中输出神经元之间竞争激活，结果是在任意时间只有一个神经元被激活。<br>这个激活的神经元被称为胜者神经元（winner-takes-all neuron）。<br>这种竞争可以通过在神经元之间具有横向抑制连接（负反馈路径）来实现。<br>其结果是神经元被迫对自身进行重新组合，这样的网络我们称之为自组织映射（Self Organizing Map，SOM）。</p>
+<h2 id="001-Plan-of-attack"><a href="#001-Plan-of-attack" class="headerlink" title="001 Plan of attack"></a>001 Plan of attack</h2><p><img src="b77ce7fc.png"></p>
+<h2 id="002-How-do-Self-Organizing-Maps-Work"><a href="#002-How-do-Self-Organizing-Maps-Work" class="headerlink" title="002 How do Self-Organizing Maps Work"></a>002 How do Self-Organizing Maps Work</h2><p><img src="0e953d56.png" alt="SOMs开始, 进入无监督学习章节"><img src="28ea85d7.png"><img src="0f42866c.png" alt="SOM用在降维"><br><img src="a6e4282d.png"><img src="b166f0f3.png" alt="无监督, 降维, 所以也是可学习的"><img src="aef03efd.png"><br><img src="b25d3b26.png"><img src="685394a5.png"><img src="79d0a3f4.png"></p>
+<h2 id="003-Why-revisit-K-Means"><a href="#003-Why-revisit-K-Means" class="headerlink" title="003 Why revisit K-Means"></a>003 Why revisit K-Means</h2><p><img src="8317b12e.png"></p>
+<h2 id="004-K-Means-Clustering-Refresher"><a href="#004-K-Means-Clustering-Refresher" class="headerlink" title="004 K-Means Clustering (Refresher)"></a>004 K-Means Clustering (Refresher)</h2><p>消除决策复杂性</p>
+<p><img src="eff3dd8c.png"><img src="704d10a1.png"><img src="4583f7be.png"><img src="648efc6f.png"><br><img src="4a6a932d.png"><img src="92fa29bb.png"><img src="41511541.png"><img src="4b0bce5b.png"><br><img src="1d8ee175.png"><img src="ef198d78.png"><img src="10e475eb.png"></p>
+<h2 id="005-How-do-Self-Organizing-Maps-Learn-Part-1"><a href="#005-How-do-Self-Organizing-Maps-Learn-Part-1" class="headerlink" title="005 How do Self-Organizing Maps Learn (Part 1)"></a>005 How do Self-Organizing Maps Learn (Part 1)</h2><p><img src="2fcac4e5.png"><img src="7299feee.png" alt="SOM的权重不是用来乘的(SOM没有激活函数), 而是一个可以学习的特征"><br><img src="fde6dd0a.png" alt="遍历数据集, 找出最接近所有节点的数据的坐标"><img src="3d7181aa.png"><br><img src="5babe2fc.png" alt="自组织, 根据数据集将自己的权重改变, 然后拟合到数据集上"><img src="26ff9d6d.png"><img src="5c4d2f72.png"></p>
+<h2 id="006-How-do-Self-Organizing-Maps-Learn-Part-2"><a href="#006-How-do-Self-Organizing-Maps-Learn-Part-2" class="headerlink" title="006 How do Self-Organizing Maps Learn (Part 2)"></a>006 How do Self-Organizing Maps Learn (Part 2)</h2><p><img src="5d16d39e.png"><img src="12861e5f.png"><img src="a6d285ce.png"><img src="23139160.png"><img src="b627d84e.png"></p>
+<h2 id="007-Live-SOM-example"><a href="#007-Live-SOM-example" class="headerlink" title="007 Live SOM example"></a>007 Live SOM example</h2><p><img src="2e0806c0.png"></p>
+<h2 id="008-Reading-an-Advanced-SOM"><a href="#008-Reading-an-Advanced-SOM" class="headerlink" title="008 Reading an Advanced SOM"></a>008 Reading an Advanced SOM</h2><p><img src="849887a1.png" alt="美国国会议员投票的数据"><img src="949f7385.png" alt="因为自组织映射的简单性，有很多种实现和变体"><img src="e591b300.png"></p>
+<h2 id="009-EXTRA-K-means-Clustering-part-2"><a href="#009-EXTRA-K-means-Clustering-part-2" class="headerlink" title="009 EXTRA K-means Clustering (part 2)"></a>009 EXTRA K-means Clustering (part 2)</h2><p>随机初始化陷阱，初始化到一个离其他点很远，离一些点很近的位置，然后每次迭代都没有改变</p>
+<p><img src="8d82f503.png"><img src="1bff840c.png"><img src="55fadce7.png"><img src="dfffc0cb.png"><br><img src="af48706b.png"><img src="b00facba.png"><img src="591d9845.png"></p>
+<h2 id="010-EXTRA-K-means-Clustering-part-3"><a href="#010-EXTRA-K-means-Clustering-part-3" class="headerlink" title="010 EXTRA K-means Clustering (part 3)"></a>010 EXTRA K-means Clustering (part 3)</h2><p><img src="2f57052f.png"><img src="657b3c7d.png" alt="我们需要多少个聚类"><img src="22d4a153.png"><img src="9673ae54.png"><br><img src="23efa376.png" alt="聚类越多，WCSS越小，表示拟合度越高"><img src="f137dbd6.png"><img src="d04c16a5.png"></p>
+<h1 id="14-Building-a-SOM"><a href="#14-Building-a-SOM" class="headerlink" title="14 - Building a SOM"></a>14 - Building a SOM</h1><h2 id="001-How-to-get-the-dataset"><a href="#001-How-to-get-the-dataset" class="headerlink" title="001 How to get the dataset"></a>001 How to get the dataset</h2><h2 id="002-Building-a-SOM-Step-1"><a href="#002-Building-a-SOM-Step-1" class="headerlink" title="002 Building a SOM - Step 1"></a>002 Building a SOM - Step 1</h2><p><img src="abb252ee.png"><img src="01a7601a.png"><img src="25df121e.png"><img src="54717226.png"><br><img src="7249a9a4.png"><img src="0c299ae0.png"><img src="75eb5a81.png" alt="检测离群值"><img src="81a469e8.png"><br><img src="bf2173fd.png"><img src="1fe90097.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Self Organizing Map</span>
+
+<span class="token comment" spellcheck="true"># Importing the libraries</span>
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+<span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
+
+<span class="token comment" spellcheck="true"># Importing the dataset</span>
+dataset <span class="token operator">=</span> pd<span class="token punctuation">.</span>read_csv<span class="token punctuation">(</span><span class="token string">'dataset/Credit_Card_Applications.csv'</span><span class="token punctuation">)</span>
+
+X <span class="token operator">=</span> dataset<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values  <span class="token comment" spellcheck="true"># 除了最后一列的所有列</span>
+y <span class="token operator">=</span> dataset<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values
+
+<span class="token comment" spellcheck="true"># Feature Scaling</span>
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>preprocessing <span class="token keyword">import</span> MinMaxScaler
+
+sc <span class="token operator">=</span> MinMaxScaler<span class="token punctuation">(</span>feature_range<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 缩放到0~1</span>
+X <span class="token operator">=</span> sc<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+</code></pre>
+<h2 id="003-Building-a-SOM-Step-2"><a href="#003-Building-a-SOM-Step-2" class="headerlink" title="003 Building a SOM - Step 2"></a>003 Building a SOM - Step 2</h2><p><img src="3cdf1d9f.png"><img src="e810e26d.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Training the SOM</span>
+<span class="token keyword">from</span> minisom <span class="token keyword">import</span> MiniSom
+
+<span class="token comment" spellcheck="true">#  SOM 的维度 (x,y); sigma 不同相邻节点的半径</span>
+som <span class="token operator">=</span> MiniSom<span class="token punctuation">(</span>x<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span> input_len<span class="token operator">=</span><span class="token number">15</span><span class="token punctuation">,</span> sigma<span class="token operator">=</span><span class="token number">1.0</span><span class="token punctuation">,</span> learning_rate<span class="token operator">=</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+som<span class="token punctuation">.</span>random_weights_init<span class="token punctuation">(</span>X<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 初始化权重</span>
+som<span class="token punctuation">.</span>train_random<span class="token punctuation">(</span>data<span class="token operator">=</span>X<span class="token punctuation">,</span> num_iteration<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="004-Building-a-SOM-Step-3"><a href="#004-Building-a-SOM-Step-3" class="headerlink" title="004 Building a SOM - Step 3"></a>004 Building a SOM - Step 3</h2><p><img src="0994435e.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Visualizing the results</span>
+<span class="token keyword">from</span> pylab <span class="token keyword">import</span> bone<span class="token punctuation">,</span> pcolor<span class="token punctuation">,</span> colorbar<span class="token punctuation">,</span> plot<span class="token punctuation">,</span> show
+
+bone<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 画白色窗口</span>
+pcolor<span class="token punctuation">(</span>som<span class="token punctuation">.</span>distance_map<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>T<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># distance_map 返回所有神经元间的平均距离MID</span>
+colorbar<span class="token punctuation">(</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 颜色-数值 对应条</span>
+markers <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">'o'</span><span class="token punctuation">,</span> <span class="token string">'s'</span><span class="token punctuation">]</span>
+colors <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">'r'</span><span class="token punctuation">,</span> <span class="token string">'g'</span><span class="token punctuation">]</span>
+<span class="token keyword">for</span> i<span class="token punctuation">,</span> x <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>X<span class="token punctuation">)</span><span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># i是第i个迭代，x是当前迭代的数据</span>
+    w <span class="token operator">=</span> som<span class="token punctuation">.</span>winner<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+    plot<span class="token punctuation">(</span>w<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token number">0.5</span><span class="token punctuation">,</span> w<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token number">0.5</span><span class="token punctuation">,</span>
+         <span class="token comment" spellcheck="true"># y不同，绘制不同图像（圆o 或 正方形s）</span>
+         markers<span class="token punctuation">[</span>y<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+         <span class="token comment" spellcheck="true"># 给边缘画</span>
+         markeredgecolor<span class="token operator">=</span>colors<span class="token punctuation">[</span>y<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+         markerfacecolor<span class="token operator">=</span><span class="token string">'None'</span><span class="token punctuation">,</span> markersize<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span> markeredgewidth<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span>
+show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+</code></pre>
+<h2 id="005-Building-a-SOM-Step-4"><a href="#005-Building-a-SOM-Step-4" class="headerlink" title="005 Building a SOM - Step 4"></a>005 Building a SOM - Step 4</h2><p><img src="3c037f03.png"></p>
+<pre class=" language-python"><code class="language-python"><span class="token comment" spellcheck="true"># Finding the frauds</span>
+mappings <span class="token operator">=</span> som<span class="token punctuation">.</span>win_map<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+frauds <span class="token operator">=</span> np<span class="token punctuation">.</span>concatenate<span class="token punctuation">(</span><span class="token punctuation">(</span>mappings<span class="token punctuation">[</span><span class="token punctuation">(</span><span class="token number">8</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span> mappings<span class="token punctuation">[</span><span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># (8,1)是从上面画的图里找的坐标</span>
+<span class="token comment" spellcheck="true"># 反转缩放变换</span>
+frauds <span class="token operator">=</span> sc<span class="token punctuation">.</span>inverse_transform<span class="token punctuation">(</span>frauds<span class="token punctuation">)</span>
+</code></pre>
+<h1 id="15-Mega-Case-Study"><a href="#15-Mega-Case-Study" class="headerlink" title="15 - Mega Case Study"></a>15 - Mega Case Study</h1><pre class=" language-python"><code class="language-python"><span class="token triple-quoted-string string">"""## Importing the libraries"""</span>
+
+<span class="token keyword">import</span> numpy <span class="token keyword">as</span> np
+<span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+
+<span class="token triple-quoted-string string">"""## Importing the dataset"""</span>
+
+dataset <span class="token operator">=</span> pd<span class="token punctuation">.</span>read_csv<span class="token punctuation">(</span><span class="token string">'dataset/Credit_Card_Applications.csv'</span><span class="token punctuation">)</span>
+X <span class="token operator">=</span> dataset<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token punctuation">:</span><span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values
+y <span class="token operator">=</span> dataset<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token operator">-</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values
+
+<span class="token triple-quoted-string string">"""## Feature Scaling"""</span>
+
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>preprocessing <span class="token keyword">import</span> MinMaxScaler
+
+sc <span class="token operator">=</span> MinMaxScaler<span class="token punctuation">(</span>feature_range<span class="token operator">=</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+X <span class="token operator">=</span> sc<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""##Training the SOM"""</span>
+
+<span class="token keyword">from</span> minisom <span class="token keyword">import</span> MiniSom
+
+som <span class="token operator">=</span> MiniSom<span class="token punctuation">(</span>x<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span> input_len<span class="token operator">=</span><span class="token number">15</span><span class="token punctuation">,</span> sigma<span class="token operator">=</span><span class="token number">1.0</span><span class="token punctuation">,</span> learning_rate<span class="token operator">=</span><span class="token number">0.5</span><span class="token punctuation">)</span>
+som<span class="token punctuation">.</span>random_weights_init<span class="token punctuation">(</span>X<span class="token punctuation">)</span>
+som<span class="token punctuation">.</span>train_random<span class="token punctuation">(</span>data<span class="token operator">=</span>X<span class="token punctuation">,</span> num_iteration<span class="token operator">=</span><span class="token number">100</span><span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""##Visualizing the results"""</span>
+
+<span class="token keyword">from</span> pylab <span class="token keyword">import</span> bone<span class="token punctuation">,</span> pcolor<span class="token punctuation">,</span> colorbar<span class="token punctuation">,</span> plot<span class="token punctuation">,</span> show
+
+bone<span class="token punctuation">(</span><span class="token punctuation">)</span>
+pcolor<span class="token punctuation">(</span>som<span class="token punctuation">.</span>distance_map<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>T<span class="token punctuation">)</span>
+colorbar<span class="token punctuation">(</span><span class="token punctuation">)</span>
+markers <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">'o'</span><span class="token punctuation">,</span> <span class="token string">'s'</span><span class="token punctuation">]</span>
+colors <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token string">'r'</span><span class="token punctuation">,</span> <span class="token string">'g'</span><span class="token punctuation">]</span>
+<span class="token keyword">for</span> i<span class="token punctuation">,</span> x <span class="token keyword">in</span> enumerate<span class="token punctuation">(</span>X<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    w <span class="token operator">=</span> som<span class="token punctuation">.</span>winner<span class="token punctuation">(</span>x<span class="token punctuation">)</span>
+    plot<span class="token punctuation">(</span>w<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token number">0.5</span><span class="token punctuation">,</span>
+         w<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token number">0.5</span><span class="token punctuation">,</span>
+         markers<span class="token punctuation">[</span>y<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+         markeredgecolor<span class="token operator">=</span>colors<span class="token punctuation">[</span>y<span class="token punctuation">[</span>i<span class="token punctuation">]</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+         markerfacecolor<span class="token operator">=</span><span class="token string">'None'</span><span class="token punctuation">,</span>
+         markersize<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">,</span>
+         markeredgewidth<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">)</span>
+show<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""## Finding the frauds"""</span>
+
+mappings <span class="token operator">=</span> som<span class="token punctuation">.</span>win_map<span class="token punctuation">(</span>X<span class="token punctuation">)</span>  <span class="token comment" spellcheck="true"># 不同点和获胜节点之间距离的map</span>
+frauds <span class="token operator">=</span> np<span class="token punctuation">.</span>concatenate<span class="token punctuation">(</span><span class="token punctuation">(</span>mappings<span class="token punctuation">[</span><span class="token punctuation">(</span><span class="token number">6</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">,</span> mappings<span class="token punctuation">[</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">0</span><span class="token punctuation">)</span>
+frauds <span class="token operator">=</span> sc<span class="token punctuation">.</span>inverse_transform<span class="token punctuation">(</span>frauds<span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""##Printing the Fraunch Clients"""</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">'Fraud Customer IDs'</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> frauds<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span>int<span class="token punctuation">(</span>i<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""#Part 2 - Going from Unsupervised to Supervised Deep Learning
+
+##Create Matrix of Features
+"""</span>
+
+customers <span class="token operator">=</span> dataset<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">:</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values  <span class="token comment" spellcheck="true"># 第一列以外的所有列</span>
+
+<span class="token triple-quoted-string string">"""## Create Dependent Variable"""</span>
+
+is_fraud <span class="token operator">=</span> np<span class="token punctuation">.</span>zeros<span class="token punctuation">(</span>len<span class="token punctuation">(</span>dataset<span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">for</span> i <span class="token keyword">in</span> range<span class="token punctuation">(</span>len<span class="token punctuation">(</span>dataset<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">if</span> dataset<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span>i<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">]</span> <span class="token keyword">in</span> frauds<span class="token punctuation">:</span>  <span class="token comment" spellcheck="true"># 客户ID在欺诈者列表里</span>
+        is_fraud<span class="token punctuation">[</span>i<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">1</span>
+
+<span class="token triple-quoted-string string">"""#Part 3 - ANN
+
+### Feature Scaling
+"""</span>
+
+<span class="token keyword">from</span> sklearn<span class="token punctuation">.</span>preprocessing <span class="token keyword">import</span> StandardScaler
+
+sc <span class="token operator">=</span> StandardScaler<span class="token punctuation">(</span><span class="token punctuation">)</span>
+customers <span class="token operator">=</span> sc<span class="token punctuation">.</span>fit_transform<span class="token punctuation">(</span>customers<span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""## Building the ANN
+
+##Import Tensorflow
+"""</span>
+
+<span class="token keyword">import</span> tensorflow <span class="token keyword">as</span> tf
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>tf<span class="token punctuation">.</span>__version__<span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""## Initializing the ANN"""</span>
+
+ann <span class="token operator">=</span> tf<span class="token punctuation">.</span>keras<span class="token punctuation">.</span>models<span class="token punctuation">.</span>Sequential<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""##Adding the input layer and the first hidden layer"""</span>
+
+ann<span class="token punctuation">.</span>add<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>keras<span class="token punctuation">.</span>layers<span class="token punctuation">.</span>Dense<span class="token punctuation">(</span>units<span class="token operator">=</span><span class="token number">2</span><span class="token punctuation">,</span> activation<span class="token operator">=</span><span class="token string">'relu'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""## Adding the output layer"""</span>
+
+ann<span class="token punctuation">.</span>add<span class="token punctuation">(</span>tf<span class="token punctuation">.</span>keras<span class="token punctuation">.</span>layers<span class="token punctuation">.</span>Dense<span class="token punctuation">(</span>units<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> activation<span class="token operator">=</span><span class="token string">'sigmoid'</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""## Training the ANN
+
+## Compiling the ANN
+"""</span>
+
+ann<span class="token punctuation">.</span>compile<span class="token punctuation">(</span>optimizer<span class="token operator">=</span><span class="token string">'adam'</span><span class="token punctuation">,</span> loss<span class="token operator">=</span><span class="token string">'binary_crossentropy'</span><span class="token punctuation">,</span> metrics<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">'accuracy'</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""## Training the ANN on the Training set"""</span>
+
+ann<span class="token punctuation">.</span>fit<span class="token punctuation">(</span>customers<span class="token punctuation">,</span> is_fraud<span class="token punctuation">,</span> batch_size<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">,</span> epochs<span class="token operator">=</span><span class="token number">10</span><span class="token punctuation">)</span>
+
+<span class="token triple-quoted-string string">"""## Predicting test set results"""</span>
+
+y_pred <span class="token operator">=</span> ann<span class="token punctuation">.</span>predict<span class="token punctuation">(</span>customers<span class="token punctuation">)</span>
+y_pred <span class="token operator">=</span> np<span class="token punctuation">.</span>concatenate<span class="token punctuation">(</span><span class="token punctuation">(</span>dataset<span class="token punctuation">.</span>iloc<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">:</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>values<span class="token punctuation">,</span> y_pred<span class="token punctuation">)</span><span class="token punctuation">,</span> axis<span class="token operator">=</span><span class="token number">1</span><span class="token punctuation">)</span>
+y_pred <span class="token operator">=</span> y_pred<span class="token punctuation">[</span>y_pred<span class="token punctuation">[</span><span class="token punctuation">:</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">.</span>argsort<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span>y_pred<span class="token punctuation">)</span>
+</code></pre>
+<h1 id="16-————————-Part-5-Boltzmann-Machines-————————"><a href="#16-————————-Part-5-Boltzmann-Machines-————————" class="headerlink" title="16 - ————————- Part 5 - Boltzmann Machines ————————-"></a>16 - ————————- Part 5 - Boltzmann Machines ————————-</h1><h1 id="17-Boltzmann-Machine-Intuition"><a href="#17-Boltzmann-Machine-Intuition" class="headerlink" title="17 - Boltzmann Machine Intuition"></a>17 - Boltzmann Machine Intuition</h1>
             </div>
             <hr/>
 
@@ -1308,7 +1621,7 @@ content
 
             
                 &nbsp;<i class="fa fa-area-chart"></i>&nbsp;站点总字数:&nbsp;
-                <span class="white-color">783k</span>
+                <span class="white-color">784.7k</span>
             
 
             
